@@ -20,7 +20,11 @@ type alias Model =
     {
         tagListManager: TagListManager.Model,
         
-        tagNames: List String
+        tagNames: List String,
+
+        currentImages: List String,
+
+        networkError: String
     }
 
 init : (Model, Cmd Msg)
@@ -34,7 +38,11 @@ init =
             {
                 tagListManager = TagListManager.init,
 
-                tagNames = TagListManager.getTagList tagListManager
+                tagNames = TagListManager.getTagList tagListManager,
+
+                currentImages = [],
+
+                networkError = ""
             },
             Cmd.none
         )
@@ -73,16 +81,13 @@ update msg model =
                 (finalModel, cmd)
 
         ListingFail err ->
-            let
-                _ = Debug.log "Error: " err
-            in
-                (model, Cmd.none)
+            ({model | networkError = toString err}, Cmd.none)
 
         AlbumListFetched result ->
             let
                 _ = Debug.log "Response " result
             in
-                (model, Cmd.none)
+                ({model | currentImages = result}, Cmd.none)
 
 
 
@@ -99,19 +104,33 @@ getImagesWithTags tags =
         Task.perform ListingFail AlbumListFetched (Http.get decodeAlbumList url)
 
 
+
+
 decodeAlbumList : Json.Decode.Decoder (List String)
 decodeAlbumList =
     Json.Decode.at [] (Json.Decode.list Json.Decode.string)
+
+
+
+
+
+
 
 --View
 
 view : Model -> Html Msg
 view model =
     div []
-    [
-        Html.App.map TagListMsg (TagListManager.view model.tagListManager)
-    ]
+    ([
+        Html.App.map TagListMsg (TagListManager.view model.tagListManager),
 
+        p [] [text model.networkError]
+    ] ++ generateImageViews model.currentImages)
+
+
+generateImageViews : List String -> List (Html Msg)
+generateImageViews images =
+    List.map (\image -> img [width 200, height 200, src ("http://localhost:3000/album/image/" ++ image)] []) images
 
 
 
