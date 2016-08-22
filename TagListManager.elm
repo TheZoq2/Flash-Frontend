@@ -1,5 +1,7 @@
 module TagListManager exposing (Model, Msg, init, update, view, getTagList)
 
+import Style
+
 import Html exposing (..)
 import Html.App
 import Html.Attributes exposing (..)
@@ -72,7 +74,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [Style.toStyle Style.tagListContainer]
     [
         Html.form [onSubmit AddTag 
             ]

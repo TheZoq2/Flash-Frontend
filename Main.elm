@@ -1,4 +1,5 @@
 import TagListManager
+import Style
 
 import Html exposing (..)
 import Html.App
@@ -120,7 +121,7 @@ decodeAlbumList =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [Style.toStyle Style.albumContainer]
     ([
         Html.App.map TagListMsg (TagListManager.view model.tagListManager),
 
