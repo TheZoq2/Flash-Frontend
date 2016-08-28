@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.App
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Json.Decode 
+import Json.Decode exposing (..)
 import Json.Encode
 import Http
 import Task
@@ -23,7 +23,7 @@ type alias Model =
         
         tagNames: List String,
 
-        currentImages: List String,
+        currentImages: List AlbumEntry,
 
         networkError: String
     }
@@ -57,7 +57,7 @@ init =
 type Msg 
     = TagListMsg TagListManager.Msg
     | ListingFail Http.Error
-    | AlbumListFetched (List String)
+    | AlbumListFetched (List (Int, String, String))
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -88,7 +88,7 @@ update msg model =
             let
                 _ = Debug.log "Response " result
             in
-                ({model | currentImages = result}, Cmd.none)
+                ({model | currentImages = List.map albumEntryFromTuple result}, Cmd.none)
 
 
 
@@ -107,9 +107,31 @@ getImagesWithTags tags =
 
 
 
-decodeAlbumList : Json.Decode.Decoder (List String)
+getThumbnail : (Int, String, String) -> String
+getThumbnail (_, _, a) = a
+
+type alias AlbumEntry =
+    {
+        id: Int,
+        path: String,
+        thumbnail_path: String
+    }
+albumEntryFromTuple : (Int, String, String) -> AlbumEntry
+albumEntryFromTuple (id, path, thumbnail_path) =
+    {
+        id = id,
+        path = path,
+        thumbnail_path = thumbnail_path
+    }
+
+--Decoding a list of images in the album as a tuple
+decodeAlbumList : Json.Decode.Decoder (List (Int, String, String))
 decodeAlbumList =
-    Json.Decode.at [] (Json.Decode.list Json.Decode.string)
+    let
+        imgResponseDecode = object3 (,,) ("id" := int) ("path" := string) ("thumbnail_path" := string)
+
+    in
+        Json.Decode.at [] (Json.Decode.list imgResponseDecode)
 
 
 
@@ -129,9 +151,9 @@ view model =
     ] ++ generateImageViews model.currentImages)
 
 
-generateImageViews : List String -> List (Html Msg)
-generateImageViews images =
-    List.map (\image -> img [width 200, height 200, src ("http://localhost:3000/album/image/" ++ image)] []) images
+generateImageViews : List AlbumEntry -> List (Html Msg)
+generateImageViews albumEntries =
+    List.map (\entry -> img [Style.toStyle Style.albumItemContainer, src ("http://localhost:3000/album/image/" ++ entry.thumbnail_path)] []) albumEntries
 
 
 

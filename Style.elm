@@ -16,6 +16,11 @@ albumContainer =
         flexDirection row,
         flexWrap wrap
     ]
+albumItemContainer =
+    [
+        height (px 300),
+        margin (px 10)
+    ]
 
 tagListContainer =
     [
