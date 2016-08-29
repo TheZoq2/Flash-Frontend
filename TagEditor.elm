@@ -19,15 +19,24 @@ type alias TagListManagerContainer =
         manager: TagListManager.Model,
         enable: Bool
     }
+initContainer : Int -> TagListManagerContainer
+initContainer id =
+    {
+        id = id,
+        manager = TagListManager.init,
+        enable = True
+    }
+
 
 type alias Model =
     {
-        tagManagerList: List TagListManagerContainer
+        tagManagerList: List TagListManagerContainer,
+        nextId: Int
     }
 
 init: (Model, Cmd Msg)
 init = 
-    (Model [], Cmd.none)
+    (Model [] 0, Cmd.none)
 
 
 
@@ -45,13 +54,18 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of 
         TagListMsg id tagListMsg ->
-            ({model | tagManagerList = (List.map tagManagerUpdateHelper model.tagManagerList)}, Cmd.none)
+            ({model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}, Cmd.none)
 
         TagListToggle id enable ->
             (model, Cmd.none)
 
         AddTagManager ->
-            (model, Cmd.none)
+            let
+                newContainerList = model.tagManagerList ++ [initContainer model.nextId]
+
+                nextId = model.nextId + 1
+            in
+                ({model | tagManagerList = newContainerList, nextId = nextId}, Cmd.none)
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
@@ -59,7 +73,7 @@ tagManagerUpdateHelper targetId msg container =
     let 
         manager = container.manager
     in
-        {container | manager = (if targetId == container.id then manager else manager) }
+        {container | manager = (if targetId == container.id then TagListManager.update msg manager else manager) }
 
 
 
