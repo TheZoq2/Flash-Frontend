@@ -38,12 +38,28 @@ init =
 type Msg
     = TagListMsg Int TagListManager.Msg
     | TagListToggle Int Bool
+    | AddTagManager
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-    (model, Cmd.none)
+    case msg of 
+        TagListMsg id tagListMsg ->
+            ({model | tagManagerList = (List.map tagManagerUpdateHelper model.tagManagerList)}, Cmd.none)
 
+        TagListToggle id enable ->
+            (model, Cmd.none)
+
+        AddTagManager ->
+            (model, Cmd.none)
+
+
+tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
+tagManagerUpdateHelper targetId msg container =
+    let 
+        manager = container.manager
+    in
+        {container | manager = (if targetId == container.id then manager else manager) }
 
 
 
@@ -55,13 +71,18 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [] 
-    [
+    (
+        [
+            button [onClick AddTagManager] [text "Add new tag list"]
 
-    ] ++ 
-    List.map 
-        (\manager -> Html.App.map (TagListMsg 1) (TagListManager.view manager)) 
-        model.tagManagerList.manager
+        ] ++ 
+        List.map viewFromTagManager model.tagManagerList
+    )
 
+
+viewFromTagManager : TagListManagerContainer -> Html Msg
+viewFromTagManager {id, manager, enable} =
+    Html.App.map (TagListMsg id) (TagListManager.view manager)
 
 
 
