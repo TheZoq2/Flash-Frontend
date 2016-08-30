@@ -1,3 +1,5 @@
+module TagEditor exposing(..)
+
 import TagListManager
 import Style
 

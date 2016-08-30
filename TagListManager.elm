@@ -92,7 +92,7 @@ viewTag tag =
     [
         text tag.name,
 
-        button [onClick (RemoveTag tag.id)] [text "remove"]
+        button [onClick (RemoveTag tag.id)] [text "⊘"]
     ]
 
 main =

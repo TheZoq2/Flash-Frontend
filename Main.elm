@@ -153,11 +153,16 @@ view model =
 
 generateImageViews : List AlbumEntry -> List (Html Msg)
 generateImageViews albumEntries =
-    List.map (\entry -> div [Style.toStyle Style.albumItemContainer] [
-        img 
-            [
-                src ("http://localhost:3000/album/image/" ++ entry.thumbnail_path)
-            ] []
+    let 
+        imgPath = "http://localhost:3000/album/image/"
+    in
+        List.map (\entry -> div [Style.toStyle Style.albumItemContainer] [
+            a [href (imgPath ++ entry.path)] [
+                img 
+                [
+                    src (imgPath ++ entry.thumbnail_path)
+                ] []
+            ]
         ]) albumEntries
 
 
