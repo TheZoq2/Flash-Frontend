@@ -50,6 +50,8 @@ type Msg
     = TagListMsg Int TagListManager.Msg
     | TagListToggle Int Bool
     | AddTagManager
+    | ToggleListManager Int
+    | RemoveListManager Int
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -68,6 +70,19 @@ update msg model =
                 nextId = model.nextId + 1
             in
                 ({model | tagManagerList = newContainerList, nextId = nextId}, Cmd.none)
+
+        ToggleListManager id ->
+            let
+                newContainerList = List.map (\manager -> {manager | enable=manager.enable == False}) model.tagManagerList
+
+            in
+                ({model | tagManagerList = newContainerList}, Cmd.none)
+
+        RemoveListManager id ->
+            let
+                newContainerList = List.filter (\manager -> manager.id /= id) model.tagManagerList
+            in
+                ({model | tagManagerList = newContainerList }, Cmd.none)
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
@@ -89,7 +104,7 @@ view model =
     div [] 
     (
         [
-            button [onClick AddTagManager] [text "Add new tag list"]
+            button [onClick AddTagManager] [text "Add new tag group"]
 
         ] ++ 
         List.map viewFromTagManager model.tagManagerList
@@ -98,7 +113,22 @@ view model =
 
 viewFromTagManager : TagListManagerContainer -> Html Msg
 viewFromTagManager {id, manager, enable} =
-    Html.App.map (TagListMsg id) (TagListManager.view manager)
+    let
+        toggleMsg = if enable == False then 
+                "Enable group"
+            else 
+                "Disable group"
+
+        toggleButton = button [onClick (ToggleListManager id)] [text toggleMsg]
+
+        removeButton = button [onClick (RemoveListManager id)] [text "remove group"]
+    in
+        div []
+        [
+            toggleButton, 
+            removeButton,
+            Html.App.map (TagListMsg id) (TagListManager.view manager)
+        ]
 
 
 
