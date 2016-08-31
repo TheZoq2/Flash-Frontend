@@ -90,9 +90,12 @@ viewTag: Tag -> Html Msg
 viewTag tag =
     li []
     [
-        text tag.name,
+        div []
+        [
+            text tag.name,
 
-        button [onClick (RemoveTag tag.id)] [text "⊘"]
+            button [onClick (RemoveTag tag.id)] [text "⊘"]
+        ]
     ]
 
 main =
