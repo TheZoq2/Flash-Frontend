@@ -2,3 +2,31 @@ body {
     color: #ffffff;
     background-color: #1c1c1c;
 }
+
+.RemoveButton {
+    display: inline-block;
+    border-radius: 0.2em;
+    background-color: rgb(169, 3, 41);
+    font-size: 1.6em;
+    cursor: pointer;
+}
+
+.RemoveButton:hover {
+    background-color: rgb(200, 50, 80);
+}
+
+.TagListContainer {
+    padding: 10px;
+}
+
+.TagListName {
+    padding: 0.5em 0px;
+}
+
+.TagListLi {
+    height: 2em;
+}
+
+.DisabledTag {
+    color: rgb(150, 150, 150);
+}

@@ -51,6 +51,9 @@ type Msg
     | AddTagManager
     | ToggleListManager Int
     | RemoveListManager Int
+    | RequestNext
+    | RequestPrev
+    | RequestSave
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -137,15 +140,30 @@ viewFromTagManager {id, manager, enable} =
             else 
                 "Disable group"
 
+        additionalClasses = 
+            if enable then
+                []
+            else
+                [Style.DisabledTag]
+
         toggleButton = button [onClick (ToggleListManager id)] [text toggleMsg]
 
-        removeButton = button [onClick (RemoveListManager id)] [text "remove group"]
+        removeButton = a [Style.class [Style.RemoveButton], onClick (RemoveListManager id)] 
+            [
+                text "⊘"
+            ]
+
+
+        nextButton = button [onClick ]
     in
-        div []
+        div [Style.class ([Style.TagListContainer] ++ additionalClasses)]
         [
-            toggleButton, 
-            removeButton,
-            Html.App.map (TagListMsg id) (TagListManager.view manager)
+            Html.App.map (TagListMsg id) (TagListManager.view manager),
+            div []
+            [
+                toggleButton, 
+                removeButton
+            ]
         ]
 
 

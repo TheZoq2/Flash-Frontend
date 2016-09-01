@@ -8,6 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode 
 
+
 --Model
 type alias Model =
     {
@@ -105,17 +106,15 @@ viewTag: Tag -> Html Msg
 viewTag tag =
     let 
         toggleState = if tag.enable == True then "enabled" else "disabled"
+
+        classList = if tag.enable == True then [] else [Style.DisabledTag]
     in
-    li []
+    li [Style.class [Style.TagListLi]]
     [
-        div []
-        [
-            p [onClick (ToggleTag tag.id) ] [text tag.name],
+        p [Style.class ([Style.TagListName] ++ classList), onClick (ToggleTag tag.id) ] [text tag.name],
 
-            p [] [text toggleState],
-
-            button [onClick (RemoveTag tag.id)] [text "⊘"]
-        ]
+        --button [onClick (RemoveTag tag.id)] [text "⊘"]
+        p [Style.class [Style.RemoveButton], onClick (RemoveTag tag.id)] [text "⊘"]
     ]
 
 

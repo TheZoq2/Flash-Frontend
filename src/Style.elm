@@ -6,12 +6,8 @@ import Css.Elements exposing (..)
 import Html.Attributes exposing (style)
 import Html.App
 import Html
+import Html.CssHelpers
 
-type CssClasses
-    = AlbumContainer
-    | AlbumItemContainer
-    | TagListContainer
-    | RemoveButton
 
 
 port files : CssFileStructure -> Cmd msg
@@ -38,6 +34,9 @@ toStyle =
     Css.asPairs >> Html.Attributes.style
 
 
+--Css helpers
+{id, class, classList} =
+    Html.CssHelpers.withNamespace ""
 
 
 
@@ -48,6 +47,14 @@ primaryBackgroundColor = hex "1c1c1c"
 
 
 
+type CssClasses
+    = AlbumContainer
+    | AlbumItemContainer
+    | TagListContainer
+    | RemoveButton
+    | TagListName
+    | TagListLi
+    | DisabledTag
 
 
 --The style to apply to all files in the project
@@ -62,11 +69,32 @@ globalStyle =
         ],
         (.) RemoveButton
         [
-            display inline-block,
-            width (em 1.5),
-            height (em 1.5),
+            display inlineBlock,
             borderRadius (em 0.2),
-            float right
+            backgroundColor (rgb 169 3 41),
+            fontSize (em 1.6),
+
+            cursor pointer,
+
+            hover [
+                backgroundColor (rgb 200 50 80)
+            ]
+        ],
+        (.) TagListContainer
+        [
+            padding (px 10)
+        ],
+        (.) TagListName
+        [
+            padding2 (em 0.5) (px 0)
+        ],
+        (.) TagListLi
+        [
+            height (em 2)
+        ],
+        (.) DisabledTag
+        [
+            color (rgb 150 150 150)
         ]
     ]
 
