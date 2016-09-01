@@ -11,6 +11,7 @@ type CssClasses
     = AlbumContainer
     | AlbumItemContainer
     | TagListContainer
+    | RemoveButton
 
 
 port files : CssFileStructure -> Cmd msg
@@ -37,8 +38,19 @@ toStyle =
     Css.asPairs >> Html.Attributes.style
 
 
+
+
+
+--Some very common parameters
 primaryTextColor = hex "ffffff"
 primaryBackgroundColor = hex "1c1c1c"
+
+
+
+
+
+
+--The style to apply to all files in the project
 
 globalStyle = 
     (stylesheet)
@@ -47,13 +59,25 @@ globalStyle =
         [
             color primaryTextColor,
             backgroundColor primaryBackgroundColor
+        ],
+        (.) RemoveButton
+        [
+            display inline-block,
+            width (em 1.5),
+            height (em 1.5),
+            borderRadius (em 0.2),
+            float right
         ]
     ]
 
 
+
+
+
+
 cssFiles : CssFileStructure
 cssFiles =
-    toFileStructure [ ("GlobalStyle.css", Css.File.compile globalStyle) ]
+    toFileStructure [ ("output/css/GlobalStyle.css", Css.File.compile globalStyle) ]
 
 
 main : Program Never
