@@ -48,7 +48,6 @@ init =
 
 type Msg
     = TagListMsg Int TagListManager.Msg
-    | TagListToggle Int Bool
     | AddTagManager
     | ToggleListManager Int
     | RemoveListManager Int
@@ -60,9 +59,6 @@ update msg model =
         TagListMsg id tagListMsg ->
             ({model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}, Cmd.none)
 
-        TagListToggle id enable ->
-            (model, Cmd.none)
-
         AddTagManager ->
             let
                 newContainerList = model.tagManagerList ++ [initContainer model.nextId]
@@ -73,7 +69,13 @@ update msg model =
 
         ToggleListManager id ->
             let
-                newContainerList = List.map (\manager -> {manager | enable=manager.enable == False}) model.tagManagerList
+                toggleWithId manager = 
+                    if manager.id == id then
+                        {manager | enable = manager.enable == False}
+                    else
+                        manager
+
+                newContainerList = List.map toggleWithId model.tagManagerList
 
             in
                 ({model | tagManagerList = newContainerList}, Cmd.none)
@@ -90,10 +92,24 @@ tagManagerUpdateHelper targetId msg container =
     let 
         manager = container.manager
     in
-        {container | manager = (if targetId == container.id then TagListManager.update msg manager else manager) }
+        {container | manager = (
+                if targetId == container.id then 
+                    TagListManager.update msg manager 
+                else 
+                    manager) }
 
 
 
+getSelectedTags : Model -> List String
+getSelectedTags model =
+    let
+        enabledTagContainers =
+            List.filter (\manager -> manager.enable == True) model.tagManagerList
+
+        managers = 
+            List.map .manager enabledTagContainers
+    in
+        List.map TagListManager.getSelectedTags managers |> List.concat
 
 
 
@@ -103,11 +119,13 @@ view : Model -> Html Msg
 view model =
     div [] 
     (
+        List.map viewFromTagManager model.tagManagerList
+        ++
+        List.map (\tagText -> p [] [text tagText]) (getSelectedTags model)
+        ++
         [
             button [onClick AddTagManager] [text "Add new tag group"]
-
-        ] ++ 
-        List.map viewFromTagManager model.tagManagerList
+        ]
     )
 
 

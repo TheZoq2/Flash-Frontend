@@ -1,4 +1,4 @@
-module TagListManager exposing (Model, Msg, init, update, view, getTagList)
+module TagListManager exposing (Model, Msg, init, update, view, getTagList, getSelectedTags)
 
 import Style
 
@@ -20,7 +20,8 @@ type alias Model =
 type alias Tag =
     {
         id: Int,
-        name: String
+        name: String,
+        enable: Bool
     }
 
 init : Model
@@ -47,6 +48,7 @@ type Msg
     = AddTag
     | RemoveTag Int
     | InputChanged String
+    | ToggleTag Int
 
 
 update: Msg -> Model -> Model
@@ -54,7 +56,7 @@ update msg model =
     case msg of 
         AddTag ->
             {model | 
-                tags = model.tags ++ [(Tag model.nextId model.currentTextFieldText)],
+                tags = model.tags ++ [(Tag model.nextId model.currentTextFieldText True)],
                 nextId = model.nextId + 1,
                 currentTextFieldText = ""
             }
@@ -64,6 +66,19 @@ update msg model =
         
         InputChanged text ->
             {model | currentTextFieldText=text}
+
+
+        ToggleTag id ->
+            let
+                toggleWithId tag =
+                    if tag.id == id then
+                        --Bool == False is the same as !Bool
+                        {tag | enable = tag.enable == False}
+                    else
+                        tag
+
+            in
+                {model | tags = List.map toggleWithId model.tags}
 
 
 
@@ -88,15 +103,32 @@ view model =
 --Create the HTML code for a single tag
 viewTag: Tag -> Html Msg
 viewTag tag =
+    let 
+        toggleState = if tag.enable == True then "enabled" else "disabled"
+    in
     li []
     [
         div []
         [
-            text tag.name,
+            p [onClick (ToggleTag tag.id) ] [text tag.name],
+
+            p [] [text toggleState],
 
             button [onClick (RemoveTag tag.id)] [text "⊘"]
         ]
     ]
+
+
+
+getSelectedTags : Model -> List String
+getSelectedTags model =
+    let
+        isEnabled tag = 
+            tag.enable == True
+    in
+        List.filter isEnabled model.tags |> List.map .name
+
+
 
 main =
   Html.App.beginnerProgram
