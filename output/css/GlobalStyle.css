@@ -17,7 +17,7 @@ body {
 }
 
 .TagListContainer {
-    margin: 10px;
+    width: 320px;
 }
 
 .TagListName {
@@ -32,11 +32,19 @@ body {
     color: rgb(100, 100, 100);
 }
 
+.TagEditorContainer {
+    display: flex;
+}
+
+.TagEditorContainer  img {
+    max-width: 100%;
+}
+
 .TagEditorRightPane {
     width: 320px;
     background-color: #1f1f1f;
 }
 
 .TagEditorRightPane  input {
-    width: 100%;
+    width: 300px;
 }

@@ -33,12 +33,14 @@ initContainer id =
 type alias Model =
     {
         tagManagerList: List TagListManagerContainer,
-        nextId: Int
+        nextTagListId: Int,
+        currentImage: String,
+        lastError: String
     }
 
 init: (Model, Cmd Msg)
 init = 
-    (Model [] 0, Cmd.none)
+    (Model [] 0 "" "", Cmd.none)
 
 
 
@@ -54,6 +56,8 @@ type Msg
     | RequestNext
     | RequestPrev
     | RequestSave
+    | NetworkError Http.Error
+    | NewImageReceived String
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -64,11 +68,11 @@ update msg model =
 
         AddTagManager ->
             let
-                newContainerList = model.tagManagerList ++ [initContainer model.nextId]
+                newContainerList = model.tagManagerList ++ [initContainer model.nextTagListId]
 
-                nextId = model.nextId + 1
+                nextTagListId = model.nextTagListId + 1
             in
-                ({model | tagManagerList = newContainerList, nextId = nextId}, Cmd.none)
+                ({model | tagManagerList = newContainerList, nextTagListId = nextTagListId}, Cmd.none)
 
         ToggleListManager id ->
             let
@@ -90,11 +94,31 @@ update msg model =
                 ({model | tagManagerList = newContainerList }, Cmd.none)
 
         RequestNext ->
-            (model, Cmd.none)
+            (model, requestNextImage)
         RequestPrev ->
             (model, Cmd.none)
         RequestSave ->
             (model, Cmd.none)
+
+
+        NetworkError _ ->
+            (model, Cmd.none)
+
+        NewImageReceived path ->
+            ({model | currentImage = "http://localhost:3000/" ++ path} , Cmd.none)
+
+
+requestNextImage : Cmd Msg
+requestNextImage = 
+    let 
+        url = "http://localhost:3000/list?action=next"
+    in
+        Task.perform NetworkError NewImageReceived (Http.get decodeNewImage url)
+
+
+decodeNewImage : Json.Decode.Decoder String
+decodeNewImage =
+    Json.Decode.at ["file_path"] Json.Decode.string
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
@@ -132,22 +156,29 @@ view model =
         prevButton = button [onClick RequestPrev] [text "Prev"]
         saveButton = button [onClick RequestSave] [text "Save"]
 
-        buttonRow = div [] [nextButton, prevButton, saveButton]
+        buttonRow = div [] [prevButton, nextButton, saveButton]
     in
-    div [Style.class [Style.TagEditorRightPane]] 
-    (
+    div [Style.class [Style.TagEditorContainer]]
+    [
+        div [Style.class [Style.TagEditorContentContainer]]
         [
-            buttonRow
-        ]
-        ++
-        List.map viewFromTagManager model.tagManagerList
-        ++
-        List.map (\tagText -> p [] [text tagText]) (getSelectedTags model)
-        ++
-        [
-            button [onClick AddTagManager] [text "Add new tag group"]
-        ]
-    )
+            img [src model.currentImage] []
+        ],
+        div [Style.class [Style.TagEditorRightPane]] 
+        (
+            [
+                buttonRow
+            ]
+            ++
+            List.map viewFromTagManager model.tagManagerList
+            ++
+            List.map (\tagText -> p [] [text tagText]) (getSelectedTags model)
+            ++
+            [
+                button [onClick AddTagManager] [text "Add new tag group"]
+            ]
+        )
+    ]
 
 
 viewFromTagManager : TagListManagerContainer -> Html Msg

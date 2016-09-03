@@ -90,7 +90,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [Style.toStyle Style.tagListContainer]
+    div []
     [
         Html.form [onSubmit AddTag 
             ]

@@ -26,11 +26,6 @@ albumItemContainer =
         margin (px 10)
     ]
 
-tagListContainer =
-    [
-        width (pct 100)
-    ]
-
 toStyle = 
     Css.asPairs >> Html.Attributes.style
 
@@ -58,7 +53,9 @@ type CssClasses
     | DisabledTag
 
     --Tag editor specific tags
+    | TagEditorContainer
     | TagEditorRightPane
+    | TagEditorContentContainer
 
 
 --The style to apply to all files in the project
@@ -87,7 +84,7 @@ globalStyle =
         ],
         (.) TagListContainer
         [
-            margin (px 10)
+            width (px 320)
         ],
         (.) TagListName
         [
@@ -103,6 +100,18 @@ globalStyle =
         ],
 
         --Tag editor specific styles
+        (.) TagEditorContainer
+        [
+            displayFlex,
+
+            descendants
+            [
+                img
+                [
+                    maxWidth (pct 100)
+                ]
+            ]
+        ],
         (.) TagEditorRightPane
         [
             width (px 320),
@@ -112,9 +121,13 @@ globalStyle =
             [
                 input
                 [
-                    width (pct 100)
+                    width (px 300)
                 ]
             ]
+        ],
+        (.) TagEditorContentContainer
+        [
+
         ]
     ]
 
