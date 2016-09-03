@@ -89,6 +89,13 @@ update msg model =
             in
                 ({model | tagManagerList = newContainerList }, Cmd.none)
 
+        RequestNext ->
+            (model, Cmd.none)
+        RequestPrev ->
+            (model, Cmd.none)
+        RequestSave ->
+            (model, Cmd.none)
+
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
 tagManagerUpdateHelper targetId msg container =
@@ -120,8 +127,19 @@ getSelectedTags model =
 
 view : Model -> Html Msg
 view model =
-    div [] 
+    let
+        nextButton = button [onClick RequestNext] [text "Next"]
+        prevButton = button [onClick RequestPrev] [text "Prev"]
+        saveButton = button [onClick RequestSave] [text "Save"]
+
+        buttonRow = div [] [nextButton, prevButton, saveButton]
+    in
+    div [Style.class [Style.TagEditorRightPane]] 
     (
+        [
+            buttonRow
+        ]
+        ++
         List.map viewFromTagManager model.tagManagerList
         ++
         List.map (\tagText -> p [] [text tagText]) (getSelectedTags model)
@@ -154,7 +172,7 @@ viewFromTagManager {id, manager, enable} =
             ]
 
 
-        nextButton = button [onClick ]
+        --nextButton = button [onClick ]
     in
         div [Style.class ([Style.TagListContainer] ++ additionalClasses)]
         [

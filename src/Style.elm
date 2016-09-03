@@ -3,6 +3,7 @@ port module Style exposing (..)
 import Css exposing (..)
 import Css.File exposing (..)
 import Css.Elements exposing (..)
+import Css.Namespace exposing (namespace)
 import Html.Attributes exposing (style)
 import Html.App
 import Html
@@ -38,11 +39,11 @@ toStyle =
 {id, class, classList} =
     Html.CssHelpers.withNamespace ""
 
-
-
 --Some very common parameters
 primaryTextColor = hex "ffffff"
 primaryBackgroundColor = hex "1c1c1c"
+secondaryBackgroundColor = hex "1f1f1f"
+disabledTagColor = (rgb 100 100 100)
 
 
 
@@ -56,6 +57,9 @@ type CssClasses
     | TagListLi
     | DisabledTag
 
+    --Tag editor specific tags
+    | TagEditorRightPane
+
 
 --The style to apply to all files in the project
 
@@ -65,7 +69,8 @@ globalStyle =
         body
         [
             color primaryTextColor,
-            backgroundColor primaryBackgroundColor
+            backgroundColor primaryBackgroundColor,
+            fontFamily sansSerif
         ],
         (.) RemoveButton
         [
@@ -82,7 +87,7 @@ globalStyle =
         ],
         (.) TagListContainer
         [
-            padding (px 10)
+            margin (px 10)
         ],
         (.) TagListName
         [
@@ -94,9 +99,27 @@ globalStyle =
         ],
         (.) DisabledTag
         [
-            color (rgb 150 150 150)
+            color disabledTagColor
+        ],
+
+        --Tag editor specific styles
+        (.) TagEditorRightPane
+        [
+            width (px 320),
+            backgroundColor secondaryBackgroundColor,
+
+            descendants
+            [
+                input
+                [
+                    width (pct 100)
+                ]
+            ]
         ]
     ]
+
+
+
 
 
 

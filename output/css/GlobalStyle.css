@@ -1,6 +1,7 @@
 body {
     color: #ffffff;
     background-color: #1c1c1c;
+    font-family: sans-serif;
 }
 
 .RemoveButton {
@@ -16,7 +17,7 @@ body {
 }
 
 .TagListContainer {
-    padding: 10px;
+    margin: 10px;
 }
 
 .TagListName {
@@ -28,5 +29,14 @@ body {
 }
 
 .DisabledTag {
-    color: rgb(150, 150, 150);
+    color: rgb(100, 100, 100);
+}
+
+.TagEditorRightPane {
+    width: 320px;
+    background-color: #1f1f1f;
+}
+
+.TagEditorRightPane  input {
+    width: 100%;
 }
