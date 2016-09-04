@@ -3,3 +3,6 @@ tageditor:
 
 css:
 	elm-css src/Style.elm --module=Style
+
+album:
+	elm-make src/Main.elm --output=output/album.js
