@@ -40,7 +40,7 @@ type alias Model =
 
 init: (Model, Cmd Msg)
 init = 
-    (Model [] 0 "" "", Cmd.none)
+    (Model [] 0 "" "", requestNewImage Current)
 
 
 
@@ -55,9 +55,11 @@ type Msg
     | RemoveListManager Int
     | RequestNext
     | RequestPrev
+    | RequestCurrent
     | RequestSave
     | NetworkError Http.Error
     | NewImageReceived String
+    | OnSaved String
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -94,26 +96,59 @@ update msg model =
                 ({model | tagManagerList = newContainerList }, Cmd.none)
 
         RequestNext ->
-            (model, requestNextImage)
+            (model, requestNewImage Next)
         RequestPrev ->
-            (model, Cmd.none)
+            (model, requestNewImage Prev)
+        RequestCurrent ->
+            (model, requestNewImage Current)
+
         RequestSave ->
-            (model, Cmd.none)
+            (model, requestSaveImage (getSelectedTags model))
+
+        OnSaved _ ->
+            (model, requestNewImage Next)
 
 
         NetworkError _ ->
+            --TODO: Report error
             (model, Cmd.none)
 
         NewImageReceived path ->
             ({model | currentImage = "http://localhost:3000/" ++ path} , Cmd.none)
 
 
-requestNextImage : Cmd Msg
-requestNextImage = 
+type ImageDirection
+    = Next
+    | Prev
+    | Current
+
+requestNewImage : ImageDirection -> Cmd Msg
+requestNewImage direction = 
     let 
-        url = "http://localhost:3000/list?action=next"
+        action = case direction of 
+            Next ->
+                "next"
+            Prev ->
+                "prev"
+            Current ->
+                "current"
+
+        url = "http://localhost:3000/list?action=" ++ action
+
     in
         Task.perform NetworkError NewImageReceived (Http.get decodeNewImage url)
+
+requestSaveImage : (List String) -> Cmd Msg
+requestSaveImage tags =
+    let 
+        --Encode the tag list
+        tagsJson = List.map Json.Encode.string tags
+
+        --TODO: Make surre X-Origin requests are allowed
+        url = "http://localhost:3000/list?action=save&tags=" ++ toString tagsJson
+    in
+        Task.perform NetworkError OnSaved (Http.get (Json.Decode.at [] Json.Decode.string) url)
+
 
 
 decodeNewImage : Json.Decode.Decoder String
