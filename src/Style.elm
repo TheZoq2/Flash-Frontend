@@ -34,11 +34,6 @@ toStyle =
 {id, class, classList} =
     Html.CssHelpers.withNamespace ""
 
---Some very common parameters
-primaryTextColor = hex "ffffff"
-primaryBackgroundColor = hex "1c1c1c"
-secondaryBackgroundColor = hex "1f1f1f"
-disabledTagColor = (rgb 100 100 100)
 
 
 
@@ -57,6 +52,14 @@ type CssClasses
     | TagEditorRightPane
     | TagEditorContentContainer
 
+
+--Some very common parameters
+primaryTextColor = hex "ffffff"
+primaryBackgroundColor = hex "1c1c1c"
+secondaryBackgroundColor = hex "1f1f1f"
+disabledTagColor = (rgb 100 100 100)
+tagEditorSidebarWidth = 350
+tagEditorStdMargin = 10
 
 --The style to apply to all files in the project
 
@@ -114,14 +117,18 @@ globalStyle =
         ],
         (.) TagEditorRightPane
         [
-            width (px 320),
+            --width (px tagEditorSidebarWidth),
+            flexBasis (px tagEditorSidebarWidth),
+            flexGrow zero,
+            flexShrink zero,
             backgroundColor secondaryBackgroundColor,
+            margin2 (px 0) (px tagEditorStdMargin),
 
             descendants
             [
                 input
                 [
-                    width (px 300)
+                    width (px (tagEditorSidebarWidth - tagEditorStdMargin * 2))
                 ]
             ]
         ],
