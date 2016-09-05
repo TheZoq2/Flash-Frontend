@@ -17,7 +17,7 @@ body {
 }
 
 .TagListContainer {
-    width: 320px;
+    width: 350px;
 }
 
 .TagListName {
@@ -30,6 +30,10 @@ body {
 
 .DisabledTag {
     color: rgb(100, 100, 100);
+}
+
+.TagListContainer {
+    margin: 30px 0;
 }
 
 .TagEditorContainer {
@@ -50,4 +54,12 @@ body {
 
 .TagEditorRightPane  input {
     width: 330px;
+}
+
+.TagEditorButtonRow {
+    margin: 10px 0;
+}
+
+.TagEditorButtonRow  button {
+    margin-right: 10px;
 }

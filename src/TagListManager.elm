@@ -90,7 +90,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [Style.class [Style.TagListManager]]
     [
         Html.form [onSubmit AddTag 
             ]
@@ -129,6 +129,7 @@ getSelectedTags model =
 
 
 
+--For testing purposes
 main =
   Html.App.beginnerProgram
     { model = init

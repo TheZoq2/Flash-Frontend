@@ -47,6 +47,10 @@ type CssClasses
     | TagListLi
     | DisabledTag
 
+    | TagEditorButtonRow
+
+    | TagListManager
+
     --Tag editor specific tags
     | TagEditorContainer
     | TagEditorRightPane
@@ -65,44 +69,62 @@ tagEditorStdMargin = 10
 
 globalStyle = 
     (stylesheet)
-    [
-        body
+    (
         [
-            color primaryTextColor,
-            backgroundColor primaryBackgroundColor,
-            fontFamily sansSerif
-        ],
-        (.) RemoveButton
-        [
-            display inlineBlock,
-            borderRadius (em 0.2),
-            backgroundColor (rgb 169 3 41),
-            fontSize (em 1.6),
+            body
+            [
+                color primaryTextColor,
+                backgroundColor primaryBackgroundColor,
+                fontFamily sansSerif
+            ],
+            (.) RemoveButton
+            [
+                display inlineBlock,
+                borderRadius (em 0.2),
+                backgroundColor (rgb 169 3 41),
+                fontSize (em 1.6),
 
-            cursor pointer,
+                cursor pointer,
 
-            hover [
-                backgroundColor (rgb 200 50 80)
+                hover [
+                    backgroundColor (rgb 200 50 80)
+                ]
+            ],
+            (.) TagListContainer
+            [
+                width (px tagEditorSidebarWidth)
+            ],
+            (.) TagListName
+            [
+                padding2 (em 0.5) (px 0)
+            ],
+            (.) TagListLi
+            [
+                height (em 2)
+            ],
+            (.) DisabledTag
+            [
+                color disabledTagColor
+            ],
+            (.) TagListContainer
+            [
+                margin2 (px (tagEditorStdMargin*3)) zero
             ]
-        ],
-        (.) TagListContainer
-        [
-            width (px 320)
-        ],
-        (.) TagListName
-        [
-            padding2 (em 0.5) (px 0)
-        ],
-        (.) TagListLi
-        [
-            height (em 2)
-        ],
-        (.) DisabledTag
-        [
-            color disabledTagColor
-        ],
+        ] 
+        ++
+        tagEditorCss
+        ++
+        tagListManagerCss
+    )
 
-        --Tag editor specific styles
+
+
+
+
+
+--Tag editor specific styles
+tagEditorCss =
+    [
         (.) TagEditorContainer
         [
             displayFlex,
@@ -132,11 +154,33 @@ globalStyle =
                 ]
             ]
         ],
-        (.) TagEditorContentContainer
+        (.) TagEditorButtonRow
         [
+            margin2 (px tagEditorStdMargin) zero,
 
+            descendants
+            [
+                button
+                [
+                    marginRight (px tagEditorStdMargin)
+                ]
+            ]
         ]
     ]
+
+tagListManagerCss = 
+    [
+        (.) TagListManager
+        [
+            children
+            [
+                input
+                [
+                ]
+            ]
+        ]
+    ]
+
 
 
 

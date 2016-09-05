@@ -191,7 +191,7 @@ view model =
         prevButton = button [onClick RequestPrev] [text "Prev"]
         saveButton = button [onClick RequestSave] [text "Save"]
 
-        buttonRow = div [] [prevButton, nextButton, saveButton]
+        buttonRow = div [Style.class [Style.TagEditorButtonRow]] [prevButton, nextButton, saveButton]
     in
     div [Style.class [Style.TagEditorContainer]]
     [
