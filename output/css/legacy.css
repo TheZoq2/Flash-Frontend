@@ -7,3 +7,8 @@
 {
 	float: left;
 }
+
+.TagEditorContentContainer
+{
+	justify-content: center;
+}

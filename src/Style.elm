@@ -64,6 +64,7 @@ secondaryBackgroundColor = hex "1f1f1f"
 disabledTagColor = (rgb 100 100 100)
 tagEditorSidebarWidth = 350
 tagEditorStdMargin = 10
+defaultMaxHeight = 1000
 
 --The style to apply to all files in the project
 
@@ -127,18 +128,11 @@ tagEditorCss =
     [
         (.) TagEditorContainer
         [
-            displayFlex,
-
-            descendants
-            [
-                img
-                [
-                    maxWidth (pct 100)
-                ]
-            ]
+            displayFlex
         ],
         (.) TagEditorRightPane
         [
+            maxHeight (px 1000),
             --width (px tagEditorSidebarWidth),
             flexBasis (px tagEditorSidebarWidth),
             flexGrow zero,
@@ -165,6 +159,19 @@ tagEditorCss =
                     marginRight (px tagEditorStdMargin)
                 ]
             ]
+        ],
+        (.) TagEditorContentContainer
+        [
+            flexGrow (int 1),
+            displayFlex,
+
+            descendants
+            [
+                img
+                [
+                    maxHeight (px defaultMaxHeight), maxWidth (pct 100)
+                ]
+            ]
         ]
     ]
 
@@ -180,9 +187,6 @@ tagListManagerCss =
             ]
         ]
     ]
-
-
-
 
 
 

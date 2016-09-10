@@ -40,11 +40,8 @@ body {
     display: flex;
 }
 
-.TagEditorContainer  img {
-    max-width: 100%;
-}
-
 .TagEditorRightPane {
+    max-height: 1000px;
     flex-basis: 350px;
     flex-grow: 0;
     flex-shrink: 0;
@@ -62,4 +59,14 @@ body {
 
 .TagEditorButtonRow  button {
     margin-right: 10px;
+}
+
+.TagEditorContentContainer {
+    flex-grow: 1;
+    display: flex;
+}
+
+.TagEditorContentContainer  img {
+    max-height: 1000px;
+    max-width: 100%;
 }

@@ -35,13 +35,13 @@ type alias Model =
         tagManagerList: List TagListManagerContainer,
         nextTagListId: Int,
         currentImage: String,
-        currentImageDimensions: (Int, Int)
+        currentImageDimensions: (Int, Int),
         lastError: String
     }
 
 init: (Model, Cmd Msg)
 init = 
-    (Model [] 0 "" "", requestNewImage Current)
+    (Model [] 0 "" (0,0) "", requestNewImage Current)
 
 
 
@@ -117,7 +117,10 @@ update msg model =
                 (model, Cmd.none)
 
         NewImageReceived response ->
-            ({model | currentImage = "http://localhost:3000/" ++ response.filePath} , Cmd.none)
+            ({model | 
+                currentImage = "http://localhost:3000/" ++ response.filePath,
+                currentImageDimensions = response.dimensions
+            } , Cmd.none)
 
 
 type ImageDirection
@@ -212,7 +215,9 @@ view model =
     [
         div [Style.class [Style.TagEditorContentContainer]]
         [
-            img [src model.currentImage] []
+            img [
+                    src model.currentImage
+                ] []
         ],
         div [Style.class [Style.TagEditorRightPane]] 
         (
