@@ -6,3 +6,4 @@ css:
 
 album:
 	elm-make src/Main.elm --output=output/album.js
+
