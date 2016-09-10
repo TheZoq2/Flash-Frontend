@@ -187,9 +187,6 @@ tagListManagerCss =
 
 
 
-
-
-
 cssFiles : CssFileStructure
 cssFiles =
     toFileStructure [ ("output/css/GlobalStyle.css", Css.File.compile globalStyle) ]

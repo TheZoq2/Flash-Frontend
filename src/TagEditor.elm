@@ -35,6 +35,7 @@ type alias Model =
         tagManagerList: List TagListManagerContainer,
         nextTagListId: Int,
         currentImage: String,
+        currentImageDimensions: (Int, Int)
         lastError: String
     }
 
@@ -58,7 +59,7 @@ type Msg
     | RequestCurrent
     | RequestSave
     | NetworkError Http.Error
-    | NewImageReceived String
+    | NewImageReceived ImageResponse
     | OnSaved String
 
 
@@ -109,12 +110,14 @@ update msg model =
             (model, requestNewImage Next)
 
 
-        NetworkError _ ->
-            --TODO: Report error
-            (model, Cmd.none)
+        NetworkError e ->
+            let
+                _ = Debug.log "Network error" e
+            in
+                (model, Cmd.none)
 
-        NewImageReceived path ->
-            ({model | currentImage = "http://localhost:3000/" ++ path} , Cmd.none)
+        NewImageReceived response ->
+            ({model | currentImage = "http://localhost:3000/" ++ response.filePath} , Cmd.none)
 
 
 type ImageDirection
@@ -134,7 +137,6 @@ requestNewImage direction =
                 "current"
 
         url = "http://localhost:3000/list?action=" ++ action
-
     in
         Task.perform NetworkError NewImageReceived (Http.get decodeNewImage url)
 
@@ -151,9 +153,22 @@ requestSaveImage tags =
 
 
 
-decodeNewImage : Json.Decode.Decoder String
+type alias ImageResponse = {
+        filePath: String,
+        dimensions: (Int, Int)
+    }
+decodeNewImage : Json.Decode.Decoder ImageResponse
 decodeNewImage =
-    Json.Decode.at ["file_path"] Json.Decode.string
+    let
+        decodeDimensions =
+            Json.Decode.tuple2 (,) Json.Decode.int Json.Decode.int
+
+        decodeMsg = 
+            Json.Decode.object2 ImageResponse 
+                ("file_path" := Json.Decode.string) 
+                ("dimensions" := decodeDimensions)
+    in
+        decodeMsg
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
