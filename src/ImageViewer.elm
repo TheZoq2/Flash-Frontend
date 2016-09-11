@@ -134,14 +134,10 @@ getNewPositionOnScroll model newZoomLevel =
         (mouseX, mouseY) = ((toFloat model.mousePosOnImage.x), (toFloat model.mousePosOnImage.y))
         (mouseOffsetX, mouseOffsetY) = (mouseX / currW, mouseY / currH)
 
-        _ = Debug.log "offset" (mouseOffsetX, mouseOffsetY)
-        _ = Debug.log "mouse" (mouseX, mouseY)
-
         (newW, newH) = getImageSize model.currentImage.dimensions newZoomLevel
 
         --The amount to subtract from the current positon
         (posSubX, posSubY) = (newW * mouseOffsetX, newH*mouseOffsetY)
-        _ = Debug.log "posSub" (posSubX, posSubY)
 
         (cPosX, cPosY) = model.position
     in
