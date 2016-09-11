@@ -7,3 +7,6 @@ css:
 album:
 	elm-make src/Main.elm --output=output/album.js
 
+
+imageviewer:
+	elm-make src/ImageViewer.elm --output=output/image_viewer.html
