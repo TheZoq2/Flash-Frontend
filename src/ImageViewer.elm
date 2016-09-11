@@ -36,16 +36,20 @@ type alias Model =
         currentImage: ImageInfo,
         zoomLevel: Float,
         position: (Float, Float),
-        drag: Maybe Drag
+        drag: Maybe Drag,
+
+        mousePosOnImage: Position
     }
 
 init : (Model, Cmd Msg)
 init = 
     ({
-        currentImage = (ImageInfo "/mnt/1TB-files/Pictures/dslr/sept08-2016/DSC_0001.JPG" (0,0)),
+        currentImage = (ImageInfo "/mnt/1TB-files/Pictures/dslr/sept08-2016/DSC_0001.JPG" (6000,4000)),
         zoomLevel = 1,
         position = (400, 100),
-        drag = Nothing
+        drag = Nothing,
+
+        mousePosOnImage = (Position 0 0)
     }, Cmd.none)
 
 
@@ -61,6 +65,8 @@ type Msg
     | DragAt Position
     | DragEnd Position
     | OnScroll Float
+
+    | MouseMovedOnImage Position
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -82,7 +88,22 @@ update msg model =
                 ({model | position = newPos, drag = Nothing}, Cmd.none)
 
         OnScroll amount ->
-            (model, Cmd.none)
+            let
+                zoomModifier = 1.0 - amount * 0.05
+
+                newZoomLevel = model.zoomLevel * zoomModifier
+
+                newPos = getNewPositionOnScroll model newZoomLevel
+            in
+                ({model | zoomLevel = newZoomLevel, position = newPos}, Cmd.none)
+
+        MouseMovedOnImage {x, y} ->
+            let
+                (imagePosX, imagePosY) = getPosition model
+
+                relativePos = Position (x - round (imagePosX)) (y - round (imagePosY))
+            in
+                ({model | mousePosOnImage = relativePos}, Cmd.none)
 
 
 getPosition : Model -> (Float, Float)
@@ -103,6 +124,30 @@ getPosition model =
                 result
 
 
+getNewPositionOnScroll: Model -> Float -> (Float, Float)
+getNewPositionOnScroll model newZoomLevel =
+    let
+        (currW, currH) = getImageSizeFromModel model
+
+        --The offset of the mouse as (float,float) between 0 and 1 which corresponds to
+        --the position on the current image
+        (mouseX, mouseY) = ((toFloat model.mousePosOnImage.x), (toFloat model.mousePosOnImage.y))
+        (mouseOffsetX, mouseOffsetY) = (mouseX / currW, mouseY / currH)
+
+        _ = Debug.log "offset" (mouseOffsetX, mouseOffsetY)
+        _ = Debug.log "mouse" (mouseX, mouseY)
+
+        (newW, newH) = getImageSize model.currentImage.dimensions newZoomLevel
+
+        --The amount to subtract from the current positon
+        (posSubX, posSubY) = (newW * mouseOffsetX, newH*mouseOffsetY)
+        _ = Debug.log "posSub" (posSubX, posSubY)
+
+        (cPosX, cPosY) = model.position
+    in
+        (cPosX - (posSubX - mouseX), cPosY - (posSubY - mouseY))
+
+
 
 
 
@@ -116,7 +161,8 @@ view model =
             src model.currentImage.src,
             Style.toStyle (getImageStyle model),
             onMouseDown,
-            onScroll
+            onScroll,
+            onMouseMove
         ] []
     ]
 
@@ -126,14 +172,28 @@ getImageStyle : Model -> List Css.Mixin
 getImageStyle model =
     let
         (x, y) = getPosition model
+        (w, h) = getImageSizeFromModel model
     in
         [
-            Css.margin2 (Css.px y) (Css.px x)
-            --Css.width (Css.px 100),
-            --Css.height (Css.px 100)
+            --Css.margin2 (Css.px y) (Css.px x),
+            Css.left (Css.px x),
+            Css.top (Css.px y),
+            Css.position Css.relative,
+            Css.width (Css.px (w)),
+            Css.height (Css.px (h))
         ]
 
+getImageSizeFromModel : Model -> (Float, Float)
+getImageSizeFromModel model =
+    getImageSize model.currentImage.dimensions model.zoomLevel
 
+
+getImageSize : (Int, Int) -> Float -> (Float, Float)
+getImageSize (realWidth, realHeight) zoomLevel =
+        (
+            ((toFloat realWidth) * zoomLevel),
+            ((toFloat realHeight) * zoomLevel)
+        )
 
 
 -- SUBSCRIPTIONS
@@ -172,6 +232,14 @@ onScroll =
     in
         onWithOptions "wheel" options (scrollEventDecoder)
         --onWithOptions "click" options (Json.Decode.succeed msg)
+
+onMouseMove : Attribute Msg
+onMouseMove =
+    let
+        posDecoder =
+            Json.Decode.object2 Position ("clientX" := Json.Decode.int) ("clientY" := Json.Decode.int)
+    in
+        on "mousemove" (Json.Decode.map MouseMovedOnImage posDecoder)
 
 
 
