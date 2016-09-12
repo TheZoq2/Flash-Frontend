@@ -68,6 +68,8 @@ type Msg
 
     | MouseMovedOnImage Position
 
+    | WindowResized {height: Int, width: Int}
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
