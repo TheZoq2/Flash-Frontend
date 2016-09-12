@@ -10,3 +10,7 @@ album:
 
 imageviewer:
 	elm-make src/ImageViewer.elm --output=output/image_viewer.html
+
+
+clean:
+	rm -r elm-stuff
