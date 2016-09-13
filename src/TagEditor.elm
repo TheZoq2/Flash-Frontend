@@ -1,7 +1,9 @@
 module TagEditor exposing(..)
 
+import TagListList
 import TagListManager
 import Style
+import ImageViewer
 
 import Html exposing (..)
 import Html.App
@@ -15,25 +17,11 @@ import Task
 
 -- MODEL
 
-type alias TagListManagerContainer =
-    {
-        id: Int,
-        manager: TagListManager.Model,
-        enable: Bool
-    }
-initContainer : Int -> TagListManagerContainer
-initContainer id =
-    {
-        id = id,
-        manager = TagListManager.init,
-        enable = True
-    }
-
 
 type alias Model =
     {
-        tagManagerList: List TagListManagerContainer,
-        nextTagListId: Int,
+        tagListList: TagListList.Model,
+        imageViewer: ImageViewer.Model,
         currentImage: String,
         currentImageDimensions: (Int, Int),
         lastError: String
@@ -41,7 +29,14 @@ type alias Model =
 
 init: (Model, Cmd Msg)
 init = 
-    (Model [] 0 "" (0,0) "", requestNewImage Current)
+    let
+        (imgViewModel, imgViewCmd) =
+            ImageViewer.init
+    in
+        (
+            Model TagListList.init imgViewModel "" (0,0) "",
+            Cmd.batch [requestNewImage Current, Cmd.map ImageViewerMsg imgViewCmd]
+        )
 
 
 
@@ -50,10 +45,8 @@ init =
 -- UPDATE
 
 type Msg
-    = TagListMsg Int TagListManager.Msg
-    | AddTagManager
-    | ToggleListManager Int
-    | RemoveListManager Int
+    = TagListListMsg TagListList.Msg
+    | ImageViewerMsg ImageViewer.Msg
     | RequestNext
     | RequestPrev
     | RequestCurrent
@@ -63,38 +56,25 @@ type Msg
     | OnSaved String
 
 
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of 
-        TagListMsg id tagListMsg ->
-            ({model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}, Cmd.none)
-
-        AddTagManager ->
+        TagListListMsg tllMsg ->
+            ({model | tagListList = (TagListList.update tllMsg model.tagListList)}, Cmd.none)
+            --(model, Cmd.none)
+        ImageViewerMsg imgViewMsg ->
             let
-                newContainerList = model.tagManagerList ++ [initContainer model.nextTagListId]
-
-                nextTagListId = model.nextTagListId + 1
+                (imgViewModel, imgViewCmd) =
+                    ImageViewer.update imgViewMsg model.imageViewer
             in
-                ({model | tagManagerList = newContainerList, nextTagListId = nextTagListId}, Cmd.none)
-
-        ToggleListManager id ->
-            let
-                toggleWithId manager = 
-                    if manager.id == id then
-                        {manager | enable = manager.enable == False}
-                    else
-                        manager
-
-                newContainerList = List.map toggleWithId model.tagManagerList
-
-            in
-                ({model | tagManagerList = newContainerList}, Cmd.none)
-
-        RemoveListManager id ->
-            let
-                newContainerList = List.filter (\manager -> manager.id /= id) model.tagManagerList
-            in
-                ({model | tagManagerList = newContainerList }, Cmd.none)
+            (
+                {model | 
+                    imageViewer = imgViewModel
+                }, 
+                Cmd.map ImageViewerMsg imgViewCmd
+            )
+            --(model, Cmd.none)
 
         RequestNext ->
             (model, requestNewImage Next)
@@ -174,29 +154,11 @@ decodeNewImage =
         decodeMsg
 
 
-tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
-tagManagerUpdateHelper targetId msg container =
-    let 
-        manager = container.manager
-    in
-        {container | manager = (
-                if targetId == container.id then 
-                    TagListManager.update msg manager 
-                else 
-                    manager) }
-
 
 
 getSelectedTags : Model -> List String
 getSelectedTags model =
-    let
-        enabledTagContainers =
-            List.filter (\manager -> manager.enable == True) model.tagManagerList
-
-        managers = 
-            List.map .manager enabledTagContainers
-    in
-        List.map TagListManager.getSelectedTags managers |> List.concat
+    TagListList.getSelectedTags model.tagListList
 
 
 
@@ -220,59 +182,10 @@ view model =
                 ] []
         ],
         div [Style.class [Style.TagEditorRightPane]] 
-        (
-            [
-                buttonRow
-            ]
-            ++
-            List.map viewFromTagManager model.tagManagerList
-            ++
-            List.map (\tagText -> p [] [text tagText]) (getSelectedTags model)
-            ++
-            [
-                button [onClick AddTagManager] [text "Add new tag group"]
-            ]
-        )
-    ]
-
-
-viewFromTagManager : TagListManagerContainer -> Html Msg
-viewFromTagManager {id, manager, enable} =
-    let
-        toggleMsg = if enable == False then 
-                "Enable group"
-            else 
-                "Disable group"
-
-        additionalClasses = 
-            if enable then
-                []
-            else
-                [Style.DisabledTag]
-
-        toggleButton = button [onClick (ToggleListManager id)] [text toggleMsg]
-
-        removeButton = a [Style.class [Style.RemoveButton], onClick (RemoveListManager id)] 
-            [
-                text "⊘"
-            ]
-
-
-        --nextButton = button [onClick ]
-    in
-        div [Style.class ([Style.TagListContainer] ++ additionalClasses)]
         [
-            Html.App.map (TagListMsg id) (TagListManager.view manager),
-            div []
-            [
-                toggleButton, 
-                removeButton
-            ]
+            Html.App.map (TagListListMsg) (TagListList.view model.tagListList)
         ]
-
-
-
-
+    ]
 
 
 -- SUBSCRIPTIONS

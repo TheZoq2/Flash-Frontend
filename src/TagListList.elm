@@ -1,4 +1,4 @@
---module TagListList exposing
+module TagListList exposing(Model, Msg, init, update, getSelectedTags, view)
 
 import TagListManager
 import Style
@@ -38,9 +38,9 @@ type alias Model =
     }
 
 
-init : (Model, Cmd Msg)
+init : Model
 init =
-    (Model [] 0, Cmd.none)
+    Model [] 0
 
 
 
@@ -55,11 +55,11 @@ type Msg
     | RemoveListManager Int
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Model -> Model
 update msg model =
     case msg of 
         TagListMsg id tagListMsg ->
-            ({model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}, Cmd.none)
+            {model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}
 
         AddTagManager ->
             let
@@ -67,8 +67,7 @@ update msg model =
 
                 nextTagListId = model.nextTagListId + 1
             in
-                ({model | tagManagerList = newContainerList, nextTagListId = nextTagListId}, Cmd.none)
-
+                {model | tagManagerList = newContainerList, nextTagListId = nextTagListId}
         ToggleListManager id ->
             let
                 toggleWithId manager = 
@@ -80,13 +79,13 @@ update msg model =
                 newContainerList = List.map toggleWithId model.tagManagerList
 
             in
-                ({model | tagManagerList = newContainerList}, Cmd.none)
+                {model | tagManagerList = newContainerList}
 
         RemoveListManager id ->
             let
                 newContainerList = List.filter (\manager -> manager.id /= id) model.tagManagerList
             in
-                ({model | tagManagerList = newContainerList }, Cmd.none)
+                {model | tagManagerList = newContainerList }
 
 
 
@@ -188,11 +187,11 @@ subscriptions model =
 
 
 -- Main
-main =
-    Html.App.program
-        {
-            init = init,
-            update = update,
-            view = view,
-            subscriptions = subscriptions
-        }
+--main =
+--    Html.App.program
+--        {
+--            init = init,
+--            update = update,
+--            view = view,
+--            subscriptions = subscriptions
+--        }
