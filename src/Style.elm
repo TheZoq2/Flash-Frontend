@@ -162,8 +162,8 @@ tagEditorCss =
         ],
         (.) TagEditorContentContainer
         [
-            flexGrow (int 1),
-            displayFlex,
+            --flexGrow (int 1),
+            --displayFlex,
 
             descendants
             [

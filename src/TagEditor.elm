@@ -97,10 +97,17 @@ update msg model =
                 (model, Cmd.none)
 
         NewImageReceived response ->
-            ({model | 
-                currentImage = "http://localhost:3000/" ++ response.filePath,
-                currentImageDimensions = response.dimensions
-            } , Cmd.none)
+            let
+                currentImage = "http://localhost:3000/" ++ response.filePath
+
+                (imgViewModel, imgViewCmd) =
+                    ImageViewer.setCurrentImage model.imageViewer (ImageViewer.ImageInfo currentImage response.dimensions)
+            in
+                ({model | 
+                    currentImage = "http://localhost:3000/" ++ response.filePath,
+                    imageViewer = imgViewModel,
+                    currentImageDimensions = response.dimensions
+                } , Cmd.map ImageViewerMsg imgViewCmd)
 
 
 type ImageDirection
@@ -177,12 +184,14 @@ view model =
     [
         div [Style.class [Style.TagEditorContentContainer]]
         [
-            img [
-                    src model.currentImage
-                ] []
+            --img [
+            --        src model.currentImage
+            --    ] []
+            Html.App.map (ImageViewerMsg) (ImageViewer.view model.imageViewer)
         ],
         div [Style.class [Style.TagEditorRightPane]] 
         [
+            buttonRow,
             Html.App.map (TagListListMsg) (TagListList.view model.tagListList)
         ]
     ]
@@ -192,7 +201,7 @@ view model =
 
 subscriptions: Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.map ImageViewerMsg (ImageViewer.subscriptions model.imageViewer) 
 
 
 

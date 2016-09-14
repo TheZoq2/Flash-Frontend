@@ -13807,6 +13807,13 @@ var _user$project$ImageViewer$main = {
 var _user$project$ImageViewer$SetImage = function (a) {
 	return {ctor: 'SetImage', _0: a};
 };
+var _user$project$ImageViewer$setCurrentImage = F2(
+	function (model, imageInfo) {
+		return A2(
+			_user$project$ImageViewer$update,
+			_user$project$ImageViewer$SetImage(imageInfo),
+			model);
+	});
 var Elm = {};
 Elm['ImageViewer'] = Elm['ImageViewer'] || {};
 _elm_lang$core$Native_Platform.addPublicModule(Elm['ImageViewer'], 'ImageViewer', typeof _user$project$ImageViewer$main === 'undefined' ? null : _user$project$ImageViewer$main);

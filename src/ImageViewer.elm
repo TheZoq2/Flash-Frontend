@@ -1,4 +1,4 @@
-module ImageViewer exposing(Model, Msg, ImageInfo, init, update)
+module ImageViewer exposing(Model, Msg, ImageInfo, init, update, view, setCurrentImage, subscriptions)
 
 import Style
 
@@ -46,7 +46,7 @@ init =
     ({
         currentImage = (ImageInfo "/mnt/1TB-files/Pictures/dslr/sept08-2016/DSC_0001.JPG" (6000,4000)),
         zoomLevel = 1,
-        position = (400, 100),
+        position = (0, 0),
         drag = Nothing,
 
         mousePosOnImage = (Position 0 0)
@@ -144,6 +144,9 @@ getNewPositionOnScroll model newZoomLevel =
         (cPosX - (posSubX - mouseX), cPosY - (posSubY - mouseY))
 
 
+setCurrentImage : Model -> ImageInfo -> (Model, Cmd Msg)
+setCurrentImage model imageInfo =
+    update (SetImage imageInfo) model
 
 
 
