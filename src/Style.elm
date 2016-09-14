@@ -8,6 +8,7 @@ import Html.Attributes exposing (style)
 import Html.App
 import Html
 import Html.CssHelpers
+import Vec exposing (..)
 
 
 
@@ -55,6 +56,8 @@ type CssClasses
     | TagEditorContainer
     | TagEditorRightPane
     | TagEditorContentContainer
+
+    | ImageViewer
 
 
 --Some very common parameters
@@ -116,6 +119,8 @@ globalStyle =
         tagEditorCss
         ++
         tagListManagerCss
+        ++
+        imageViewerStyle
     )
 
 
@@ -162,16 +167,6 @@ tagEditorCss =
         ],
         (.) TagEditorContentContainer
         [
-            --flexGrow (int 1),
-            --displayFlex,
-
-            descendants
-            [
-                img
-                [
-                    maxHeight (px defaultMaxHeight), maxWidth (pct 100)
-                ]
-            ]
         ]
     ]
 
@@ -188,12 +183,29 @@ tagListManagerCss =
         ]
     ]
 
+imageViewerStyle =
+    [
+        (.) ImageViewer
+        [
+            overflow hidden
+        ]
+    ]
+
 
 
 
 cssFiles : CssFileStructure
 cssFiles =
     toFileStructure [ ("output/css/GlobalStyle.css", Css.File.compile globalStyle) ]
+
+
+
+styleFromSize size = 
+    toStyle [
+        width (px size.width),
+        height (px size.height)
+    ]
+
 
 
 main : Program Never

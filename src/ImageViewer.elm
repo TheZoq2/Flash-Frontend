@@ -1,4 +1,14 @@
-module ImageViewer exposing(Model, Msg, ImageInfo, init, update, view, setCurrentImage, subscriptions)
+module ImageViewer exposing(
+        Model, 
+        Msg, 
+        ImageInfo, 
+        init, 
+        update, 
+        view, 
+        setCurrentImage, 
+        subscriptions,
+        resize
+    )
 
 import Style
 
@@ -11,7 +21,8 @@ import Json.Encode
 import Http
 import Task
 import Css
-import Mouse exposing (Position)
+import Mouse
+import Vec exposing (..)
 
 --Type containing info about the current image
 type alias ImageInfo =
@@ -24,8 +35,8 @@ type alias ImageInfo =
 
 type alias Drag =
     {
-        start: Position,
-        current: Position
+        start: Mouse.Position,
+        current: Mouse.Position
     }
 
 
@@ -37,8 +48,9 @@ type alias Model =
         zoomLevel: Float,
         position: (Float, Float),
         drag: Maybe Drag,
+        size: Size,
 
-        mousePosOnImage: Position
+        mousePosOnImage: Mouse.Position
     }
 
 init : (Model, Cmd Msg)
@@ -49,7 +61,9 @@ init =
         position = (0, 0),
         drag = Nothing,
 
-        mousePosOnImage = (Position 0 0)
+        mousePosOnImage = (Mouse.Position 0 0),
+
+        size = Size 1300 800
     }, Cmd.none)
 
 
@@ -61,12 +75,13 @@ init =
 -- UPDATE
 type Msg
     = SetImage ImageInfo
-    | DragStart Position
-    | DragAt Position
-    | DragEnd Position
+    | DragStart Mouse.Position
+    | DragAt Mouse.Position
+    | DragEnd Mouse.Position
     | OnScroll Float
+    | Resize Size
 
-    | MouseMovedOnImage Position
+    | MouseMovedOnImage Mouse.Position
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -101,9 +116,11 @@ update msg model =
             let
                 (imagePosX, imagePosY) = getPosition model
 
-                relativePos = Position (x - round (imagePosX)) (y - round (imagePosY))
+                relativePos = Mouse.Position (x - round (imagePosX)) (y - round (imagePosY))
             in
                 ({model | mousePosOnImage = relativePos}, Cmd.none)
+        Resize size ->
+            ({model | size=size}, Cmd.none)
 
 
 getPosition : Model -> (Float, Float)
@@ -148,6 +165,10 @@ setCurrentImage : Model -> ImageInfo -> (Model, Cmd Msg)
 setCurrentImage model imageInfo =
     update (SetImage imageInfo) model
 
+resize : Model -> Size -> (Model, Cmd Msg)
+resize model size = 
+    update (Resize size) model
+
 
 
 
@@ -155,7 +176,7 @@ setCurrentImage model imageInfo =
 
 view : Model -> Html Msg
 view model =
-    div [] [
+    div [Style.styleFromSize model.size, Style.class [Style.ImageViewer]] [
         img [
             src model.currentImage.src,
             Style.toStyle (getImageStyle model),
@@ -236,7 +257,7 @@ onMouseMove : Attribute Msg
 onMouseMove =
     let
         posDecoder =
-            Json.Decode.object2 Position ("clientX" := Json.Decode.int) ("clientY" := Json.Decode.int)
+            Json.Decode.object2 Mouse.Position ("clientX" := Json.Decode.int) ("clientY" := Json.Decode.int)
     in
         on "mousemove" (Json.Decode.map MouseMovedOnImage posDecoder)
 

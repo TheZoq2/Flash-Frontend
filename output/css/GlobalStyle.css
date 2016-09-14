@@ -61,7 +61,6 @@ body {
     margin-right: 10px;
 }
 
-.TagEditorContentContainer  img {
-    max-height: 1000px;
-    max-width: 100%;
+.ImageViewer {
+    overflow: hidden;
 }

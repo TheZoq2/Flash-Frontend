@@ -4,6 +4,7 @@ import TagListList
 import TagListManager
 import Style
 import ImageViewer
+import Vec exposing (..)
 
 import Html exposing (..)
 import Html.App
@@ -13,6 +14,7 @@ import Json.Decode exposing (..)
 import Json.Encode
 import Http
 import Task
+import Window
 
 
 -- MODEL
@@ -35,7 +37,11 @@ init =
     in
         (
             Model TagListList.init imgViewModel "" (0,0) "",
-            Cmd.batch [requestNewImage Current, Cmd.map ImageViewerMsg imgViewCmd]
+            Cmd.batch [
+                requestNewImage Current, 
+                Task.perform WindowResized WindowResized Window.size,
+                Cmd.map ImageViewerMsg imgViewCmd
+            ]
         )
 
 
@@ -54,6 +60,7 @@ type Msg
     | NetworkError Http.Error
     | NewImageReceived ImageResponse
     | OnSaved String
+    | WindowResized Window.Size
 
 
 
@@ -108,6 +115,15 @@ update msg model =
                     imageViewer = imgViewModel,
                     currentImageDimensions = response.dimensions
                 } , Cmd.map ImageViewerMsg imgViewCmd)
+
+        WindowResized size ->
+            let
+                viewerSize = 
+                    Size ((toFloat size.width) - Style.tagEditorSidebarWidth - 20) (toFloat size.height)
+                (newImgViewer, imgViewCmd) = 
+                    ImageViewer.resize model.imageViewer viewerSize
+            in
+                ({model | imageViewer = newImgViewer }, Cmd.map ImageViewerMsg imgViewCmd)
 
 
 type ImageDirection
@@ -201,7 +217,11 @@ view model =
 
 subscriptions: Model -> Sub Msg
 subscriptions model =
-    Sub.map ImageViewerMsg (ImageViewer.subscriptions model.imageViewer) 
+    Sub.batch [
+        Sub.map ImageViewerMsg (ImageViewer.subscriptions model.imageViewer),
+        Window.resizes WindowResized
+    ]
+
 
 
 
