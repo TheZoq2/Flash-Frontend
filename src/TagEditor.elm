@@ -119,7 +119,7 @@ update msg model =
         WindowResized size ->
             let
                 viewerSize = 
-                    Size ((toFloat size.width) - Style.tagEditorSidebarWidth - 20) (toFloat size.height)
+                    Size ((toFloat size.width) - Style.totalSidebarSize) (toFloat size.height)
                 (newImgViewer, imgViewCmd) = 
                     ImageViewer.resize model.imageViewer viewerSize
             in
@@ -200,9 +200,6 @@ view model =
     [
         div [Style.class [Style.TagEditorContentContainer]]
         [
-            --img [
-            --        src model.currentImage
-            --    ] []
             Html.App.map (ImageViewerMsg) (ImageViewer.view model.imageViewer)
         ],
         div [Style.class [Style.TagEditorRightPane]] 

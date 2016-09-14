@@ -200,6 +200,9 @@ cssFiles =
 
 
 
+totalSidebarSize =
+    tagEditorSidebarWidth + tagEditorStdMargin * 2
+
 styleFromSize size = 
     toStyle [
         width (px size.width),
