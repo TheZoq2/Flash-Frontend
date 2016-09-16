@@ -155,15 +155,15 @@ handleKeyboardInput model code =
                     'S' -> --Save
                         (model, requestSaveImage (getSelectedTags model))
                     'T' -> --Modify tags
-                        ({model | model.keyReceiver = TagListList}, Cmd.none)
+                        ({model | keyReceiver = TagListList}, Cmd.none)
                     _ ->
                         (model, Cmd.none)
             TagListList ->
                 case Char.fromCode code of
                     'I' ->
-                        ({model | model.keyReceiver = None}, Cmd.none)
+                        ({model | keyReceiver = None}, Cmd.none)
                     _ ->
-                        (model, Cmd.none)
+                        ({model | tagListList = TagListList.handleKeyboardInput model.tagListList code}, Cmd.none)
 
 type ImageDirection
     = Next
@@ -272,3 +272,4 @@ main =
             view = view,
             subscriptions = subscriptions
         }
+

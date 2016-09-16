@@ -1,4 +1,4 @@
-module TagListList exposing(Model, Msg, init, update, getSelectedTags, view)
+module TagListList exposing(Model, Msg, init, update, getSelectedTags, view, handleKeyboardInput)
 
 import TagListManager
 import Style
@@ -11,6 +11,7 @@ import Json.Decode exposing (..)
 import Json.Encode
 import Http
 import Task
+import Char
 
 
 -- MODEL
@@ -53,6 +54,7 @@ type Msg
     | AddTagManager
     | ToggleListManager Int
     | RemoveListManager Int
+    | KeyPressed Int
 
 
 update : Msg -> Model -> Model
@@ -62,12 +64,7 @@ update msg model =
             {model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}
 
         AddTagManager ->
-            let
-                newContainerList = model.tagManagerList ++ [initContainer model.nextTagListId]
-
-                nextTagListId = model.nextTagListId + 1
-            in
-                {model | tagManagerList = newContainerList, nextTagListId = nextTagListId}
+            addTagListManager model
         ToggleListManager id ->
             let
                 toggleWithId manager = 
@@ -87,10 +84,31 @@ update msg model =
             in
                 {model | tagManagerList = newContainerList }
 
+        KeyPressed code ->
+            handleKeyboardInput model code
+
 
 
 
 -- UPDATE HELPER FUNCTIONS
+
+handleKeyboardInput : Model -> Int -> Model
+handleKeyboardInput model code =
+    case Char.fromCode code of
+        'A' -> 
+            addTagListManager model
+        _ ->
+            model
+
+
+addTagListManager : Model -> Model
+addTagListManager model =
+    let
+        newContainerList = model.tagManagerList ++ [initContainer model.nextTagListId]
+
+        nextTagListId = model.nextTagListId + 1
+    in
+        {model | tagManagerList = newContainerList, nextTagListId = nextTagListId}
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
