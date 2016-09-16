@@ -15,9 +15,14 @@ import Json.Encode
 import Http
 import Task
 import Window
-
+import Keyboard
+import Char
 
 -- MODEL
+
+type KeyReceiver
+    = None
+    | TagListList
 
 
 type alias Model =
@@ -26,7 +31,8 @@ type alias Model =
         imageViewer: ImageViewer.Model,
         currentImage: String,
         currentImageDimensions: (Int, Int),
-        lastError: String
+        lastError: String,
+        keyReceiver: KeyReceiver
     }
 
 init: (Model, Cmd Msg)
@@ -36,13 +42,14 @@ init =
             ImageViewer.init
     in
         (
-            Model TagListList.init imgViewModel "" (0,0) "",
+            Model TagListList.init imgViewModel "" (0,0) "" None,
             Cmd.batch [
                 requestNewImage Current, 
                 Task.perform WindowResized WindowResized Window.size,
                 Cmd.map ImageViewerMsg imgViewCmd
             ]
         )
+
 
 
 
@@ -61,6 +68,7 @@ type Msg
     | NewImageReceived ImageResponse
     | OnSaved String
     | WindowResized Window.Size
+    | Keypress Int
 
 
 
@@ -125,6 +133,37 @@ update msg model =
             in
                 ({model | imageViewer = newImgViewer }, Cmd.map ImageViewerMsg imgViewCmd)
 
+        Keypress code ->
+            handleKeyboardInput model code
+
+
+
+
+
+handleKeyboardInput : Model -> Int -> (Model, Cmd Msg)
+handleKeyboardInput model code =
+    let
+        _ = Debug.log "" (Char.fromCode code)
+    in
+        case model.keyReceiver of
+            None ->
+                case Char.fromCode code of
+                    'L' -> --Next
+                        (model, requestNewImage Next)
+                    'H' -> --Previous
+                        (model, requestNewImage Prev)
+                    'S' -> --Save
+                        (model, requestSaveImage (getSelectedTags model))
+                    'T' -> --Modify tags
+                        ({model | model.keyReceiver = TagListList}, Cmd.none)
+                    _ ->
+                        (model, Cmd.none)
+            TagListList ->
+                case Char.fromCode code of
+                    'I' ->
+                        ({model | model.keyReceiver = None}, Cmd.none)
+                    _ ->
+                        (model, Cmd.none)
 
 type ImageDirection
     = Next
@@ -216,7 +255,8 @@ subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch [
         Sub.map ImageViewerMsg (ImageViewer.subscriptions model.imageViewer),
-        Window.resizes WindowResized
+        Window.resizes WindowResized,
+        Keyboard.downs Keypress
     ]
 
 
