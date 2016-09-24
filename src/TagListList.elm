@@ -17,6 +17,7 @@ import String
 
 -- MODEL
 
+
 type alias TagListManagerContainer =
     {
         id: Int,
@@ -36,19 +37,27 @@ initContainer id focusKey =
 focusKeys = 
     ['J', 'K', 'L', 'A', 'S', 'D', 'F', 'G', 'H', 'Q', 'W', 'E', 'R', 'Z', 'X', 'C', 'V', 'B', 'N', 'M']
 
+type KeyState 
+    = Global
+    | Remove
+    | Disable
+    | Select
+    | Selected Int
 
 
 type alias Model =
     {
         tagManagerList: List TagListManagerContainer,
         nextTagListId: Int,
-        focusKeyList: List Char
+        focusKeyList: List Char,
+
+        keyboardState: KeyState
     }
 
 
 init : Model
 init =
-    Model [] 0 focusKeys
+    Model [] 0 focusKeys Global
 
 
 
@@ -101,10 +110,26 @@ update msg model =
 
 handleKeyboardInput : Model -> Int -> Model
 handleKeyboardInput model code =
-    case Char.fromCode code of
-        'A' -> 
-            addTagListManager model
-        _ ->
+    case model.keyboardState of
+        Global -> 
+            case Char.fromCode code of
+                'A' -> 
+                    addTagListManager model
+                'R' ->
+                    {model | keyboardState = Remove}
+                _ ->
+                    model
+        Remove ->
+            case getManagerWithFocusKey model.tagManagerList <| Char.fromCode code of
+                Just id ->
+                    let
+                        newContainerList = List.filter (\manager -> manager.id /= id) model.tagManagerList
+                    in
+                        {model | tagManagerList = newContainerList, keyboardState = Global}
+                Nothing ->
+                    model
+
+        _ -> 
             model
 
 
@@ -145,6 +170,22 @@ tagManagerUpdateHelper targetId msg container =
                     TagListManager.update msg manager 
                 else 
                     manager) }
+
+
+getManagerWithFocusKey : List TagListManagerContainer -> Char -> Maybe Int
+getManagerWithFocusKey list key =
+    case list of
+        [] ->
+            Nothing
+        _ ->
+        let
+            elem = Maybe.withDefault (initContainer 0 'a') <| List.head list 
+            rest = Maybe.withDefault [] <| List.tail list
+        in
+            if elem.focusKey == key then
+                Just elem.id
+            else
+                getManagerWithFocusKey rest key
 
 
 
