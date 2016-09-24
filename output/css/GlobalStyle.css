@@ -53,6 +53,10 @@ body {
     width: 330px;
 }
 
+.TagEditorRightPaneSelected {
+    background-color: rgb(50, 50, 50);
+}
+
 .TagEditorButtonRow {
     margin: 10px 0;
 }

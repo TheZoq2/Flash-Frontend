@@ -56,6 +56,7 @@ type CssClasses
     | TagEditorContainer
     | TagEditorRightPane
     | TagEditorContentContainer
+    | TagEditorRightPaneSelected
 
     | ImageViewer
 
@@ -64,6 +65,7 @@ type CssClasses
 primaryTextColor = hex "ffffff"
 primaryBackgroundColor = hex "1c1c1c"
 secondaryBackgroundColor = hex "1f1f1f"
+tagListSelectedBackgroundColor = (rgb 50 50 50)
 disabledTagColor = (rgb 100 100 100)
 tagEditorSidebarWidth = 350
 tagEditorStdMargin = 10
@@ -152,6 +154,10 @@ tagEditorCss =
                     width (px (tagEditorSidebarWidth - tagEditorStdMargin * 2))
                 ]
             ]
+        ],
+        (.) TagEditorRightPaneSelected
+        [
+            backgroundColor tagListSelectedBackgroundColor
         ],
         (.) TagEditorButtonRow
         [

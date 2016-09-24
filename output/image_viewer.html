@@ -13248,9 +13248,18 @@ var _rtfeldman$elm_css_helpers$Html_CssHelpers$Namespace = F4(
 	function (a, b, c, d) {
 		return {$class: a, classList: b, id: c, name: d};
 	});
+var _user$project$Vec$Size = F2(
+	function (a, b) {
+		return {width: a, height: b};
+	});
+var _user$project$Vec$Position = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
 var _user$project$Style$defaultMaxHeight = 1000;
 var _user$project$Style$tagEditorStdMargin = 10;
 var _user$project$Style$tagEditorSidebarWidth = 350;
+var _user$project$Style$totalSidebarSize = _user$project$Style$tagEditorSidebarWidth + (_user$project$Style$tagEditorStdMargin * 2);
 var _user$project$Style$disabledTagColor = A3(_rtfeldman$elm_css$Css$rgb, 100, 100, 100);
 var _user$project$Style$secondaryBackgroundColor = _rtfeldman$elm_css$Css$hex('1f1f1f');
 var _user$project$Style$primaryBackgroundColor = _rtfeldman$elm_css$Css$hex('1c1c1c');
@@ -13262,6 +13271,16 @@ var _user$project$Style$classList = _user$project$Style$_p0.classList;
 var _user$project$Style$toStyle = function (_p1) {
 	return _elm_lang$html$Html_Attributes$style(
 		_rtfeldman$elm_css$Css$asPairs(_p1));
+};
+var _user$project$Style$styleFromSize = function (size) {
+	return _user$project$Style$toStyle(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_rtfeldman$elm_css$Css$width(
+				_rtfeldman$elm_css$Css$px(size.width)),
+				_rtfeldman$elm_css$Css$height(
+				_rtfeldman$elm_css$Css$px(size.height))
+			]));
 };
 var _user$project$Style$albumItemContainer = _elm_lang$core$Native_List.fromArray(
 	[
@@ -13284,6 +13303,20 @@ var _user$project$Style$files = _elm_lang$core$Native_Platform.outgoingPort(
 				return {filename: v.filename, content: v.content, success: v.success};
 			});
 	});
+var _user$project$Style$ImageViewer = {ctor: 'ImageViewer'};
+var _user$project$Style$imageViewerStyle = _elm_lang$core$Native_List.fromArray(
+	[
+		A2(
+		F2(
+			function (x, y) {
+				return A2(_rtfeldman$elm_css$Css_ops['.'], x, y);
+			}),
+		_user$project$Style$ImageViewer,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_rtfeldman$elm_css$Css$overflow(_rtfeldman$elm_css$Css$hidden)
+			]))
+	]);
 var _user$project$Style$TagEditorContentContainer = {ctor: 'TagEditorContentContainer'};
 var _user$project$Style$TagEditorRightPane = {ctor: 'TagEditorRightPane'};
 var _user$project$Style$TagEditorContainer = {ctor: 'TagEditorContainer'};
@@ -13378,23 +13411,7 @@ var _user$project$Style$tagEditorCss = _elm_lang$core$Native_List.fromArray(
 			}),
 		_user$project$Style$TagEditorContentContainer,
 		_elm_lang$core$Native_List.fromArray(
-			[
-				_rtfeldman$elm_css$Css$flexGrow(
-				_rtfeldman$elm_css$Css$int(1)),
-				_rtfeldman$elm_css$Css$displayFlex,
-				_rtfeldman$elm_css$Css$descendants(
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_rtfeldman$elm_css$Css_Elements$img(
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_rtfeldman$elm_css$Css$maxHeight(
-								_rtfeldman$elm_css$Css$px(_user$project$Style$defaultMaxHeight)),
-								_rtfeldman$elm_css$Css$maxWidth(
-								_rtfeldman$elm_css$Css$pct(100))
-							]))
-					]))
-			]))
+			[]))
 	]);
 var _user$project$Style$DisabledTag = {ctor: 'DisabledTag'};
 var _user$project$Style$TagListLi = {ctor: 'TagListLi'};
@@ -13495,7 +13512,10 @@ var _user$project$Style$globalStyle = _rtfeldman$elm_css$Css$stylesheet(
 						_rtfeldman$elm_css$Css$zero)
 					]))
 			]),
-		A2(_elm_lang$core$Basics_ops['++'], _user$project$Style$tagEditorCss, _user$project$Style$tagListManagerCss)));
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_user$project$Style$tagEditorCss,
+			A2(_elm_lang$core$Basics_ops['++'], _user$project$Style$tagListManagerCss, _user$project$Style$imageViewerStyle))));
 var _user$project$Style$cssFiles = _rtfeldman$elm_css$Css_File$toFileStructure(
 	_elm_lang$core$Native_List.fromArray(
 		[
@@ -13624,9 +13644,10 @@ var _user$project$ImageViewer$init = {
 			'/mnt/1TB-files/Pictures/dslr/sept08-2016/DSC_0001.JPG',
 			{ctor: '_Tuple2', _0: 6000, _1: 4000}),
 		zoomLevel: 1,
-		position: {ctor: '_Tuple2', _0: 400, _1: 100},
+		position: {ctor: '_Tuple2', _0: 0, _1: 0},
 		drag: _elm_lang$core$Maybe$Nothing,
-		mousePosOnImage: A2(_elm_lang$mouse$Mouse$Position, 0, 0)
+		mousePosOnImage: A2(_elm_lang$mouse$Mouse$Position, 0, 0),
+		size: A2(_user$project$Vec$Size, 1300, 800)
 	},
 	_1: _elm_lang$core$Platform_Cmd$none
 };
@@ -13694,7 +13715,7 @@ var _user$project$ImageViewer$update = F2(
 						{zoomLevel: newZoomLevel, position: newPos}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'MouseMovedOnImage':
 				var _p18 = _user$project$ImageViewer$getPosition(model);
 				var imagePosX = _p18._0;
 				var imagePosY = _p18._1;
@@ -13709,11 +13730,19 @@ var _user$project$ImageViewer$update = F2(
 						{mousePosOnImage: relativePos}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{size: _p14._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
-var _user$project$ImageViewer$Model = F5(
-	function (a, b, c, d, e) {
-		return {currentImage: a, zoomLevel: b, position: c, drag: d, mousePosOnImage: e};
+var _user$project$ImageViewer$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {currentImage: a, zoomLevel: b, position: c, drag: d, size: e, mousePosOnImage: f};
 	});
 var _user$project$ImageViewer$MouseMovedOnImage = function (a) {
 	return {ctor: 'MouseMovedOnImage', _0: a};
@@ -13729,6 +13758,16 @@ var _user$project$ImageViewer$onMouseMove = function () {
 		'mousemove',
 		A2(_elm_lang$core$Json_Decode$map, _user$project$ImageViewer$MouseMovedOnImage, posDecoder));
 }();
+var _user$project$ImageViewer$Resize = function (a) {
+	return {ctor: 'Resize', _0: a};
+};
+var _user$project$ImageViewer$resize = F2(
+	function (model, size) {
+		return A2(
+			_user$project$ImageViewer$update,
+			_user$project$ImageViewer$Resize(size),
+			model);
+	});
 var _user$project$ImageViewer$OnScroll = function (a) {
 	return {ctor: 'OnScroll', _0: a};
 };
@@ -13782,7 +13821,12 @@ var _user$project$ImageViewer$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
-			[]),
+			[
+				_user$project$Style$styleFromSize(model.size),
+				_user$project$Style$class(
+				_elm_lang$core$Native_List.fromArray(
+					[_user$project$Style$ImageViewer]))
+			]),
 		_elm_lang$core$Native_List.fromArray(
 			[
 				A2(

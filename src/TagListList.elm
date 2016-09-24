@@ -12,6 +12,7 @@ import Json.Encode
 import Http
 import Task
 import Char
+import String
 
 
 -- MODEL
@@ -20,28 +21,34 @@ type alias TagListManagerContainer =
     {
         id: Int,
         manager: TagListManager.Model,
-        enable: Bool
+        enable: Bool,
+        focusKey: Char
     }
-initContainer : Int -> TagListManagerContainer
-initContainer id =
+initContainer : Int -> Char -> TagListManagerContainer
+initContainer id focusKey =
     {
         id = id,
         manager = TagListManager.init,
-        enable = True
+        enable = True,
+        focusKey = focusKey
     }
+
+focusKeys = 
+    ['J', 'K', 'L', 'A', 'S', 'D', 'F', 'G', 'H', 'Q', 'W', 'E', 'R', 'Z', 'X', 'C', 'V', 'B', 'N', 'M']
 
 
 
 type alias Model =
     {
         tagManagerList: List TagListManagerContainer,
-        nextTagListId: Int
+        nextTagListId: Int,
+        focusKeyList: List Char
     }
 
 
 init : Model
 init =
-    Model [] 0
+    Model [] 0 focusKeys
 
 
 
@@ -104,11 +111,28 @@ handleKeyboardInput model code =
 addTagListManager : Model -> Model
 addTagListManager model =
     let
-        newContainerList = model.tagManagerList ++ [initContainer model.nextTagListId]
+        --Dealing with the fact that the list can be empty. TODO: Generate a new list
+        nextFocusKey = case List.head model.focusKeyList of
+            Just val ->
+                val
+            Nothing ->
+                '\\'
+        nextFocusList = case List.tail model.focusKeyList of
+            Just list -> 
+                list
+            Nothing ->
+                []
+
+        newContainerList = model.tagManagerList ++ 
+            [initContainer model.nextTagListId <| nextFocusKey]
 
         nextTagListId = model.nextTagListId + 1
+
     in
-        {model | tagManagerList = newContainerList, nextTagListId = nextTagListId}
+        {model | 
+            tagManagerList = newContainerList,
+            nextTagListId = nextTagListId,
+            focusKeyList = nextFocusList}
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
@@ -158,7 +182,7 @@ view model =
 
 
 viewFromTagManager : TagListManagerContainer -> Html Msg
-viewFromTagManager {id, manager, enable} =
+viewFromTagManager {id, manager, enable, focusKey} =
     let
         toggleMsg = if enable == False then 
                 "Enable group"
@@ -186,6 +210,7 @@ viewFromTagManager {id, manager, enable} =
             Html.App.map (TagListMsg id) (TagListManager.view manager),
             div []
             [
+                p [] [text <| String.fromChar focusKey],
                 toggleButton, 
                 removeButton
             ]

@@ -165,6 +165,11 @@ handleKeyboardInput model code =
                     _ ->
                         ({model | tagListList = TagListList.handleKeyboardInput model.tagListList code}, Cmd.none)
 
+
+subComponentOwnsKeyboard : Model -> Bool
+subComponentOwnsKeyboard _ =
+    False
+
 type ImageDirection
     = Next
     | Prev
@@ -234,6 +239,13 @@ view model =
         saveButton = button [onClick RequestSave] [text "Save"]
 
         buttonRow = div [Style.class [Style.TagEditorButtonRow]] [prevButton, nextButton, saveButton]
+
+
+        additionalRightPaneClasses = 
+            if model.keyReceiver == TagListList then
+                [Style.TagEditorRightPaneSelected]
+            else
+                []
     in
     div [Style.class [Style.TagEditorContainer]]
     [
@@ -241,12 +253,16 @@ view model =
         [
             Html.App.map (ImageViewerMsg) (ImageViewer.view model.imageViewer)
         ],
-        div [Style.class [Style.TagEditorRightPane]] 
+        div [Style.class ([Style.TagEditorRightPane] ++ additionalRightPaneClasses)]
         [
             buttonRow,
             Html.App.map (TagListListMsg) (TagListList.view model.tagListList)
         ]
     ]
+
+
+
+
 
 
 -- SUBSCRIPTIONS
