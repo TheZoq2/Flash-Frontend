@@ -95,10 +95,7 @@ update msg model =
                 {model | tagManagerList = newContainerList}
 
         RemoveListManager id ->
-            let
-                newContainerList = List.filter (\manager -> manager.id /= id) model.tagManagerList
-            in
-                {model | tagManagerList = newContainerList }
+            removeTagListManager model id
 
         KeyPressed code ->
             handleKeyboardInput model code
@@ -122,15 +119,26 @@ handleKeyboardInput model code =
         Remove ->
             case getManagerWithFocusKey model.tagManagerList <| Char.fromCode code of
                 Just id ->
-                    let
-                        newContainerList = List.filter (\manager -> manager.id /= id) model.tagManagerList
-                    in
-                        {model | tagManagerList = newContainerList, keyboardState = Global}
+                    removeTagListManager model id
                 Nothing ->
                     model
 
         _ -> 
             model
+
+
+removeTagListManager : Model -> Int -> Model
+removeTagListManager model id =
+    let
+        (newContainerList, removed) = List.partition (\manager -> manager.id /= id) model.tagManagerList
+
+        removedFocusKeyList = List.map (.focusKey) removed
+    in
+        {model | 
+            tagManagerList = newContainerList, keyboardState = Global,
+            focusKeyList = removedFocusKeyList ++ model.focusKeyList 
+        }
+
 
 
 addTagListManager : Model -> Model
