@@ -82,17 +82,7 @@ update msg model =
         AddTagManager ->
             addTagListManager model
         ToggleListManager id ->
-            let
-                toggleWithId manager = 
-                    if manager.id == id then
-                        {manager | enable = manager.enable == False}
-                    else
-                        manager
-
-                newContainerList = List.map toggleWithId model.tagManagerList
-
-            in
-                {model | tagManagerList = newContainerList}
+            toggleTagListManager model id
 
         RemoveListManager id ->
             removeTagListManager model id
@@ -107,24 +97,34 @@ update msg model =
 
 handleKeyboardInput : Model -> Int -> Model
 handleKeyboardInput model code =
-    case model.keyboardState of
-        Global -> 
-            case Char.fromCode code of
-                'A' -> 
-                    addTagListManager model
-                'R' ->
-                    {model | keyboardState = Remove}
-                _ ->
-                    model
-        Remove ->
-            case getManagerWithFocusKey model.tagManagerList <| Char.fromCode code of
+    let
+        runFunctionOnSelected model func char =
+            case getManagerWithFocusKey model.tagManagerList <| char of
                 Just id ->
-                    removeTagListManager model id
+                    let
+                        newModel =(func model id)
+                    in
+                        {newModel | keyboardState = Global}
                 Nothing ->
                     model
-
-        _ -> 
-            model
+    in
+        case model.keyboardState of
+            Global -> 
+                case Char.fromCode code of
+                    'A' -> 
+                        addTagListManager model
+                    'R' ->
+                        {model | keyboardState = Remove}
+                    'D' ->
+                        {model | keyboardState = Disable}
+                    _ ->
+                        model
+            Remove ->
+                runFunctionOnSelected model removeTagListManager <| Char.fromCode code
+            Disable -> 
+                runFunctionOnSelected model toggleTagListManager <| Char.fromCode code
+            _ -> 
+                model
 
 
 removeTagListManager : Model -> Int -> Model
@@ -136,8 +136,26 @@ removeTagListManager model id =
     in
         {model | 
             tagManagerList = newContainerList, keyboardState = Global,
-            focusKeyList = removedFocusKeyList ++ model.focusKeyList 
+            focusKeyList = removedFocusKeyList ++ model.focusKeyList,
+            keyboardState = Global
         }
+
+
+
+toggleTagListManager : Model -> Int -> Model
+toggleTagListManager model id =
+            let
+                toggleWithId manager = 
+                    if manager.id == id then
+                        {manager | enable = manager.enable == False}
+                    else
+                        manager
+
+                newContainerList = List.map toggleWithId model.tagManagerList
+
+            in
+                {model | tagManagerList = newContainerList}
+
 
 
 
