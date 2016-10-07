@@ -123,6 +123,12 @@ handleKeyboardInput model code =
                 runFunctionOnSelected model removeTagListManager <| Char.fromCode code
             Disable -> 
                 runFunctionOnSelected model toggleTagListManager <| Char.fromCode code
+            Select ->
+                case getManagerWithFocusKey model.tagManagerList <| Char.fromCode code of
+                    Just id ->
+                        {model | keyboardState = Selected id}
+                    Nothing ->
+                        model
             _ -> 
                 model
 
