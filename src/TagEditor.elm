@@ -199,7 +199,7 @@ requestSaveImage tags =
         --TODO: Make surre X-Origin requests are allowed
         url = "http://localhost:3000/list?action=save&tags=" ++ toString tagsJson
     in
-        Task.perform NetworkError OnSaved (Http.get (Json.Decode.at [] Json.Decode.string) url)
+        Task.perform NetworkError NewImageReceived (Http.get decodeNewImage url)
 
 
 
