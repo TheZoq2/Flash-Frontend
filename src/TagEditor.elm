@@ -205,7 +205,8 @@ requestSaveImage tags =
 
 type alias ImageResponse = {
         filePath: String,
-        dimensions: (Int, Int)
+        dimensions: (Int, Int),
+        tags: List String
     }
 decodeNewImage : Json.Decode.Decoder ImageResponse
 decodeNewImage =
@@ -214,9 +215,10 @@ decodeNewImage =
             Json.Decode.tuple2 (,) Json.Decode.int Json.Decode.int
 
         decodeMsg = 
-            Json.Decode.object2 ImageResponse 
+            Json.Decode.object3 ImageResponse 
                 ("file_path" := Json.Decode.string) 
                 ("dimensions" := decodeDimensions)
+                ("tags" := (Json.Decode.list Json.Decode.string))
     in
         decodeMsg
 

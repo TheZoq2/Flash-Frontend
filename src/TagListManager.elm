@@ -1,4 +1,4 @@
-module TagListManager exposing (Model, Msg, init, update, view, getTagList, getSelectedTags)
+module TagListManager exposing (Model, Msg, init, initWithTagNames, update, view, getTagList, getSelectedTags)
 
 import Style
 
@@ -29,6 +29,17 @@ init : Model
 init = 
     Model [] 0 ""
 
+initWithTagNames : List String -> Model
+initWithTagNames tags =
+    case tags of
+        [] ->
+            init
+        (first::rest) ->
+            let
+                next = initWithTagNames rest
+            in
+                {next | tags = next.tags ++ [Tag next.nextId first True], nextId = next.nextId + 1}
+
 
 
 
@@ -56,9 +67,15 @@ update: Msg -> Model -> Model
 update msg model =
     case msg of 
         AddTag ->
-            {model | 
-                tags = model.tags ++ [(Tag model.nextId model.currentTextFieldText True)],
-                nextId = model.nextId + 1,
+            let
+                --{model | 
+                --    tags = model.tags ++ [(Tag model.nextId model.currentTextFieldText True)],
+                --    nextId = model.nextId + 1,
+                --    currentTextFieldText = ""
+                --}
+                modelWithTagAdded = (addTag model model.currentTextFieldText)
+            in
+            {modelWithTagAdded |
                 currentTextFieldText = ""
             }
 
@@ -82,6 +99,22 @@ update msg model =
                 {model | tags = List.map toggleWithId model.tags}
 
 
+--addTagsFromList: Model -> List String -> Model
+--addTagsFromList model tags =
+--    case tags of
+--        [] ->
+--            model
+--        (first :: rest) ->
+--            addTagsFromList (addTag model first) rest
+
+
+addTag: Model -> String -> Model
+addTag model tag =
+    {model | 
+        tags = model.tags ++ [(Tag model.nextId tag True)],
+        nextId = model.nextId + 1,
+        currentTextFieldText = ""
+    }
 
 
 

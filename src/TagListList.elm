@@ -48,6 +48,8 @@ type KeyState
 type alias Model =
     {
         tagManagerList: List TagListManagerContainer,
+        existingTagListId: Maybe Int, --The ID of the tag list that contains the tags already contained 
+                                      --in the image
         nextTagListId: Int,
         focusKeyList: List Char,
 
@@ -57,7 +59,7 @@ type alias Model =
 
 init : Model
 init =
-    Model [] 0 focusKeys Global
+    Model [] Nothing 0 focusKeys Global
 
 
 
@@ -192,6 +194,11 @@ addTagListManager model =
             focusKeyList = nextFocusList}
 
 
+addTagListManagerWithTags : Model -> List String -> Model
+addTagListManagerWithTags =
+
+
+
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
 tagManagerUpdateHelper targetId msg container =
     let 
@@ -231,6 +238,17 @@ getSelectedTags model =
             List.map .manager enabledTagContainers
     in
         List.map TagListManager.getSelectedTags managers |> List.concat
+
+
+setOldTags: Model -> List String -> Model
+setOldTags model tags =
+    case tags of
+        [] ->
+            {model | oldTagListId = Nothing}
+        list ->
+            let
+            in
+                {model | oldTagListId = Just (TagListManager.addTagsFromList (TagListManager.init) tags)}
 
 
 
