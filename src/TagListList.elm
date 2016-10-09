@@ -33,6 +33,14 @@ initContainer id focusKey =
         enable = True,
         focusKey = focusKey
     }
+initContainerWithTags : List String ->  Int -> Char -> TagListManagerContainer
+initContainerWithTags tags id focusKey=
+    {
+        id = id,
+        manager = TagListManager.initWithTagNames tags,
+        enable = True,
+        focusKey = focusKey
+    }
 
 focusKeys = 
     ['J', 'K', 'L', 'A', 'S', 'D', 'F', 'G', 'H', 'Q', 'W', 'E', 'R', 'Z', 'X', 'C', 'V', 'B', 'N', 'M']
@@ -169,6 +177,11 @@ toggleTagListManager model id =
 
 addTagListManager : Model -> Model
 addTagListManager model =
+    addTagListManagerWithTags model []
+
+
+addTagListManagerWithTags : Model -> List String -> Model
+addTagListManagerWithTags model tags =
     let
         --Dealing with the fact that the list can be empty. TODO: Generate a new list
         nextFocusKey = case List.head model.focusKeyList of
@@ -183,7 +196,7 @@ addTagListManager model =
                 []
 
         newContainerList = model.tagManagerList ++ 
-            [initContainer model.nextTagListId <| nextFocusKey]
+            [initContainerWithTags tags model.nextTagListId <| nextFocusKey]
 
         nextTagListId = model.nextTagListId + 1
 
@@ -192,10 +205,6 @@ addTagListManager model =
             tagManagerList = newContainerList,
             nextTagListId = nextTagListId,
             focusKeyList = nextFocusList}
-
-
-addTagListManagerWithTags : Model -> List String -> Model
-addTagListManagerWithTags =
 
 
 
