@@ -184,8 +184,18 @@ tagListManagerCss =
             [
                 input
                 [
+                    
                 ]
             ]
+        ],
+
+        (.) TagListContainer
+        [
+            borderTopWidth (px 1),
+            borderTopColor (rgb 150 150 150),
+            borderTopStyle solid,
+            paddingTop (px 15),
+            margin2 (px 15) zero
         ]
     ]
 

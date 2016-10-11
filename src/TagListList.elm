@@ -316,16 +316,13 @@ viewFromTagManager {id, manager, enable, focusKey} =
             [
                 text "⊘"
             ]
-
-
-        --nextButton = button [onClick ]
     in
         div [Style.class ([Style.TagListContainer] ++ additionalClasses)]
         [
             Html.App.map (TagListMsg id) (TagListManager.view manager),
             div []
             [
-                p [] [text <| String.fromChar focusKey],
+                --p [] [text <| String.fromChar focusKey],
                 toggleButton, 
                 removeButton
             ]
