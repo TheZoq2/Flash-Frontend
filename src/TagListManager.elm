@@ -99,13 +99,6 @@ update msg model =
                 {model | tags = List.map toggleWithId model.tags}
 
 
---addTagsFromList: Model -> List String -> Model
---addTagsFromList model tags =
---    case tags of
---        [] ->
---            model
---        (first :: rest) ->
---            addTagsFromList (addTag model first) rest
 
 
 addTag: Model -> String -> Model

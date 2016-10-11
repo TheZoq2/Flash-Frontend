@@ -1,4 +1,4 @@
-module TagListList exposing(Model, Msg, init, update, getSelectedTags, view, handleKeyboardInput)
+module TagListList exposing(Model, Msg, init, update, getSelectedTags, view, handleKeyboardInput, setOldTags)
 
 import TagListManager
 import Style
@@ -251,13 +251,28 @@ getSelectedTags model =
 
 setOldTags: Model -> List String -> Model
 setOldTags model tags =
-    case tags of
-        [] ->
-            {model | oldTagListId = Nothing}
-        list ->
-            let
-            in
-                {model | oldTagListId = Just (TagListManager.addTagsFromList (TagListManager.init) tags)}
+    let
+        model = case model.existingTagListId of
+            Nothing -> 
+                model
+            Just id ->
+                removeTagListManager model id
+    in
+        case tags of
+            [] ->
+                let
+                    _ = Debug.log "No previous tags" ""
+                in
+                {model | existingTagListId = Nothing}
+            list ->
+                let
+                    currentTags = getSelectedTags model
+
+                    shownTags = List.filter (\elem -> List.member elem currentTags == False) tags
+                    
+                    model' = addTagListManagerWithTags model shownTags
+                in
+                    {model' | existingTagListId = Just <| model'.nextTagListId - 1}
 
 
 

@@ -117,11 +117,15 @@ update msg model =
 
                 (imgViewModel, imgViewCmd) =
                     ImageViewer.setCurrentImage model.imageViewer (ImageViewer.ImageInfo currentImage response.dimensions)
-            in
-                ({model | 
+
+                model' = {model | 
                     currentImage = "http://localhost:3000/" ++ response.filePath,
                     imageViewer = imgViewModel,
                     currentImageDimensions = response.dimensions
+                }
+            in
+                ({model' | 
+                    tagListList = TagListList.setOldTags model'.tagListList response.tags
                 } , Cmd.map ImageViewerMsg imgViewCmd)
 
         WindowResized size ->
