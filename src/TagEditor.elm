@@ -277,8 +277,8 @@ subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch [
         Sub.map ImageViewerMsg (ImageViewer.subscriptions model.imageViewer),
-        Window.resizes WindowResized,
-        Keyboard.downs Keypress
+        Window.resizes WindowResized
+        --Keyboard.downs Keypress
     ]
 
 

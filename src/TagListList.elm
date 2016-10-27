@@ -266,7 +266,7 @@ setOldTags model tags =
                 {model | existingTagListId = Nothing}
             list ->
                 let
-                    currentTags = getSelectedTags model
+                    currentTags = List.map String.toLower <| getSelectedTags model
 
                     shownTags = List.filter (\elem -> List.member elem currentTags == False) tags
                     
