@@ -113,13 +113,13 @@ update msg model =
 
         NewImageReceived response ->
             let
-                currentImage = "http://localhost:3000/" ++ response.filePath
+                currentImage = "" ++ response.filePath
 
                 (imgViewModel, imgViewCmd) =
                     ImageViewer.setCurrentImage model.imageViewer (ImageViewer.ImageInfo currentImage response.dimensions)
 
                 model' = {model | 
-                    currentImage = "http://localhost:3000/" ++ response.filePath,
+                    currentImage = "" ++ response.filePath,
                     imageViewer = imgViewModel,
                     currentImageDimensions = response.dimensions
                 }

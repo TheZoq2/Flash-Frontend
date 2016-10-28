@@ -100,7 +100,7 @@ getImagesWithTags tags =
         tagsJson = List.map Json.Encode.string tags
         
         --TODO: Make surre X-Origin requests are allowed
-        url = "http://localhost:3000/album?tags=" ++ toString tagsJson
+        url = "/album?tags=" ++ toString tagsJson
     in
         Task.perform ListingFail AlbumListFetched (Http.get decodeAlbumList url)
 
