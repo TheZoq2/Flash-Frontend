@@ -1,2 +1,7 @@
 elm-stuff
 index.html
+
+output/album.js
+output/css/GlobalStyle.css
+output/image_viewer.html
+output/tag_editor.js
