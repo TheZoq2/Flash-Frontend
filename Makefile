@@ -1,3 +1,9 @@
+all:
+	make tageditor
+	make css
+	make album
+	make imageviewer
+
 tageditor:
 	elm-make src/TagEditor.elm --output=output/tag_editor.js
 
