@@ -1,10 +1,8 @@
-module TagListList exposing(Model, Msg, init, update, getSelectedTags, view, handleKeyboardInput, setOldTags)
+module TagListList exposing (Model, Msg, init, update, getSelectedTags, view, handleKeyboardInput, setOldTags)
 
 import TagListManager
 import Style
-
 import Html exposing (..)
-import Html.App
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode exposing (..)
@@ -19,33 +17,36 @@ import String
 
 
 type alias TagListManagerContainer =
-    {
-        id: Int,
-        manager: TagListManager.Model,
-        enable: Bool,
-        focusKey: Char
+    { id : Int
+    , manager : TagListManager.Model
+    , enable : Bool
+    , focusKey : Char
     }
+
+
 initContainer : Int -> Char -> TagListManagerContainer
 initContainer id focusKey =
-    {
-        id = id,
-        manager = TagListManager.init,
-        enable = True,
-        focusKey = focusKey
-    }
-initContainerWithTags : List String ->  Int -> Char -> TagListManagerContainer
-initContainerWithTags tags id focusKey=
-    {
-        id = id,
-        manager = TagListManager.initWithTagNames tags,
-        enable = True,
-        focusKey = focusKey
+    { id = id
+    , manager = TagListManager.init
+    , enable = True
+    , focusKey = focusKey
     }
 
-focusKeys = 
-    ['J', 'K', 'L', 'A', 'S', 'D', 'F', 'G', 'H', 'Q', 'W', 'E', 'R', 'Z', 'X', 'C', 'V', 'B', 'N', 'M']
 
-type KeyState 
+initContainerWithTags : List String -> Int -> Char -> TagListManagerContainer
+initContainerWithTags tags id focusKey =
+    { id = id
+    , manager = TagListManager.initWithTagNames tags
+    , enable = True
+    , focusKey = focusKey
+    }
+
+
+focusKeys =
+    [ 'J', 'K', 'L', 'A', 'S', 'D', 'F', 'G', 'H', 'Q', 'W', 'E', 'R', 'Z', 'X', 'C', 'V', 'B', 'N', 'M' ]
+
+
+type KeyState
     = Global
     | Remove
     | Disable
@@ -54,14 +55,13 @@ type KeyState
 
 
 type alias Model =
-    {
-        tagManagerList: List TagListManagerContainer,
-        existingTagListId: Maybe Int, --The ID of the tag list that contains the tags already contained 
-                                      --in the image
-        nextTagListId: Int,
-        focusKeyList: List Char,
-
-        keyboardState: KeyState
+    { tagManagerList : List TagListManagerContainer
+    , existingTagListId : Maybe Int
+    , --The ID of the tag list that contains the tags already contained
+      --in the image
+      nextTagListId : Int
+    , focusKeyList : List Char
+    , keyboardState : KeyState
     }
 
 
@@ -71,9 +71,8 @@ init =
 
 
 
-
-
 -- UPDATE
+
 
 type Msg
     = TagListMsg Int TagListManager.Msg
@@ -85,12 +84,13 @@ type Msg
 
 update : Msg -> Model -> Model
 update msg model =
-    case msg of 
+    case msg of
         TagListMsg id tagListMsg ->
-            {model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList}
+            { model | tagManagerList = List.map (tagManagerUpdateHelper id tagListMsg) model.tagManagerList }
 
         AddTagManager ->
             addTagListManager model
+
         ToggleListManager id ->
             toggleTagListManager model id
 
@@ -102,8 +102,8 @@ update msg model =
 
 
 
-
 -- UPDATE HELPER FUNCTIONS
+
 
 handleKeyboardInput : Model -> Int -> Model
 handleKeyboardInput model code =
@@ -112,67 +112,77 @@ handleKeyboardInput model code =
             case getManagerWithFocusKey model.tagManagerList <| char of
                 Just id ->
                     let
-                        newModel =(func model id)
+                        newModel =
+                            (func model id)
                     in
-                        {newModel | keyboardState = Global}
+                        { newModel | keyboardState = Global }
+
                 Nothing ->
                     model
     in
         case model.keyboardState of
-            Global -> 
+            Global ->
                 case Char.fromCode code of
-                    'A' -> 
+                    'A' ->
                         addTagListManager model
+
                     'R' ->
-                        {model | keyboardState = Remove}
+                        { model | keyboardState = Remove }
+
                     'D' ->
-                        {model | keyboardState = Disable}
+                        { model | keyboardState = Disable }
+
                     _ ->
                         model
+
             Remove ->
                 runFunctionOnSelected model removeTagListManager <| Char.fromCode code
-            Disable -> 
+
+            Disable ->
                 runFunctionOnSelected model toggleTagListManager <| Char.fromCode code
+
             Select ->
                 case getManagerWithFocusKey model.tagManagerList <| Char.fromCode code of
                     Just id ->
-                        {model | keyboardState = Selected id}
+                        { model | keyboardState = Selected id }
+
                     Nothing ->
                         model
-            _ -> 
+
+            _ ->
                 model
 
 
 removeTagListManager : Model -> Int -> Model
 removeTagListManager model id =
     let
-        (newContainerList, removed) = List.partition (\manager -> manager.id /= id) model.tagManagerList
+        ( newContainerList, removed ) =
+            List.partition (\manager -> manager.id /= id) model.tagManagerList
 
-        removedFocusKeyList = List.map (.focusKey) removed
+        removedFocusKeyList =
+            List.map (.focusKey) removed
     in
-        {model | 
-            tagManagerList = newContainerList, keyboardState = Global,
-            focusKeyList = removedFocusKeyList ++ model.focusKeyList,
-            keyboardState = Global
+        { model
+            | tagManagerList = newContainerList
+            , keyboardState = Global
+            , focusKeyList = removedFocusKeyList ++ model.focusKeyList
+            , keyboardState = Global
         }
-
 
 
 toggleTagListManager : Model -> Int -> Model
 toggleTagListManager model id =
-            let
-                toggleWithId manager = 
-                    if manager.id == id then
-                        {manager | enable = manager.enable == False}
-                    else
-                        manager
+    let
+        toggleWithId manager =
+            if manager.id == id then
+                { manager | enable = manager.enable == False }
+            else
+                manager
 
-                newContainerList = List.map toggleWithId model.tagManagerList
-
-            in
-                {model | tagManagerList = newContainerList}
-
-
+        newContainerList =
+            List.map toggleWithId model.tagManagerList
+    in
+        { model | tagManagerList = newContainerList }
 
 
 addTagListManager : Model -> Model
@@ -184,40 +194,50 @@ addTagListManagerWithTags : Model -> List String -> Model
 addTagListManagerWithTags model tags =
     let
         --Dealing with the fact that the list can be empty. TODO: Generate a new list
-        nextFocusKey = case List.head model.focusKeyList of
-            Just val ->
-                val
-            Nothing ->
-                '\\'
-        nextFocusList = case List.tail model.focusKeyList of
-            Just list -> 
-                list
-            Nothing ->
-                []
+        nextFocusKey =
+            case List.head model.focusKeyList of
+                Just val ->
+                    val
 
-        newContainerList = model.tagManagerList ++ 
-            [initContainerWithTags tags model.nextTagListId <| nextFocusKey]
+                Nothing ->
+                    '\\'
 
-        nextTagListId = model.nextTagListId + 1
+        nextFocusList =
+            case List.tail model.focusKeyList of
+                Just list ->
+                    list
 
+                Nothing ->
+                    []
+
+        newContainerList =
+            model.tagManagerList
+                ++ [ initContainerWithTags tags model.nextTagListId <| nextFocusKey ]
+
+        nextTagListId =
+            model.nextTagListId + 1
     in
-        {model | 
-            tagManagerList = newContainerList,
-            nextTagListId = nextTagListId,
-            focusKeyList = nextFocusList}
-
+        { model
+            | tagManagerList = newContainerList
+            , nextTagListId = nextTagListId
+            , focusKeyList = nextFocusList
+        }
 
 
 tagManagerUpdateHelper : Int -> TagListManager.Msg -> TagListManagerContainer -> TagListManagerContainer
 tagManagerUpdateHelper targetId msg container =
-    let 
-        manager = container.manager
+    let
+        manager =
+            container.manager
     in
-        {container | manager = (
-                if targetId == container.id then 
-                    TagListManager.update msg manager 
-                else 
-                    manager) }
+        { container
+            | manager =
+                (if targetId == container.id then
+                    TagListManager.update msg manager
+                 else
+                    manager
+                )
+        }
 
 
 getManagerWithFocusKey : List TagListManagerContainer -> Char -> Maybe Int
@@ -225,16 +245,19 @@ getManagerWithFocusKey list key =
     case list of
         [] ->
             Nothing
-        _ ->
-        let
-            elem = Maybe.withDefault (initContainer 0 'a') <| List.head list 
-            rest = Maybe.withDefault [] <| List.tail list
-        in
-            if elem.focusKey == key then
-                Just elem.id
-            else
-                getManagerWithFocusKey rest key
 
+        _ ->
+            let
+                elem =
+                    Maybe.withDefault (initContainer 0 'a') <| List.head list
+
+                rest =
+                    Maybe.withDefault [] <| List.tail list
+            in
+                if elem.focusKey == key then
+                    Just elem.id
+                else
+                    getManagerWithFocusKey rest key
 
 
 getSelectedTags : Model -> List String
@@ -243,99 +266,97 @@ getSelectedTags model =
         enabledTagContainers =
             List.filter (\manager -> manager.enable == True) model.tagManagerList
 
-        managers = 
+        managers =
             List.map .manager enabledTagContainers
     in
         List.map TagListManager.getSelectedTags managers |> List.concat
 
 
-setOldTags: Model -> List String -> Model
+setOldTags : Model -> List String -> Model
 setOldTags model tags =
     let
-        model = case model.existingTagListId of
-            Nothing -> 
-                model
-            Just id ->
-                removeTagListManager model id
+        model_ =
+            case model.existingTagListId of
+                Nothing ->
+                    model
+
+                Just id ->
+                    removeTagListManager model id
     in
         case tags of
             [] ->
                 let
-                    _ = Debug.log "No previous tags" ""
+                    _ =
+                        Debug.log "No previous tags" ""
                 in
-                {model | existingTagListId = Nothing}
+                    { model_ | existingTagListId = Nothing }
+
             list ->
                 let
-                    currentTags = List.map String.toLower <| getSelectedTags model
+                    currentTags =
+                        List.map String.toLower <| getSelectedTags model_
 
-                    shownTags = List.filter (\elem -> List.member elem currentTags == False) tags
-                    
-                    model' = addTagListManagerWithTags model shownTags
+                    shownTags =
+                        List.filter (\elem -> List.member elem currentTags == False) tags
+
+                    model__ =
+                        addTagListManagerWithTags model_ shownTags
                 in
-                    {model' | existingTagListId = Just <| model'.nextTagListId - 1}
-
-
-
-
+                    { model_ | existingTagListId = Just <| model__.nextTagListId - 1 }
 
 
 
 -- VIEW
 
+
 view : Model -> Html Msg
 view model =
-    div [] 
-    (
-        List.map viewFromTagManager model.tagManagerList
-        ++
-        List.map (\tagText -> p [] [text tagText]) (getSelectedTags model)
-        ++
-        [
-            button [onClick AddTagManager] [text "Add new tag group"]
-        ]
-    )
+    div []
+        (List.map viewFromTagManager model.tagManagerList
+            ++ List.map (\tagText -> p [] [ text tagText ]) (getSelectedTags model)
+            ++ [ button [ onClick AddTagManager ] [ text "Add new tag group" ]
+               ]
+        )
 
 
 viewFromTagManager : TagListManagerContainer -> Html Msg
-viewFromTagManager {id, manager, enable, focusKey} =
+viewFromTagManager { id, manager, enable, focusKey } =
     let
-        toggleMsg = if enable == False then 
+        toggleMsg =
+            if enable == False then
                 "Enable group"
-            else 
+            else
                 "Disable group"
 
-        additionalClasses = 
+        additionalClasses =
             if enable then
                 []
             else
-                [Style.DisabledTag]
+                [ Style.DisabledTag ]
 
-        toggleButton = button [onClick (ToggleListManager id)] [text toggleMsg]
+        toggleButton =
+            button [ onClick (ToggleListManager id) ] [ text toggleMsg ]
 
-        removeButton = a [Style.class [Style.RemoveButton], onClick (RemoveListManager id)] 
-            [
-                text "⊘"
-            ]
+        removeButton =
+            a [ Style.class [ Style.RemoveButton ], onClick (RemoveListManager id) ]
+                [ text "⊘"
+                ]
     in
-        div [Style.class ([Style.TagListContainer] ++ additionalClasses)]
-        [
-            Html.App.map (TagListMsg id) (TagListManager.view manager),
-            div []
-            [
-                --p [] [text <| String.fromChar focusKey],
-                toggleButton, 
-                removeButton
+        div [ Style.class ([ Style.TagListContainer ] ++ additionalClasses) ]
+            [ Html.map (TagListMsg id) (TagListManager.view manager)
+            , div []
+                [ --p [] [text <| String.fromChar focusKey],
+                  toggleButton
+                , removeButton
+                ]
             ]
-        ]
-
-
-
 
 
 
 -- SUBSCRIPTIONS
 
-subscriptions: Model -> Sub Msg
+
+subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
 
