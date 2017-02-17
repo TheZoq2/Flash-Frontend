@@ -3,7 +3,7 @@ module Main exposing (..)
 import TagListManager
 import Style
 import Html exposing (..)
-import Html.App
+import Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode exposing (..)
@@ -48,7 +48,7 @@ init =
 type Msg
     = TagListMsg TagListManager.Msg
     | ListingFail Http.Error
-    | AlbumListFetched (List ( Int, String, String ))
+    | AlbumListFetched (Result Http.Error (List ( Int, String, String )))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -84,7 +84,14 @@ update msg model =
                 _ =
                     Debug.log "Response " result
             in
-                ( { model | currentImages = List.map albumEntryFromTuple result }, Cmd.none )
+                case result of
+                    Ok result ->
+                        ( { model | currentImages = List.map albumEntryFromTuple result }, Cmd.none )
+                    Err error ->
+                        let
+                            _ = Debug.log "Album fetch error: " error
+                        in
+                            (model, Cmd.none)
 
 
 
@@ -102,7 +109,9 @@ getImagesWithTags tags =
         url =
             "/album?tags=" ++ toString tagsJson
     in
-        Task.perform ListingFail AlbumListFetched (Http.get decodeAlbumList url)
+        --Task.perform ListingFail AlbumListFetched (Http.get decodeAlbumList url)
+        --Task.perform AlbumListFetched (Http.get decodeAlbumList url)
+        Http.get url decodeAlbumList |> Http.send AlbumListFetched
 
 
 getThumbnail : ( Int, String, String ) -> String
@@ -133,7 +142,7 @@ decodeAlbumList : Json.Decode.Decoder (List ( Int, String, String ))
 decodeAlbumList =
     let
         imgResponseDecode =
-            object3 (,,) ("id" := int) ("path" := string) ("thumbnail_path" := string)
+            map3 (,,) (field "id" int) (field "path" string) (field "thumbnail_path" string)
     in
         Json.Decode.at [] (Json.Decode.list imgResponseDecode)
 
@@ -145,7 +154,7 @@ decodeAlbumList =
 view : Model -> Html Msg
 view model =
     div [ Style.toStyle Style.albumContainer ]
-        ([ Html.App.map TagListMsg (TagListManager.view model.tagListManager)
+        ([ Html.map TagListMsg (TagListManager.view model.tagListManager)
          , p [] [ text model.networkError ]
          ]
             ++ generateImageViews model.currentImages
@@ -185,7 +194,7 @@ subscriptions model =
 --Main
 
 
-main : Program Never () msg
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
