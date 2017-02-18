@@ -15,6 +15,7 @@ import Task
 import Window
 import Keyboard
 import Char
+import Css
 
 
 -- MODEL
@@ -27,27 +28,22 @@ type KeyReceiver
 
 type alias Model =
     { tagListList : TagListList.Model
-    , imageViewer : ImageViewer.Model
     , currentImage : String
     , currentImageDimensions : ( Int, Int )
     , lastError : String
     , keyReceiver : KeyReceiver
+    , viewerSize: Size
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    let
-        ( imgViewModel, imgViewCmd ) =
-            ImageViewer.init
-    in
-        ( Model TagListList.init imgViewModel "" ( 0, 0 ) "" None
-        , Cmd.batch
-            [ requestNewImage Current
-            , Task.perform WindowResized Window.size
-            , Cmd.map ImageViewerMsg imgViewCmd
-            ]
-        )
+    ( Model TagListList.init "" ( 0, 0 ) "" None (Size 0 0 )
+    , Cmd.batch
+        [ requestNewImage Current
+        , Task.perform WindowResized Window.size
+        ]
+    )
 
 
 
@@ -56,7 +52,6 @@ init =
 
 type Msg
     = TagListListMsg TagListList.Msg
-    | ImageViewerMsg ImageViewer.Msg
     | RequestNext
     | RequestPrev
     | RequestCurrent
@@ -73,18 +68,6 @@ update msg model =
     case msg of
         TagListListMsg tllMsg ->
             ( { model | tagListList = (TagListList.update tllMsg model.tagListList) }, Cmd.none )
-
-        --(model, Cmd.none)
-        ImageViewerMsg imgViewMsg ->
-            let
-                ( imgViewModel, imgViewCmd ) =
-                    ImageViewer.update imgViewMsg model.imageViewer
-            in
-                ( { model
-                    | imageViewer = imgViewModel
-                  }
-                , Cmd.map ImageViewerMsg imgViewCmd
-                )
 
         --(model, Cmd.none)
         RequestNext ->
@@ -114,31 +97,30 @@ update msg model =
                 currentImage =
                     "" ++ response.filePath
 
-                ( imgViewModel, imgViewCmd ) =
-                    ImageViewer.setCurrentImage model.imageViewer (ImageViewer.ImageInfo currentImage response.dimensions)
+                --( imgViewModel, imgViewCmd ) =
+                    --ImageViewer.setCurrentImage model.imageViewer (ImageViewer.ImageInfo currentImage response.dimensions)
 
                 model_ =
                     { model
-                        | currentImage = "" ++ response.filePath
-                        , imageViewer = imgViewModel
+                        | currentImage = currentImage
                         , currentImageDimensions = response.dimensions
                     }
             in
-                ( { model_
-                    | tagListList = TagListList.setOldTags model_.tagListList response.tags
-                  }
-                , Cmd.map ImageViewerMsg imgViewCmd
-                )
+                (model, Cmd.none)
+                --( { model_
+                --    | tagListList = TagListList.setOldTags model_.tagListList response.tags
+                --  }
+                --, Cmd.map ImageViewerMsg imgViewCmd
+                --)
 
         WindowResized size ->
             let
                 viewerSize =
                     Size ((toFloat size.width) - Style.totalSidebarSize) (toFloat size.height)
 
-                ( newImgViewer, imgViewCmd ) =
-                    ImageViewer.resize model.imageViewer viewerSize
             in
-                ( { model | imageViewer = newImgViewer }, Cmd.map ImageViewerMsg imgViewCmd )
+                ( { model | viewerSize = viewerSize }, Cmd.none )
+            --(model, Cmd.none)
 
         Keypress code ->
             handleKeyboardInput model code
@@ -251,7 +233,7 @@ decodeNewImage : Json.Decode.Decoder ImageResponse
 decodeNewImage =
     let
         decodeDimensions =
-            Json.Decode.map2 (,) Json.Decode.int Json.Decode.int
+            Json.Decode.map2 (,) (index 0 Json.Decode.int) (index 1 Json.Decode.int)
 
         decodeMsg =
             Json.Decode.map3 ImageResponse
@@ -291,11 +273,10 @@ view model =
                 [ Style.TagEditorRightPaneSelected ]
             else
                 []
+
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
-            [ div [ Style.class [ Style.TagEditorContentContainer ] ]
-                [ Html.map (ImageViewerMsg) (ImageViewer.view model.imageViewer)
-                ]
+            [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] []
             , div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , Html.map (TagListListMsg) (TagListList.view model.tagListList)
@@ -310,8 +291,7 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Sub.map ImageViewerMsg (ImageViewer.subscriptions model.imageViewer)
-        , Window.resizes WindowResized
+        [ Window.resizes WindowResized
         , Keyboard.downs Keypress
         ]
 
