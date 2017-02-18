@@ -276,7 +276,8 @@ view model =
 
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
-            [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] []
+            [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
+                []
             , div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , Html.map (TagListListMsg) (TagListList.view model.tagListList)
