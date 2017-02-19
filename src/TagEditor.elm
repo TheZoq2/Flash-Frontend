@@ -97,21 +97,11 @@ update msg model =
                 currentImage =
                     "" ++ response.filePath
 
-                --( imgViewModel, imgViewCmd ) =
-                    --ImageViewer.setCurrentImage model.imageViewer (ImageViewer.ImageInfo currentImage response.dimensions)
-
-                model_ =
-                    { model
-                        | currentImage = currentImage
-                        , currentImageDimensions = response.dimensions
-                    }
             in
-                (model, Cmd.none)
-                --( { model_
-                --    | tagListList = TagListList.setOldTags model_.tagListList response.tags
-                --  }
-                --, Cmd.map ImageViewerMsg imgViewCmd
-                --)
+                ({ model
+                        | currentImage = currentImage
+                    }
+                , Cmd.none)
 
         WindowResized size ->
             let
@@ -224,7 +214,6 @@ requestSaveImage tags =
 
 type alias ImageResponse =
     { filePath : String
-    , dimensions : ( Int, Int )
     , tags : List String
     }
 
@@ -236,9 +225,8 @@ decodeNewImage =
             Json.Decode.map2 (,) (index 0 Json.Decode.int) (index 1 Json.Decode.int)
 
         decodeMsg =
-            Json.Decode.map3 ImageResponse
+            Json.Decode.map2 ImageResponse
                 (field "file_path" Json.Decode.string)
-                (field "dimensions" decodeDimensions)
                 (field "tags" (Json.Decode.list Json.Decode.string))
     in
         decodeMsg
@@ -273,11 +261,16 @@ view model =
                 [ Style.TagEditorRightPaneSelected ]
             else
                 []
-
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
-                []
+                [
+                    ImageViewer.imageViewerHtml
+                        (model.viewerSize.width, model.viewerSize.height)
+                        (0, 0)
+                        1
+                        model.currentImage
+                    ]
             , div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , Html.map (TagListListMsg) (TagListList.view model.tagListList)

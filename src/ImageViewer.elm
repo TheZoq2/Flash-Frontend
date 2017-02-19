@@ -5,13 +5,11 @@ module ImageViewer
 
 import Css
 import Html exposing (..)
+import Html.Attributes exposing (src)
 
 import Style
 
-type Msg
-    = None
-
-imageViewerHtml : (Float, Float) -> (Float, Float) -> Float -> String -> Html Msg
+imageViewerHtml : (Float, Float) -> (Float, Float) -> Float -> String -> Html a
 imageViewerHtml containerSize position zoom filename =
     let
         (x, y) =
@@ -21,11 +19,11 @@ imageViewerHtml containerSize position zoom filename =
             containerSize
 
         containerCss = 
-            [ Css.width <| Css.px w
-            , Css.height <| Css.px h
+            [ Css.width <| Css.px (w * zoom)
+            , Css.height <| Css.px (h * zoom)
             , Css.top <| Css.px x
             , Css.top <| Css.px y
             ]
     in
         div [Style.toStyle containerCss] 
-            []
+            [img [Style.class [Style.ImageViewerImage], src filename] []]

@@ -54,6 +54,7 @@ type CssClasses
     | TagEditorContentContainer
     | TagEditorRightPaneSelected
     | ImageViewer
+    | ImageViewerImage
 
 
 
@@ -103,29 +104,29 @@ globalStyle =
             , backgroundColor primaryBackgroundColor
             , fontFamily sansSerif
             ]
-         , (.) RemoveButton
+         , Css.class RemoveButton
             [ display inlineBlock
-            , borderRadius (em 0.2)
+            , borderRadius (Css.em 0.2)
             , backgroundColor (rgb 169 3 41)
-            , fontSize (em 1.6)
+            , fontSize (Css.em 1.6)
             , cursor pointer
             , hover
                 [ backgroundColor (rgb 200 50 80)
                 ]
             ]
-         , (.) TagListContainer
+         , Css.class TagListContainer
             [ width (px tagEditorSidebarWidth)
             ]
-         , (.) TagListName
-            [ padding2 (em 0.5) (px 0)
+         , Css.class TagListName
+            [ padding2 (Css.em 0.5) (px 0)
             ]
-         , (.) TagListLi
-            [ height (em 2)
+         , Css.class TagListLi
+            [ height (Css.em 2)
             ]
-         , (.) DisabledTag
+         , Css.class DisabledTag
             [ color disabledTagColor
             ]
-         , (.) TagListContainer
+         , Css.class TagListContainer
             [ margin2 (px (tagEditorStdMargin * 3)) zero
             ]
          ]
@@ -141,10 +142,10 @@ globalStyle =
 
 
 tagEditorCss =
-    [ (.) TagEditorContainer
+    [ Css.class TagEditorContainer
         [ displayFlex
         ]
-    , (.) TagEditorRightPane
+    , Css.class TagEditorRightPane
         [ maxHeight (px 1000)
         , --width (px tagEditorSidebarWidth),
           flexBasis (px tagEditorSidebarWidth)
@@ -158,10 +159,10 @@ tagEditorCss =
                 ]
             ]
         ]
-    , (.) TagEditorRightPaneSelected
+    , Css.class TagEditorRightPaneSelected
         [ backgroundColor tagListSelectedBackgroundColor
         ]
-    , (.) TagEditorButtonRow
+    , Css.class TagEditorButtonRow
         [ margin2 (px tagEditorStdMargin) zero
         , descendants
             [ button
@@ -169,19 +170,19 @@ tagEditorCss =
                 ]
             ]
         ]
-    , (.) TagEditorContentContainer
+    , Css.class TagEditorContentContainer
         []
     ]
 
 
 tagListManagerCss =
-    [ (.) TagListManager
+    [ Css.class TagListManager
         [ children
             [ input
                 []
             ]
         ]
-    , (.) TagListContainer
+    , Css.class TagListContainer
         [ borderTopWidth (px 1)
         , borderTopColor (rgb 150 150 150)
         , borderTopStyle solid
@@ -192,8 +193,13 @@ tagListManagerCss =
 
 
 imageViewerStyle =
-    [ (.) ImageViewer
+    [ Css.class ImageViewer
         [ overflow hidden
+        ]
+    , Css.class ImageViewerImage
+        [ Css.width (Css.pct 100)
+        , Css.height (Css.pct 100)
+        , Css.property "object-fit" "contain"
         ]
     ]
 
@@ -212,3 +218,8 @@ styleFromSize size =
         [ width (px size.width)
         , height (px size.height)
         ]
+
+
+main : CssCompilerProgram
+main =
+    Css.File.compiler files cssFiles
