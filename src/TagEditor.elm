@@ -245,13 +245,13 @@ view : Model -> Html Msg
 view model =
     let
         nextButton =
-            button [ onClick RequestNext ] [ text "Next" ]
+            a [ Style.class [Style.Button], onClick RequestNext, href "#" ] [ text "›" ]
 
         prevButton =
-            button [ onClick RequestPrev ] [ text "Prev" ]
+            a [ Style.class [Style.Button], onClick RequestPrev, href "#" ] [ text "‹" ]
 
         saveButton =
-            button [ onClick RequestSave ] [ text "Save" ]
+            a [ Style.class [Style.Button], onClick RequestSave, href "#" ] [ text "✔" ]
 
         buttonRow =
             div [ Style.class [ Style.TagEditorButtonRow ] ] [ prevButton, nextButton, saveButton ]

@@ -55,6 +55,7 @@ type CssClasses
     | TagEditorRightPaneSelected
     | ImageViewer
     | ImageViewerImage
+    | Button
 
 
 
@@ -64,6 +65,9 @@ type CssClasses
 primaryTextColor =
     hex "ffffff"
 
+weakBorderColor =
+    hex "aaaaaa"
+
 
 primaryBackgroundColor =
     hex "1c1c1c"
@@ -71,6 +75,9 @@ primaryBackgroundColor =
 
 secondaryBackgroundColor =
     hex "1f1f1f"
+
+buttonHoverColor =
+    hex "333"
 
 
 tagListSelectedBackgroundColor =
@@ -87,6 +94,9 @@ tagEditorSidebarWidth =
 
 tagEditorStdMargin =
     10
+
+tagEditorStdHeight = 
+    40
 
 
 defaultMaxHeight =
@@ -140,6 +150,8 @@ globalStyle =
 
 --Tag editor specific styles
 
+buttonWidth =
+    tagEditorSidebarWidth / 3
 
 tagEditorCss =
     [ Css.class TagEditorContainer
@@ -163,15 +175,26 @@ tagEditorCss =
         [ backgroundColor tagListSelectedBackgroundColor
         ]
     , Css.class TagEditorButtonRow
-        [ margin2 (px tagEditorStdMargin) zero
+        [ displayFlex
         , descendants
-            [ button
-                [ marginRight (px tagEditorStdMargin)
+            [ a
+                [ width <| Css.px buttonWidth
+                , height <| Css.px tagEditorStdHeight
                 ]
             ]
         ]
-    , Css.class TagEditorContentContainer
-        []
+    , Css.class Button
+        [ display Css.block
+        , float Css.left
+        , textAlign Css.center
+        , lineHeight <| Css.px tagEditorStdHeight
+        , color primaryTextColor
+        , textDecoration Css.none
+        , fontSize <| Css.em 3
+        , padding2 (Css.px tagEditorStdMargin) zero
+        , hover
+            [ backgroundColor buttonHoverColor]
+        ]
     ]
 
 
