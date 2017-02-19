@@ -56,6 +56,7 @@ type CssClasses
     | ImageViewer
     | ImageViewerImage
     | Button
+    | WideButton
 
 
 
@@ -65,8 +66,8 @@ type CssClasses
 primaryTextColor =
     hex "ffffff"
 
-weakBorderColor =
-    hex "aaaaaa"
+dividerColor =
+    hex "777777"
 
 
 primaryBackgroundColor =
@@ -112,7 +113,7 @@ globalStyle =
         ([ body
             [ color primaryTextColor
             , backgroundColor primaryBackgroundColor
-            , fontFamily sansSerif
+            , fontFamilies ["Source Sans Pro"]
             ]
          , Css.class RemoveButton
             [ display inlineBlock
@@ -180,6 +181,7 @@ tagEditorCss =
             [ a
                 [ width <| Css.px buttonWidth
                 , height <| Css.px tagEditorStdHeight
+                , borderBottom3 (Css.px 1) Css.solid dividerColor
                 ]
             ]
         ]
@@ -195,6 +197,8 @@ tagEditorCss =
         , hover
             [ backgroundColor buttonHoverColor]
         ]
+    , Css.class WideButton
+        [width <| Css.px tagEditorSidebarWidth]
     ]
 
 

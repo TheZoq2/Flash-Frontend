@@ -27,8 +27,7 @@ type KeyReceiver
 
 
 type alias Model =
-    { tagListList : TagListList.Model
-    , currentImage : String
+    { currentImage : String
     , currentImageDimensions : ( Int, Int )
     , lastError : String
     , keyReceiver : KeyReceiver
@@ -38,7 +37,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model TagListList.init "" ( 0, 0 ) "" None (Size 0 0 )
+    ( Model "" ( 0, 0 ) "" None (Size 0 0 )
     , Cmd.batch
         [ requestNewImage Current
         , Task.perform WindowResized Window.size
@@ -51,8 +50,7 @@ init =
 
 
 type Msg
-    = TagListListMsg TagListList.Msg
-    | RequestNext
+    = RequestNext
     | RequestPrev
     | RequestCurrent
     | RequestSave
@@ -61,15 +59,12 @@ type Msg
     | OnSaved String
     | WindowResized Window.Size
     | Keypress Int
+    | AddTagList
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        TagListListMsg tllMsg ->
-            ( { model | tagListList = (TagListList.update tllMsg model.tagListList) }, Cmd.none )
-
-        --(model, Cmd.none)
         RequestNext ->
             ( model, requestNewImage Next )
 
@@ -145,17 +140,8 @@ handleKeyboardInput model code =
                         ( model, Cmd.none )
 
             TagListList ->
-                case Char.fromCode code of
-                    'I' ->
-                        ( { model | keyReceiver = None }, Cmd.none )
-
-                    _ ->
-                        ( { model
-                            | tagListList =
-                                TagListList.handleKeyboardInput model.tagListList code
-                          }
-                        , Cmd.none
-                        )
+                --TODO Handle input
+                (model, Cmd.none)
 
 
 subComponentOwnsKeyboard : Model -> Bool
@@ -232,29 +218,44 @@ decodeNewImage =
         decodeMsg
 
 
+--TODO: Implement
 getSelectedTags : Model -> List String
 getSelectedTags model =
-    TagListList.getSelectedTags model.tagListList
+    --TagListList.getSelectedTags model.tagListList
+    []
 
 
 
 -- VIEW
 
+flatButton : List Style.CssClasses -> Msg -> String -> Float -> Html Msg
+flatButton classes onClickMsg buttonText fontSize =
+    a 
+        [ Style.class (classes ++ [Style.Button])
+        , onClick onClickMsg
+        , href "#"
+        , Style.toStyle [Css.fontSize (Css.em fontSize)]
+        ]
+        [ text buttonText ]
+
 
 view : Model -> Html Msg
 view model =
     let
-        nextButton =
-            a [ Style.class [Style.Button], onClick RequestNext, href "#" ] [ text "›" ]
-
         prevButton =
-            a [ Style.class [Style.Button], onClick RequestPrev, href "#" ] [ text "‹" ]
+            flatButton [] RequestNext "‹" 3
+
+        nextButton =
+            flatButton [] RequestPrev "›" 3
 
         saveButton =
-            a [ Style.class [Style.Button], onClick RequestSave, href "#" ] [ text "✔" ]
+            flatButton [] RequestSave "✔" 1.5
 
         buttonRow =
             div [ Style.class [ Style.TagEditorButtonRow ] ] [ prevButton, nextButton, saveButton ]
+
+        addTagList =
+            flatButton [Style.WideButton] RequestSave "+" 2
 
         additionalRightPaneClasses =
             if model.keyReceiver == TagListList then
@@ -273,7 +274,7 @@ view model =
                     ]
             , div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
-                , Html.map (TagListListMsg) (TagListList.view model.tagListList)
+                , addTagList
                 ]
             ]
 
