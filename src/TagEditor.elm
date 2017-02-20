@@ -1,6 +1,5 @@
 module TagEditor exposing (..)
 
-import TagListList
 import TagListManager
 import Style
 import ImageViewer
@@ -16,6 +15,7 @@ import Window
 import Keyboard
 import Char
 import Css
+import Elements exposing (flatButton)
 
 
 -- MODEL
@@ -230,34 +230,23 @@ getSelectedTags model =
 
 -- VIEW
 
-flatButton : List Style.CssClasses -> Msg -> String -> Float -> Html Msg
-flatButton classes onClickMsg buttonText fontSize =
-    a 
-        [ Style.class (classes ++ [Style.Button])
-        , onClick onClickMsg
-        , href "#"
-        , Style.toStyle [Css.fontSize (Css.em fontSize)]
-        ]
-        [ text buttonText ]
-
-
 view : Model -> Html Msg
 view model =
     let
         prevButton =
-            flatButton [] RequestNext "‹" 3
+            flatButton [] [] RequestNext "‹" 3
 
         nextButton =
-            flatButton [] RequestPrev "›" 3
+            flatButton [] [] RequestPrev "›" 3
 
         saveButton =
-            flatButton [] RequestSave "✔" 1.5
+            flatButton [] [] RequestSave "✔" 1.5
 
         buttonRow =
             div [ Style.class [ Style.TagEditorButtonRow ] ] [ prevButton, nextButton, saveButton ]
 
         addTagList =
-            flatButton [Style.WideButton] RequestSave "+" 2
+            flatButton [Style.WideButton] [] RequestSave "+" 2
 
         additionalRightPaneClasses =
             if model.keyReceiver == TagListList then

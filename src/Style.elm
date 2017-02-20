@@ -57,6 +57,7 @@ type CssClasses
     | ImageViewerImage
     | Button
     | WideButton
+    | InlineButton
 
 
 
@@ -199,6 +200,10 @@ tagEditorCss =
         ]
     , Css.class WideButton
         [width <| Css.px tagEditorSidebarWidth]
+    , Css.class InlineButton
+        [ lineHeight <| (Css.em 1)
+        , display Css.inlineBlock
+        ]
     ]
 
 
@@ -241,23 +246,12 @@ totalSidebarSize =
 
 
 
-
 styleFromSize size =
     toStyle
         [ width (px size.width)
         , height (px size.height)
         ]
 
---Complete elements
-flatButton : List Style.CssClasses -> a -> String -> Float -> Html Msg
-flatButton classes onClickMsg buttonText fontSize =
-    a 
-        [ Style.class (classes ++ [Style.Button])
-        , onClick onClickMsg
-        , href "#"
-        , Style.toStyle [Css.fontSize (Css.em fontSize)]
-        ]
-        [ text buttonText ]
 
 main : CssCompilerProgram
 main =
