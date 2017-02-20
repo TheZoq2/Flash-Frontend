@@ -16,8 +16,7 @@ import Task
 
 
 type alias Model =
-    { tagListManager : TagListManager.Model
-    , tagNames : List String
+    { tagNames : List String
     , currentImages : List AlbumEntry
     , networkError : String
     }
@@ -25,20 +24,12 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    let
-        tagListManager =
-            TagListManager.init
-
-        tagNames =
-            TagListManager.getTagList tagListManager
-    in
-        ( { tagListManager = TagListManager.init
-          , tagNames = TagListManager.getTagList tagListManager
-          , currentImages = []
-          , networkError = ""
-          }
-        , Cmd.none
-        )
+    ( { tagNames = []
+      , currentImages = []
+      , networkError = ""
+      }
+    , Cmd.none
+    )
 
 
 
@@ -46,36 +37,13 @@ init =
 
 
 type Msg
-    = TagListMsg TagListManager.Msg
-    | ListingFail Http.Error
+    = ListingFail Http.Error
     | AlbumListFetched (Result Http.Error (List ( Int, String, String )))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        TagListMsg tagMsg ->
-            let
-                newModel =
-                    { model | tagListManager = TagListManager.update tagMsg model.tagListManager }
-
-                newTagNames =
-                    TagListManager.getTagList newModel.tagListManager
-
-                --If the list of tags has changed since the last time we checked
-                cmd =
-                    if newTagNames == model.tagNames then
-                        Cmd.none
-                    else
-                        --Request new images
-                        getImagesWithTags newTagNames
-
-                --Update the model with the new list
-                finalModel =
-                    { newModel | tagNames = newTagNames }
-            in
-                ( finalModel, cmd )
-
         ListingFail err ->
             ( { model | networkError = toString err }, Cmd.none )
 
@@ -154,8 +122,7 @@ decodeAlbumList =
 view : Model -> Html Msg
 view model =
     div [ Style.toStyle Style.albumContainer ]
-        ([ Html.map TagListMsg (TagListManager.view model.tagListManager)
-         , p [] [ text model.networkError ]
+        ([ p [] [ text model.networkError ]
          ]
             ++ generateImageViews model.currentImages
         )

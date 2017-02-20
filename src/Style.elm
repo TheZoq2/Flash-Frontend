@@ -240,12 +240,24 @@ totalSidebarSize =
     tagEditorSidebarWidth + tagEditorStdMargin * 2
 
 
+
+
 styleFromSize size =
     toStyle
         [ width (px size.width)
         , height (px size.height)
         ]
 
+--Complete elements
+flatButton : List Style.CssClasses -> a -> String -> Float -> Html Msg
+flatButton classes onClickMsg buttonText fontSize =
+    a 
+        [ Style.class (classes ++ [Style.Button])
+        , onClick onClickMsg
+        , href "#"
+        , Style.toStyle [Css.fontSize (Css.em fontSize)]
+        ]
+        [ text buttonText ]
 
 main : CssCompilerProgram
 main =

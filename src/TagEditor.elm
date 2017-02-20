@@ -106,6 +106,8 @@ update msg model =
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
             --(model, Cmd.none)
+        AddTagList ->
+            ( model, Cmd.none)
 
         Keypress code ->
             handleKeyboardInput model code
