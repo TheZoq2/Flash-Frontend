@@ -1,56 +1,45 @@
-module TagListManager exposing (Tag, addTag, selectedTagsText, htmlFromTagList)
+module TagListManager exposing 
+    (Tag
+    , TagList
+    , emptyTagList
+    , addTagToList
+    , removeTag
+    , selectedTags
+    )
 
 import Html exposing (..)
 import Html.Events exposing (..)
 
 import Elements exposing (flatButton)
 import Style
+import Dict exposing (Dict)
 
 type alias Tag =
-    { id: Int
-    , text: String
+    { text: String
     , selected: Bool
     }
 
-
-
---Adds a tag to a list of existing tags. The new tag is given the specified
---id and the new list aswell as a new id is returned
-addTag : Int -> List Tag -> String -> (List Tag, Int)
-addTag id tags tagText =
-    let
-        tag =
-            Tag id tagText True
-    in
-        (tags ++ [tag], id + 1)
-
-
-
-
-
---Returns a list of the text of all selected tags in a list of tags
-selectedTagsText : List Tag -> List String
-selectedTagsText tags =
-    List.map (\x -> x.text) <| List.filter (\x -> x.selected) tags
-
-
-
+newTag : String -> Tag
+newTag text =
+    Tag text True
 
 
 --Generates the html to display a single tag
-htmlFromTag : Tag -> (Int -> msg) -> (Int -> msg) -> Html msg
+htmlFromTag : Tag -> msg -> msg -> Html msg
 htmlFromTag tag onTextClick onRemoveButton =
     span []
-        [ p [onClick (onTextClick tag.id)] [text tag.text]
-        , flatButton [Style.InlineButton] [] (onRemoveButton tag.id) "x" 1
+        [ p [onClick (onTextClick)] [text tag.text]
+        , flatButton [Style.InlineButton] [] (onRemoveButton) "x" 1
         ]
 
 
 
-htmlFromTagList : List Tag -> (Int -> msg) -> (Int -> msg) -> Html msg
-htmlFromTagList list onTextClick onRemoveButton=
+htmlFromListOfTags : List (Tag, msg, msg) -> Html msg
+htmlFromListOfTags list =
     ul []
-        <| List.map (\tag -> li [] [htmlFromTag tag onTextClick onRemoveButton]) list
+        <| List.map 
+            (\(tag, onTextClick, onRemoveButton) -> li [] [htmlFromTag tag onTextClick onRemoveButton]) 
+            list
 
 
 
@@ -59,30 +48,55 @@ htmlFromTagList list onTextClick onRemoveButton=
 -- TagLists
 
 type alias TagList =
-    { nextTagId
-    , tags: List Tag
+    { nextId: Int
+    , tags: Dict Int Tag
     , enabled: Bool
     }
 
 
--- Adds a single tag to a tag list
-
-addTagList : List TagList -> Int -> (List TagList, Int)
-addTagList oldList id =
-    (List.append oldList <| TagList id [], id + 1)
+emptyTagList : TagList
+emptyTagList =
+    TagList 0 Dict.empty True
 
 
 
+-- Add a tag to a tag list
 
--- Adds a tag with a specific text to a tag list in a list of tag lists
+addTagToList : String -> TagList -> TagList
+addTagToList tagText list=
+    {list | tags = Dict.insert list.nextId (newTag tagText) list.tags, nextId = list.nextId + 1}
 
-addTagToList : List TagList -> Int -> String -> TagList
-addTagToList tagLists listId tag =
+
+removeTag : Int -> TagList -> TagList
+removeTag id list =
+    {list | tags = Dict.remove id list.tags}
+
+
+
+
+-- Returns a list of the text of all enabled tags in a tag list
+
+selectedTags : TagList -> List String
+selectedTags list =
     let
-        addFunction tagList =
-            if tagList.id == listId then
-                {tagList | tags = addTag tag}
-            else
-                tagList
+        tagList = Dict.foldl (\_ tag list -> list ++ [tag]) [] list.tags
     in
-        List.map addFunction tagLists
+        List.filter (\tag -> tag.selected) tagList
+        |> List.map (\tag -> tag.text)
+
+
+
+-- Returns the html for a given tag
+
+tagListHtml : TagList -> (Int -> msg) -> (Int -> msg) -> Html msg
+tagListHtml list onTextClick onRemoveButton =
+    Dict.foldl 
+        (\key value acc -> acc ++ [(value, (onTextClick key), (onRemoveButton key))])
+        []
+        list.tags
+    |> htmlFromListOfTags
+
+
+
+
+
