@@ -60,8 +60,8 @@ type Msg
     | WindowResized Window.Size
     | Keypress Int
     | AddTagList
-    | ToggleTag Int
-    | RemoveTag Int
+    --| ToggleTag Int
+    --| RemoveTag Int
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =

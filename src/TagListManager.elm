@@ -4,7 +4,12 @@ module TagListManager exposing
     , emptyTagList
     , addTagToList
     , removeTag
+    , tagListSelectedTags
     , selectedTags
+    , addTagList
+    , removeTagList
+    , emptyTagListList
+    , removeTagFromTagListList
     )
 
 import Html exposing (..)
@@ -76,8 +81,8 @@ removeTag id list =
 
 -- Returns a list of the text of all enabled tags in a tag list
 
-selectedTags : TagList -> List String
-selectedTags list =
+tagListSelectedTags : TagList -> List String
+tagListSelectedTags list =
     let
         tagList = Dict.foldl (\_ tag list -> list ++ [tag]) [] list.tags
     in
@@ -96,6 +101,78 @@ tagListHtml list onTextClick onRemoveButton =
         list.tags
     |> htmlFromListOfTags
 
+
+
+
+
+-- TagListLists
+type alias TagListList =
+    { nextId: Int
+    , tagLists: Dict Int TagList
+    }
+
+emptyTagListList =
+    TagListList 0 Dict.empty
+
+
+
+
+--Adds a tag list to a tag list list
+
+addTagList : TagList -> TagListList -> TagListList
+addTagList addedList targetList =
+    { targetList 
+        | tagLists = Dict.insert targetList.nextId addedList targetList.tagLists
+        , nextId = targetList.nextId + 1
+        }
+
+removeTagList : Int -> TagListList -> TagListList
+removeTagList listId tagListList =
+    let
+        filterFunction key value =
+            key /= listId
+    in
+        { tagListList | tagLists = Dict.filter filterFunction tagListList.tagLists }
+
+
+
+
+-- Runs a function on a specified tag list
+
+runOnTagList : (TagList -> TagList) -> Int -> TagListList -> TagListList
+runOnTagList fn targetId tagListList =
+    let
+        mapFunction key value = 
+            if key == targetId then
+                fn value
+            else
+                value
+    in
+        { tagListList | tagLists = Dict.map mapFunction tagListList.tagLists }
+
+
+
+-- Adds a tag to a tag list inside a tag list list
+
+addTagToTagListList : String -> Int -> TagListList -> TagListList
+addTagToTagListList tagText listId listList =
+    runOnTagList (addTagToList tagText) listId listList
+
+
+
+
+-- Removes the tag with tagId from the list with listId
+
+removeTagFromTagListList : Int -> Int -> TagListList -> TagListList
+removeTagFromTagListList listId tagId tagListList = 
+    runOnTagList (removeTag tagId) listId tagListList
+
+
+
+
+selectedTags : TagListList -> List String
+selectedTags list =
+    Dict.foldl (\_ value acc -> acc ++ tagListSelectedTags value) [] list.tagLists
 
 
 
