@@ -5,7 +5,7 @@ import Expect
 import Fuzz exposing (list, int, tuple, string)
 import String
 
-import TagListManager
+import Tags
 
 
 tagListTest : Test
@@ -16,72 +16,72 @@ tagListTest =
                 \() ->
                     let
                         manager 
-                            =  TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "yolo"
-                            |> TagListManager.addTagToList "swag"
+                            =  Tags.emptyTagList
+                            |> Tags.addTagToList "yolo"
+                            |> Tags.addTagToList "swag"
                     in
-                        Expect.equal ["yolo", "swag"] <| (TagListManager.tagListSelectedTags manager)
+                        Expect.equal ["yolo", "swag"] <| (Tags.tagListSelectedTags manager)
             , test "removal" <|
                 \() ->
                     let
                         manager 
-                            =  TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "yolo"
-                            |> TagListManager.addTagToList "swag"
-                            |> TagListManager.addTagToList "something"
-                            |> TagListManager.removeTag 1
+                            =  Tags.emptyTagList
+                            |> Tags.addTagToList "yolo"
+                            |> Tags.addTagToList "swag"
+                            |> Tags.addTagToList "something"
+                            |> Tags.removeTag 1
                     in
-                        Expect.equal ["yolo", "something"] <| (TagListManager.tagListSelectedTags manager)
+                        Expect.equal ["yolo", "something"] <| (Tags.tagListSelectedTags manager)
             ]
         , describe "TagListList management"
             [test "addition only" <|
                 \() ->
                     let
                         manager1
-                            = TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "yolo"
-                            |> TagListManager.addTagToList "swag"
+                            = Tags.emptyTagList
+                            |> Tags.addTagToList "yolo"
+                            |> Tags.addTagToList "swag"
 
                         manager2
-                            = TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "foo"
-                            |> TagListManager.addTagToList "bar"
+                            = Tags.emptyTagList
+                            |> Tags.addTagToList "foo"
+                            |> Tags.addTagToList "bar"
 
 
-                        listList = TagListManager.emptyTagListList
-                            |> TagListManager.addTagList manager1
-                            |> TagListManager.addTagList manager2
+                        listList = Tags.emptyTagListList
+                            |> Tags.addTagList manager1
+                            |> Tags.addTagList manager2
                     in
-                        Expect.equal ["yolo", "swag", "foo", "bar"] <| (TagListManager.selectedTags listList)
+                        Expect.equal ["yolo", "swag", "foo", "bar"] <| (Tags.selectedTags listList)
                 ]
         , describe "TagListList management"
             [test "removal" <|
                 \() ->
                     let
                         manager1
-                            = TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "yolo"
-                            |> TagListManager.addTagToList "swag"
+                            = Tags.emptyTagList
+                            |> Tags.addTagToList "yolo"
+                            |> Tags.addTagToList "swag"
 
                         manager2
-                            = TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "foo"
-                            |> TagListManager.addTagToList "bar"
+                            = Tags.emptyTagList
+                            |> Tags.addTagToList "foo"
+                            |> Tags.addTagToList "bar"
 
                         manager3
-                            = TagListManager.emptyTagList
-                            |> TagListManager.addTagToList "hello"
-                            |> TagListManager.addTagToList "world"
+                            = Tags.emptyTagList
+                            |> Tags.addTagToList "hello"
+                            |> Tags.addTagToList "world"
 
 
-                        listList = TagListManager.emptyTagListList
-                            |> TagListManager.addTagList manager1
-                            |> TagListManager.addTagList manager2
-                            |> TagListManager.addTagList manager3
-                            |> TagListManager.removeTagFromTagListList 2 1
-                            |> TagListManager.removeTagList 1
+                        listList = Tags.emptyTagListList
+                            |> Tags.addTagList manager1
+                            |> Tags.addTagList manager2
+                            |> Tags.addTagList manager3
+                            |> Tags.removeTagFromTagListList 2 1
+                            |> Tags.removeTagList 1
                     in
-                        Expect.equal ["yolo", "swag", "hello"] <| (TagListManager.selectedTags listList)
+                        Expect.equal ["yolo", "swag", "hello"] <| (Tags.selectedTags listList)
                 ]
         ]
 

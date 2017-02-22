@@ -1,4 +1,4 @@
-module TagListManager exposing 
+module Tags exposing 
     (Tag
     , TagList
     , emptyTagList
@@ -176,4 +176,18 @@ selectedTags list =
 
 
 
-
+tagListListHtml :
+    TagListList 
+   -> (Int -> msg) 
+   -> (Int -> msg) 
+   -> (Int -> Int -> msg) 
+   -> (Int -> Int -> msg) 
+   -> Html msg
+tagListListHtml 
+        tagListList
+        onRemoveButton
+        onDisableButton
+        onTagRemoveButton
+        onTagTextClick
+    =
+    ul [] []

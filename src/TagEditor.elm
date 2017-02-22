@@ -1,6 +1,6 @@
 module TagEditor exposing (..)
 
-import TagListManager
+import Tags
 import Style
 import ImageViewer
 import Vec exposing (..)

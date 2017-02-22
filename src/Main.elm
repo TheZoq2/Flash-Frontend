@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import TagListManager
+import Tags
 import Style
 import Html exposing (..)
 import Html
