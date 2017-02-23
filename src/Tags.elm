@@ -190,4 +190,13 @@ tagListListHtml
         onTagRemoveButton
         onTagTextClick
     =
-    ul [] []
+    let
+        foldFunction =
+            (\id value acc -> 
+                acc ++ [(value, (onTagTextClick id), (onTagRemoveButton id))])
+
+        tagLists =
+            Dict.foldl foldFunction [] tagListList.tagLists
+    in
+        ul []
+            <| List.map (\tag onText onRemove -> tagListHtml tag onText onRemove) tagLists
