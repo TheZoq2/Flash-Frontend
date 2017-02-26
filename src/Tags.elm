@@ -2,6 +2,7 @@ module Tags exposing
     (Tag
     , TagList
     , TagListList
+    , TagListMessages
     , emptyTagList
     , addTagToList
     , removeTag
@@ -16,9 +17,11 @@ module Tags exposing
     , toggleTagList
     , toggleTagInTagListList
     , startTagTextInput
+    , cancelAddTag
     )
 
 import Html exposing (..)
+import Html.Attributes exposing (autofocus)
 import Html.Events exposing (..)
 
 import Elements exposing (flatButton)
@@ -172,6 +175,11 @@ startTagTextInput id list =
     {list | textFieldTargetId = Just id}
 
 
+cancelAddTag : TagListList -> TagListList
+cancelAddTag list =
+    {list | textFieldTargetId = Nothing}
+
+
 -- Runs a function on a specified tag list
 
 runOnTagList : (TagList -> TagList) -> Int -> TagListList -> TagListList
@@ -217,26 +225,23 @@ selectedTags list =
 
 
 
-tagListListHtml :
-    TagListList 
-   -> (Int -> msg)
-   -> (Int -> msg)
-   -> (Int -> msg)
-   -> (Int -> Int -> msg)
-   -> (Int -> Int -> msg)
-   -> Html msg
-tagListListHtml 
-        tagListList
-        onAddTag
-        onRemoveList
-        onToggleList
-        onTagRemoveButton
-        onTagTextClick
-    =
+type alias TagListMessages msg =
+    { onAddTag: (Int -> msg)
+    , onRemoveList: (Int -> msg)
+    , onToggleList: (Int -> msg)
+    , onTagRemoveButton: (Int -> Int -> msg)
+    , onTagTextClick: (Int -> Int -> msg)
+    , onTagnameUnfocus: msg
+    , onTagSubmit: (Int -> msg)
+    , onTextChanged: (String -> msg)
+    }
+
+tagListListHtml : TagListList -> TagListMessages msg -> Html msg
+tagListListHtml tagListList messages =
     let
         foldFunction =
             (\id value acc -> 
-                acc ++ [(id, (value, (onTagTextClick id), (onTagRemoveButton id)))])
+                acc ++ [(id, (value, (messages.onTagTextClick id), (messages.onTagRemoveButton id)))])
 
         tagLists =
             Dict.foldl foldFunction [] tagListList.tagLists
@@ -262,24 +267,28 @@ tagListListHtml
                 buttonSize = 1.5
 
                 toggleButton =
-                    flatButton [Style.InlineButton] [] (onToggleList id) toggleCharacter buttonSize
+                    flatButton [Style.InlineButton] [] (messages.onToggleList id) toggleCharacter buttonSize
                 removeButton =
-                    flatButton [Style.InlineButton] [] (onRemoveList id) removeCharacter buttonSize
+                    flatButton [Style.InlineButton] [] (messages.onRemoveList id) removeCharacter buttonSize
 
                 addElement = case tagListList.textFieldTargetId of
                     Nothing ->
-                        flatButton [Style.InlineButton, Style.AddTagButton] [] (onAddTag id) addCharacter buttonSize
+                        flatButton [Style.InlineButton, Style.AddTagButton] [] (messages.onAddTag id) addCharacter buttonSize
                     Just(targetId) ->
                         if targetId /= id then
                             flatButton 
                                 [Style.InlineButton, Style.AddTagButton]
                                 []
-                                (onAddTag id)
+                                (messages.onAddTag id)
                                 addCharacter
                                 buttonSize
                         else
-                            form [Style.class [Style.AddTagButton]]
-                                [input [] []]
+                            form [Style.class [Style.AddTagButton], onSubmit <| messages.onTagSubmit id]
+                                [input 
+                                    [Html.Attributes.id "tag_input_field"
+                                    , onBlur messages.onTagnameUnfocus
+                                    , onInput messages.onTextChanged
+                                    ] []]
 
 
 

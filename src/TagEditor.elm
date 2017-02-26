@@ -16,6 +16,7 @@ import Keyboard
 import Char
 import Css
 import Elements exposing (flatButton)
+import Dom
 
 
 -- MODEL
@@ -33,12 +34,13 @@ type alias Model =
     , keyReceiver : KeyReceiver
     , viewerSize: Size
     , tags: Tags.TagListList
+    , tagTextfieldContent: Maybe String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" ( 0, 0 ) "" None (Size 0 0 ) Tags.emptyTagListList
+    ( Model "" ( 0, 0 ) "" None (Size 0 0 ) Tags.emptyTagListList Nothing
     , Cmd.batch
         [ requestNewImage Current
         , Task.perform WindowResized Window.size
@@ -63,10 +65,14 @@ type Msg
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
+    | StartTagAddition Int
     | ToggleTagList Int
     | RemoveTagList Int
     | ToggleTag Int Int
     | RemoveTag Int Int
+    | TagTextFieldChanged String
+    | CancelTagCreation
+    | FocusResult (Result Dom.Error ())
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -112,6 +118,7 @@ update msg model =
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
             --(model, Cmd.none)
+        --TODO: Write a general function for dealing with taglistlist messages
         AddTagList ->
             let
                 newTags = Tags.addTagList Tags.emptyTagList model.tags
@@ -119,10 +126,19 @@ update msg model =
                 ( {model | tags = newTags }, Cmd.none)
         AddTag id ->
             let
-                --newTags = Tags.addTagToTagListList "Test" id model.tags
+                newTags =
+                    case model.tagTextfieldContent of
+                        Just text ->
+                            Tags.addTagToTagListList text id model.tags
+                        Nothing ->
+                            model.tags
+            in
+                ({model | tags = newTags} |> cancelTagCreation, Cmd.none)
+        StartTagAddition id ->
+            let
                 newTags = Tags.startTagTextInput id model.tags
             in
-                ({model | tags = newTags}, Cmd.none)
+                ({model | tags = newTags}, Dom.focus "tag_input_field" |> Task.attempt FocusResult)
         ToggleTagList id ->
             let
                 newTags = Tags.toggleTagList id model.tags
@@ -143,10 +159,27 @@ update msg model =
                 newTags = Tags.removeTagFromTagListList listId tagId model.tags
             in
                 ({model | tags = newTags}, Cmd.none)
-
+        CancelTagCreation ->
+            (cancelTagCreation model, Cmd.none)
+        TagTextFieldChanged text ->
+            ({model | tagTextfieldContent = Just text}, Cmd.none)
+        FocusResult result ->
+            case result of
+                Err (Dom.NotFound id) ->
+                    let
+                        _ = Debug.log "Failed to find dom element when trying to focus on" id
+                    in
+                        (model, Cmd.none)
+                Ok () ->
+                    (model, Cmd.none)
         Keypress code ->
             handleKeyboardInput model code
 
+
+
+cancelTagCreation : Model -> Model
+cancelTagCreation model =
+    {model | tagTextfieldContent = Nothing, tags = Tags.cancelAddTag model.tags}
 
 
 
@@ -291,6 +324,17 @@ view model =
                 [ Style.TagEditorRightPaneSelected ]
             else
                 []
+
+        listMessages =
+                { onAddTag = StartTagAddition
+                , onRemoveList = RemoveTagList
+                , onToggleList = ToggleTagList
+                , onTagRemoveButton = RemoveTag
+                , onTagTextClick = ToggleTag
+                , onTagnameUnfocus = CancelTagCreation
+                , onTagSubmit = AddTag
+                , onTextChanged = TagTextFieldChanged
+                }
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -305,13 +349,7 @@ view model =
                     ]
                 ++ [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                     [ buttonRow
-                    , Tags.tagListListHtml
-                        model.tags
-                        AddTag
-                        RemoveTagList
-                        ToggleTagList
-                        RemoveTag
-                        ToggleTag
+                    , Tags.tagListListHtml model.tags listMessages
                     , addTagList
                     ]
                 ]
