@@ -63,6 +63,7 @@ type CssClasses
     | TagList
     | TagListButtonRow
     | AddTagButton
+    | TagTextField
 
 
 
@@ -88,7 +89,7 @@ buttonHoverColor =
 
 
 tagListSelectedBackgroundColor =
-    (rgb 50 50 50)
+    hex "292929"
 
 
 disabledTagColor =
@@ -232,6 +233,11 @@ tagEditorCss =
         ]
     , Css.class AddTagButton
         [ flexGrow <| Css.num 1
+        ]
+    , Css.class TagTextField
+        [ border zero
+        , backgroundColor Css.transparent
+        , color primaryTextColor
         ]
     ]
 

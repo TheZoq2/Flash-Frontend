@@ -221,7 +221,11 @@ toggleTagList id list =
 
 selectedTags : TagListList -> List String
 selectedTags list =
-    Dict.foldl (\_ value acc -> acc ++ tagListSelectedTags value) [] list.tagLists
+    let
+        foldFunction _ value acc = 
+            acc ++ if value.enabled then tagListSelectedTags value else []
+    in
+        Dict.foldl foldFunction [] list.tagLists
 
 
 
@@ -288,6 +292,7 @@ tagListListHtml tagListList messages =
                                     [Html.Attributes.id "tag_input_field"
                                     , onBlur messages.onTagnameUnfocus
                                     , onInput messages.onTextChanged
+                                    , Style.class [Style.TagTextField]
                                     ] []]
 
 

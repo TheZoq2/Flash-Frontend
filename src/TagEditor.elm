@@ -294,8 +294,7 @@ decodeNewImage =
 --TODO: Implement
 getSelectedTags : Model -> List String
 getSelectedTags model =
-    --TagListList.getSelectedTags model.tagListList
-    []
+    Tags.selectedTags model.tags
 
 
 
