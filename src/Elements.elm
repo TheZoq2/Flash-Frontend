@@ -14,7 +14,9 @@ flatButton classes attributes onClickMsg buttonText fontSize =
             [ Style.class (classes ++ [Style.Button])
             , onClick onClickMsg
             , href "#"
-            , Style.toStyle [Css.fontSize (Css.em fontSize)]
+            , Style.toStyle 
+                [ Css.fontSize (Css.em fontSize)
+                ]
             ] 
             ++ attributes
         )

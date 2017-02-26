@@ -58,6 +58,11 @@ type CssClasses
     | Button
     | WideButton
     | InlineButton
+    | BlockButton
+    | Tag
+    | TagList
+    | TagListButtonRow
+    | AddTagButton
 
 
 
@@ -68,7 +73,7 @@ primaryTextColor =
     hex "ffffff"
 
 dividerColor =
-    hex "777777"
+    hex "444444"
 
 
 primaryBackgroundColor =
@@ -167,11 +172,6 @@ tagEditorCss =
         , flexShrink zero
         , backgroundColor secondaryBackgroundColor
         , margin2 (px 0) (px tagEditorStdMargin)
-        , descendants
-            [ input
-                [ width (px (tagEditorSidebarWidth - tagEditorStdMargin * 2))
-                ]
-            ]
         ]
     , Css.class TagEditorRightPaneSelected
         [ backgroundColor tagListSelectedBackgroundColor
@@ -187,22 +187,51 @@ tagEditorCss =
             ]
         ]
     , Css.class Button
-        [ display Css.block
-        , float Css.left
-        , textAlign Css.center
+        [ textAlign Css.center
         , lineHeight <| Css.px tagEditorStdHeight
         , color primaryTextColor
         , textDecoration Css.none
-        , fontSize <| Css.em 3
-        , padding2 (Css.px tagEditorStdMargin) zero
         , hover
             [ backgroundColor buttonHoverColor]
         ]
     , Css.class WideButton
-        [width <| Css.px tagEditorSidebarWidth]
+        [ width <| Css.px tagEditorSidebarWidth
+        ]
+    , Css.class BlockButton 
+        [ display Css.block
+        , padding2 (Css.px tagEditorStdMargin) zero
+        ]
     , Css.class InlineButton
         [ lineHeight <| (Css.em 1)
         , display Css.inlineBlock
+        , width <| (Css.em 1)
+        ]
+    , Css.class Tag
+        [ fontSize <| (Css.em 1)
+        , displayFlex
+        , descendants
+            [ span 
+                [ flexGrow (Css.num 1)
+                , cursor Css.pointer
+                , hover
+                    [ backgroundColor buttonHoverColor ]
+                ]
+            ]
+        ]
+    , Css.class TagList
+        [ padding2 (Css.em 1) zero
+        , borderTopWidth (px 1)
+        , borderTopColor dividerColor
+        , borderTopStyle solid
+        ]
+    , Css.class TagListButtonRow
+        [ displayFlex
+        , firstChild
+            [ flexGrow <| Css.num 1
+            ]
+        ]
+    , Css.class AddTagButton
+        [ flexGrow <| Css.num 1
         ]
     ]
 
@@ -216,7 +245,7 @@ tagListManagerCss =
         ]
     , Css.class TagListContainer
         [ borderTopWidth (px 1)
-        , borderTopColor (rgb 150 150 150)
+        , borderTopColor dividerColor
         , borderTopStyle solid
         , paddingTop (px 15)
         , margin2 (px 15) zero

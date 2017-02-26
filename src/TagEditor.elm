@@ -32,12 +32,13 @@ type alias Model =
     , lastError : String
     , keyReceiver : KeyReceiver
     , viewerSize: Size
+    , tags: Tags.TagListList
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" ( 0, 0 ) "" None (Size 0 0 )
+    ( Model "" ( 0, 0 ) "" None (Size 0 0 ) Tags.emptyTagListList
     , Cmd.batch
         [ requestNewImage Current
         , Task.perform WindowResized Window.size
@@ -59,9 +60,13 @@ type Msg
     | OnSaved String
     | WindowResized Window.Size
     | Keypress Int
+    -- Tag list specific messages
     | AddTagList
-    --| ToggleTag Int
-    --| RemoveTag Int
+    | AddTag Int
+    | ToggleTagList Int
+    | RemoveTagList Int
+    | ToggleTag Int Int
+    | RemoveTag Int Int
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -108,10 +113,42 @@ update msg model =
                 ( { model | viewerSize = viewerSize }, Cmd.none )
             --(model, Cmd.none)
         AddTagList ->
-            ( model, Cmd.none)
+            let
+                newTags = Tags.addTagList Tags.emptyTagList model.tags
+            in
+                ( {model | tags = newTags }, Cmd.none)
+        AddTag id ->
+            let
+                --newTags = Tags.addTagToTagListList "Test" id model.tags
+                newTags = Tags.startTagTextInput id model.tags
+            in
+                ({model | tags = newTags}, Cmd.none)
+        ToggleTagList id ->
+            let
+                newTags = Tags.toggleTagList id model.tags
+            in
+                ({model | tags = newTags}, Cmd.none)
+        RemoveTagList id ->
+            let
+                newTags = Tags.removeTagList id model.tags
+            in
+                ({model | tags = newTags}, Cmd.none)
+        ToggleTag listId tagId ->
+            let
+                newTags = Tags.toggleTagInTagListList listId tagId model.tags
+            in
+                ({model | tags = newTags}, Cmd.none)
+        RemoveTag listId tagId ->
+            let
+                newTags = Tags.removeTagFromTagListList listId tagId model.tags
+            in
+                ({model | tags = newTags}, Cmd.none)
 
         Keypress code ->
             handleKeyboardInput model code
+
+
+
 
 
 handleKeyboardInput : Model -> Int -> ( Model, Cmd Msg )
@@ -235,19 +272,19 @@ view : Model -> Html Msg
 view model =
     let
         prevButton =
-            flatButton [] [] RequestNext "‹" 3
+            flatButton [Style.BlockButton] [] RequestPrev "‹" 3
 
         nextButton =
-            flatButton [] [] RequestPrev "›" 3
+            flatButton [Style.BlockButton] [] RequestNext "›" 3
 
         saveButton =
-            flatButton [] [] RequestSave "✔" 1.5
+            flatButton [Style.BlockButton] [] RequestSave "✔" 1.5
 
         buttonRow =
             div [ Style.class [ Style.TagEditorButtonRow ] ] [ prevButton, nextButton, saveButton ]
 
         addTagList =
-            flatButton [Style.WideButton] [] RequestSave "+" 2
+            flatButton [Style.WideButton, Style.BlockButton] [] AddTagList "+" 2
 
         additionalRightPaneClasses =
             if model.keyReceiver == TagListList then
@@ -256,19 +293,28 @@ view model =
                 []
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
-            [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
-                [
-                    ImageViewer.imageViewerHtml
-                        (model.viewerSize.width, model.viewerSize.height)
-                        (0, 0)
-                        1
-                        model.currentImage
+            <|
+                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
+                    <| [
+                        ImageViewer.imageViewerHtml
+                            (model.viewerSize.width, model.viewerSize.height)
+                            (0, 0)
+                            1
+                            model.currentImage
+                        ]
                     ]
-            , div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
-                [ buttonRow
-                , addTagList
+                ++ [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
+                    [ buttonRow
+                    , Tags.tagListListHtml
+                        model.tags
+                        AddTag
+                        RemoveTagList
+                        ToggleTagList
+                        RemoveTag
+                        ToggleTag
+                    , addTagList
+                    ]
                 ]
-            ]
 
 
 
