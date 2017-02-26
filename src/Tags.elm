@@ -1,6 +1,7 @@
 module Tags exposing 
     (Tag
     , TagList
+    , TagListList
     , emptyTagList
     , addTagToList
     , removeTag
@@ -10,6 +11,11 @@ module Tags exposing
     , removeTagList
     , emptyTagListList
     , removeTagFromTagListList
+    , tagListListHtml
+    , addTagToTagListList
+    , toggleTagList
+    , toggleTagInTagListList
+    , startTagTextInput
     )
 
 import Html exposing (..)
@@ -21,7 +27,7 @@ import Dict exposing (Dict)
 
 type alias Tag =
     { text: String
-    , selected: Bool
+    , enabled: Bool
     }
 
 newTag : String -> Tag
@@ -32,10 +38,17 @@ newTag text =
 --Generates the html to display a single tag
 htmlFromTag : Tag -> msg -> msg -> Html msg
 htmlFromTag tag onTextClick onRemoveButton =
-    span []
-        [ p [onClick (onTextClick)] [text tag.text]
-        , flatButton [Style.InlineButton] [] (onRemoveButton) "x" 1
-        ]
+    let
+        textClasses = case tag.enabled of
+            True ->
+                []
+            False ->
+                [Style.DisabledTag]
+    in
+        span [Style.class [Style.Tag]]
+            [ span [onClick (onTextClick), Style.class textClasses] [text tag.text]
+            , flatButton [Style.InlineButton] [] (onRemoveButton) "×" 1.5
+            ]
 
 
 
@@ -78,6 +91,23 @@ removeTag id list =
 
 
 
+runOnTag : (Tag -> Tag) -> Int -> TagList -> TagList
+runOnTag function targetId list=
+    let
+        mapFunction id tag =
+            if targetId == id then
+                function tag
+            else
+                tag
+    in
+        { list | tags = Dict.map mapFunction list.tags }
+
+
+toggleTag : Int -> TagList -> TagList
+toggleTag id list =
+    runOnTag (\tag -> { tag | enabled = not tag.enabled }) id list
+
+
 
 -- Returns a list of the text of all enabled tags in a tag list
 
@@ -86,7 +116,7 @@ tagListSelectedTags list =
     let
         tagList = Dict.foldl (\_ tag list -> list ++ [tag]) [] list.tags
     in
-        List.filter (\tag -> tag.selected) tagList
+        List.filter (\tag -> tag.enabled) tagList
         |> List.map (\tag -> tag.text)
 
 
@@ -109,10 +139,11 @@ tagListHtml list onTextClick onRemoveButton =
 type alias TagListList =
     { nextId: Int
     , tagLists: Dict Int TagList
+    , textFieldTargetId: Maybe Int
     }
 
 emptyTagListList =
-    TagListList 0 Dict.empty
+    TagListList 0 Dict.empty Nothing
 
 
 
@@ -135,6 +166,10 @@ removeTagList listId tagListList =
         { tagListList | tagLists = Dict.filter filterFunction tagListList.tagLists }
 
 
+
+startTagTextInput : Int -> TagListList -> TagListList
+startTagTextInput id list =
+    {list | textFieldTargetId = Just id}
 
 
 -- Runs a function on a specified tag list
@@ -167,8 +202,14 @@ removeTagFromTagListList : Int -> Int -> TagListList -> TagListList
 removeTagFromTagListList listId tagId tagListList = 
     runOnTagList (removeTag tagId) listId tagListList
 
+toggleTagInTagListList : Int -> Int -> TagListList -> TagListList
+toggleTagInTagListList listId tagId tagListList = 
+    runOnTagList (toggleTag tagId) listId tagListList
 
 
+toggleTagList : Int -> TagListList -> TagListList
+toggleTagList id list =
+    runOnTagList (\list -> {list | enabled = not list.enabled}) id list
 
 selectedTags : TagListList -> List String
 selectedTags list =
@@ -178,25 +219,84 @@ selectedTags list =
 
 tagListListHtml :
     TagListList 
-   -> (Int -> msg) 
-   -> (Int -> msg) 
-   -> (Int -> Int -> msg) 
-   -> (Int -> Int -> msg) 
+   -> (Int -> msg)
+   -> (Int -> msg)
+   -> (Int -> msg)
+   -> (Int -> Int -> msg)
+   -> (Int -> Int -> msg)
    -> Html msg
 tagListListHtml 
         tagListList
-        onRemoveButton
-        onDisableButton
+        onAddTag
+        onRemoveList
+        onToggleList
         onTagRemoveButton
         onTagTextClick
     =
     let
         foldFunction =
             (\id value acc -> 
-                acc ++ [(value, (onTagTextClick id), (onTagRemoveButton id))])
+                acc ++ [(id, (value, (onTagTextClick id), (onTagRemoveButton id)))])
 
         tagLists =
             Dict.foldl foldFunction [] tagListList.tagLists
+
+        listClasses tagList =
+            case tagList.enabled of
+                True -> []
+                False -> [Style.DisabledTag]
+
+        --TODO: Improve code quality in this function
+        buildButtonRow : TagList -> Int -> Html msg
+        buildButtonRow tagList id =
+            let
+                toggleCharacter =
+                    case tagList.enabled of
+                        True -> "☑"
+                        False -> "☐"
+                removeCharacter =
+                    "×"
+                addCharacter =
+                    "+"
+
+                buttonSize = 1.5
+
+                toggleButton =
+                    flatButton [Style.InlineButton] [] (onToggleList id) toggleCharacter buttonSize
+                removeButton =
+                    flatButton [Style.InlineButton] [] (onRemoveList id) removeCharacter buttonSize
+
+                addElement = case tagListList.textFieldTargetId of
+                    Nothing ->
+                        flatButton [Style.InlineButton, Style.AddTagButton] [] (onAddTag id) addCharacter buttonSize
+                    Just(targetId) ->
+                        if targetId /= id then
+                            flatButton 
+                                [Style.InlineButton, Style.AddTagButton]
+                                []
+                                (onAddTag id)
+                                addCharacter
+                                buttonSize
+                        else
+                            form [Style.class [Style.AddTagButton]]
+                                [input [] []]
+
+
+
+
+            in
+                div [Style.class [Style.TagListButtonRow]]
+                    [ toggleButton
+                    , addElement
+                    , removeButton
+                    ]
     in
         ul []
-            <| List.map (\tag onText onRemove -> tagListHtml tag onText onRemove) tagLists
+            <| List.map 
+                    (\(id, (tag, onText, onRemove)) -> 
+                        div [Style.class ([Style.TagList] ++ (listClasses tag))]
+                            [ tagListHtml tag onText onRemove
+                            , buildButtonRow tag id
+                            ]
+                        )
+                    tagLists
