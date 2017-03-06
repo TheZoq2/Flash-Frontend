@@ -25,6 +25,8 @@ import Dom
 type KeyReceiver
     = None
     | TagListList
+    | TagList Int
+    | TagField Int
 
 
 type alias Model =
@@ -138,7 +140,7 @@ update msg model =
             let
                 newTags = Tags.startTagTextInput id model.tags
             in
-                ({model | tags = newTags}, Dom.focus "tag_input_field" |> Task.attempt FocusResult)
+                ({model | tags = newTags, keyReceiver = TagField id}, Dom.focus "tag_input_field" |> Task.attempt FocusResult)
         ToggleTagList id ->
             let
                 newTags = Tags.toggleTagList id model.tags
@@ -160,7 +162,10 @@ update msg model =
             in
                 ({model | tags = newTags}, Cmd.none)
         CancelTagCreation ->
-            (cancelTagCreation model, Cmd.none)
+            let
+                newModel = cancelTagCreation model
+            in
+                ({newModel | keyReceiver = None}, Cmd.none)
         TagTextFieldChanged text ->
             ({model | tagTextfieldContent = Just text}, Cmd.none)
         FocusResult result ->
@@ -212,7 +217,7 @@ handleKeyboardInput model code =
                     _ ->
                         ( model, Cmd.none )
 
-            TagListList ->
+            _ ->
                 --TODO Handle input
                 (model, Cmd.none)
 
@@ -291,7 +296,6 @@ decodeNewImage =
         decodeMsg
 
 
---TODO: Implement
 getSelectedTags : Model -> List String
 getSelectedTags model =
     Tags.selectedTags model.tags
