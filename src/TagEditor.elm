@@ -122,10 +122,7 @@ update msg model =
             --(model, Cmd.none)
         --TODO: Write a general function for dealing with taglistlist messages
         AddTagList ->
-            let
-                newTags = Tags.addTagList Tags.emptyTagList model.tags
-            in
-                ( {model | tags = newTags }, Cmd.none)
+            addTagList model
         AddTag id ->
             let
                 newTags =
@@ -182,6 +179,15 @@ update msg model =
 
 
 
+addTagList : Model -> (Model, Cmd Msg)
+addTagList model =
+    let
+        newTags = Tags.addTagList Tags.emptyTagList model.tags
+    in
+        ( {model | tags = newTags }, Cmd.none)
+
+
+
 cancelTagCreation : Model -> Model
 cancelTagCreation model =
     {model | tagTextfieldContent = Nothing, tags = Tags.cancelAddTag model.tags}
@@ -217,6 +223,15 @@ handleKeyboardInput model code =
                     _ ->
                         ( model, Cmd.none )
 
+            TagListList ->
+                case Char.fromCode code of
+                    'I' ->
+                        --Return to normal
+                        ( {model | keyReceiver = None}, Cmd.none)
+                    'A' ->
+                        addTagList model
+                    _ ->
+                        ( model, Cmd.none )
             _ ->
                 --TODO Handle input
                 (model, Cmd.none)
