@@ -21,7 +21,6 @@ import Dom
 
 -- MODEL
 
-
 type KeyReceiver
     = None
     | TagListList
@@ -194,6 +193,7 @@ cancelTagCreation model =
 
 
 
+keyboardSelectorList = ['J', 'K', 'L', 'H', 'S', 'D', 'F', 'G']
 
 handleKeyboardInput : Model -> Int -> ( Model, Cmd Msg )
 handleKeyboardInput model code =
@@ -230,16 +230,17 @@ handleKeyboardInput model code =
                         ( {model | keyReceiver = None}, Cmd.none)
                     'A' ->
                         addTagList model
-                    _ ->
-                        ( model, Cmd.none )
+                    code ->
+                        --( model, Cmd.none )
+                        handleTagListSelectorKeys model code
             _ ->
                 --TODO Handle input
                 (model, Cmd.none)
 
 
-subComponentOwnsKeyboard : Model -> Bool
-subComponentOwnsKeyboard _ =
-    False
+handleTagListSelectorKeys : Model -> Char -> (Model, Cmd Msg)
+handleTagListSelectorKeys model code =
+    (model, Cmd.none)
 
 
 type ImageDirection
@@ -371,6 +372,7 @@ view model =
                     , addTagList
                     ]
                 ]
+
 
 
 

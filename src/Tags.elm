@@ -28,6 +28,8 @@ import Elements exposing (flatButton)
 import Style
 import Dict exposing (Dict)
 
+import List.Extra
+
 type alias Tag =
     { text: String
     , enabled: Bool
@@ -314,3 +316,10 @@ tagListListHtml tagListList messages =
                             ]
                         )
                     tagLists
+
+
+
+getNthTagListId : TagListList -> Int -> Maybe(Int)
+getNthTagListId tagListList target =
+    List.Extra.getAt target <| Dict.keys tagListList.tagLists
+

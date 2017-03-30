@@ -1,23 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<title>Flash tag editor</title>
+    <meta charset="utf-8">
+    <title>Flash tag editor</title>
 
-	<script src="tag_editor.js"></script>
+    <script src="tag_editor.js"></script>
 
-	<link rel="stylesheet" href="css/reset.css">
-	<link rel="stylesheet" href="css/GlobalStyle.css">
-	<link rel="stylesheet" href="css/legacy.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/GlobalStyle.css">
+    <link rel="stylesheet" href="css/legacy.css">
+
+
+    <!-- Including the leaflet map api -->
+    <link rel="stylesheet" href="https://leafletjs-cdn.s3.amazonaws.com/content/leaflet/master/leaflet.css" />
+    <script src="https://leafletjs-cdn.s3.amazonaws.com/content/leaflet/master/leaflet-src.js"></script>
 </head>
 <body>
-	<div id="main">
-		
-	</div>
+    <div id="main">
+        
+    </div>
 
-	<script>
-		var node = document.getElementById('main');
-		var app = Elm.TagEditor.embed(node);
-	</script>
+    <div id="mapid" style="height: 200px;"></div>
+
+
+    <script>
+        var node = document.getElementById('main');
+        var app = Elm.TagEditor.embed(node);
+    </script>
+
+    <script>
+        var mymap = L.map('mapid').setView([51.505, -0.09], 13);
+        L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            maxZoom: 18,
+            id: 'your.mapbox.project.id',
+            accessToken: 'your.mapbox.public.access.token'
+        }).addTo(mymap);
+    </script>
 </body>
 </html>
