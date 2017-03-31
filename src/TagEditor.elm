@@ -17,6 +17,7 @@ import Char
 import Css
 import Elements exposing (flatButton)
 import Dom
+import List.Extra
 
 
 -- MODEL
@@ -193,7 +194,8 @@ cancelTagCreation model =
 
 
 
-keyboardSelectorList = ['J', 'K', 'L', 'H', 'S', 'D', 'F', 'G']
+keyboardSelectorList =
+    ['J', 'K', 'L', 'H', 'S', 'D', 'F', 'G']
 
 handleKeyboardInput : Model -> Int -> ( Model, Cmd Msg )
 handleKeyboardInput model code =
@@ -231,7 +233,7 @@ handleKeyboardInput model code =
                     'A' ->
                         addTagList model
                     code ->
-                        --( model, Cmd.none )
+                        --Select a subcomponent
                         handleTagListSelectorKeys model code
             _ ->
                 --TODO Handle input
@@ -240,7 +242,14 @@ handleKeyboardInput model code =
 
 handleTagListSelectorKeys : Model -> Char -> (Model, Cmd Msg)
 handleTagListSelectorKeys model code =
-    (model, Cmd.none)
+    case List.Extra.elemIndex code keyboardSelectorList of
+        Just index ->
+            let
+                _ = Debug.log "" "got selector key"
+            in
+                (model, Cmd.none)
+        Nothing ->
+            (model, Cmd.none)
 
 
 type ImageDirection
