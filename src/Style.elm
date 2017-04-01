@@ -52,7 +52,7 @@ type CssClasses
     | TagEditorContainer
     | TagEditorRightPane
     | TagEditorContentContainer
-    | TagEditorRightPaneSelected
+    | TagEditorSelected
     | ImageViewer
     | ImageViewerImage
     | Button
@@ -174,7 +174,7 @@ tagEditorCss =
         , backgroundColor secondaryBackgroundColor
         , margin2 (px 0) (px tagEditorStdMargin)
         ]
-    , Css.class TagEditorRightPaneSelected
+    , Css.class TagEditorSelected
         [ backgroundColor tagListSelectedBackgroundColor
         ]
     , Css.class TagEditorButtonRow

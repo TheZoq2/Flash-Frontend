@@ -396,7 +396,7 @@ view model =
 
         additionalRightPaneClasses =
             if model.keyReceiver == TagListList then
-                [ Style.TagEditorRightPaneSelected ]
+                [ Style.TagEditorSelected ]
             else
                 []
 
@@ -410,6 +410,13 @@ view model =
                 , onTagSubmit = AddTag
                 , onTextChanged = TagTextFieldChanged
                 }
+
+        selectedTag =
+            case model.keyReceiver of
+                TagList id ->
+                    Tags.List id
+                _ ->
+                    Tags.None
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -424,7 +431,7 @@ view model =
                     ]
                 ++ [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                     [ buttonRow
-                    , Tags.tagListListHtml model.tags listMessages
+                    , Tags.tagListListHtml model.tags selectedTag listMessages
                     , addTagList
                     ]
                 ]

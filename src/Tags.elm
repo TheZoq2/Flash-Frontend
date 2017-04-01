@@ -3,6 +3,7 @@ module Tags exposing
     , TagList
     , TagListList
     , TagListMessages
+    , SelectedTag(..)
     , emptyTagList
     , addTagToList
     , removeTag
@@ -249,8 +250,13 @@ type alias TagListMessages msg =
     , onTextChanged: (String -> msg)
     }
 
-tagListListHtml : TagListList -> TagListMessages msg -> Html msg
-tagListListHtml tagListList messages =
+type SelectedTag
+    = None
+    | List Int
+    | Single Int Int
+
+tagListListHtml : TagListList -> SelectedTag -> TagListMessages msg -> Html msg
+tagListListHtml tagListList selectedTag messages =
     let
         foldFunction =
             (\id value acc -> 
@@ -259,7 +265,15 @@ tagListListHtml tagListList messages =
         tagLists =
             Dict.foldl foldFunction [] tagListList.tagLists
 
-        listClasses tagList =
+        listClasses listId tagList =
+            case selectedTag of
+                None ->
+                    []
+                Single _ _ ->
+                    []
+                List id ->
+                    if id == listId then [Style.TagEditorSelected] else []
+            ++
             case tagList.enabled of
                 True -> []
                 False -> [Style.DisabledTag]
@@ -334,7 +348,7 @@ tagListListHtml tagListList messages =
         ul []
             <| List.map 
                     (\(id, (tag, onText, onRemove)) -> 
-                        div [Style.class ([Style.TagList] ++ (listClasses tag))]
+                        div [Style.class ([Style.TagList] ++ (listClasses id tag))]
                             [ tagListHtml tag onText onRemove
                             , buildButtonRow tag id
                             ]
