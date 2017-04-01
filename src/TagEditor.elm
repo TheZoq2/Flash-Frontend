@@ -134,20 +134,11 @@ update msg model =
             in
                 ({model | tags = newTags} |> cancelTagCreation, Cmd.none)
         StartTagAddition id ->
-            let
-                newTags = Tags.startTagTextInput id model.tags
-            in
-                ({model | tags = newTags, keyReceiver = TagField id}, Dom.focus "tag_input_field" |> Task.attempt FocusResult)
+            startTagAddition model id
         ToggleTagList id ->
-            let
-                newTags = Tags.toggleTagList id model.tags
-            in
-                ({model | tags = newTags}, Cmd.none)
+            toggleTagList model id
         RemoveTagList id ->
-            let
-                newTags = Tags.removeTagList id model.tags
-            in
-                ({model | tags = newTags}, Cmd.none)
+            removeTagList model id
         ToggleTag listId tagId ->
             let
                 newTags = Tags.toggleTagInTagListList listId tagId model.tags
@@ -159,10 +150,7 @@ update msg model =
             in
                 ({model | tags = newTags}, Cmd.none)
         CancelTagCreation ->
-            let
-                newModel = cancelTagCreation model
-            in
-                ({newModel | keyReceiver = None}, Cmd.none)
+            (cancelTagCreation model, Cmd.none)
         TagTextFieldChanged text ->
             ({model | tagTextfieldContent = Just text}, Cmd.none)
         FocusResult result ->
@@ -171,12 +159,37 @@ update msg model =
                     let
                         _ = Debug.log "Failed to find dom element when trying to focus on" id
                     in
-                        (model, Cmd.none)
+                        ( {model | keyReceiver = None}, Cmd.none)
                 Ok () ->
                     (model, Cmd.none)
         Keypress code ->
             handleKeyboardInput model code
 
+
+startTagAddition : Model -> Int -> (Model, Cmd Msg)
+startTagAddition model tagListId =
+    let
+        newTags = Tags.startTagTextInput tagListId model.tags
+        cmd = Dom.focus "tag_input_field" |> Task.attempt FocusResult
+    in
+        ({model | tags = newTags, keyReceiver = TagField tagListId}, cmd)
+
+
+removeTagList : Model -> Int -> (Model, Cmd Msg)
+removeTagList model id =
+    let
+        newTags =
+            Tags.removeTagList id model.tags
+
+        newReceiver =
+            case model.keyReceiver of
+                TagList _ ->
+                    TagListList
+                TagField _ ->
+                    TagListList
+                _ -> model.keyReceiver
+    in
+        ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
 
 
 addTagList : Model -> (Model, Cmd Msg)
@@ -187,10 +200,28 @@ addTagList model =
         ( {model | tags = newTags }, Cmd.none)
 
 
+toggleTagList : Model -> Int -> (Model, Cmd Msg)
+toggleTagList model id =
+    let
+        newTags = Tags.toggleTagList id model.tags
+    in
+        ({model | tags = newTags}, Cmd.none)
+
+
 
 cancelTagCreation : Model -> Model
 cancelTagCreation model =
-    {model | tagTextfieldContent = Nothing, tags = Tags.cancelAddTag model.tags}
+    let
+        newReceiver = case model.keyReceiver of
+            TagField id ->
+                TagList id
+            _ ->
+                None
+    in
+        {model | tagTextfieldContent = Nothing
+               , tags = Tags.cancelAddTag model.tags
+               , keyReceiver = newReceiver
+               }
 
 
 
@@ -202,6 +233,7 @@ handleKeyboardInput model code =
     let
         _ =
             Debug.log "" (Char.fromCode code)
+        _ = Debug.log "Current receiver" model.keyReceiver
     in
         case model.keyReceiver of
             None ->
@@ -235,8 +267,19 @@ handleKeyboardInput model code =
                     code ->
                         --Select a subcomponent
                         handleTagListSelectorKeys model code
+            TagList id ->
+                case Char.fromCode code of
+                    'I' ->
+                        ( {model | keyReceiver = TagListList}, Cmd.none)
+                    'A' ->
+                        startTagAddition model id
+                    'R' -> -- Remove the list
+                        removeTagList model id
+                    'T' -> -- Toggle the list
+                        toggleTagList model id
+                    _ ->
+                        (model, Cmd.none)
             _ ->
-                --TODO Handle input
                 (model, Cmd.none)
 
 
@@ -245,9 +288,14 @@ handleTagListSelectorKeys model code =
     case List.Extra.elemIndex code keyboardSelectorList of
         Just index ->
             let
-                _ = Debug.log "" "got selector key"
+                receiverId =
+                    Tags.getNthTagListId model.tags index
             in
-                (model, Cmd.none)
+                case receiverId of
+                    Just id ->
+                        ({ model | keyReceiver = TagList id}, Cmd.none)
+                    Nothing ->
+                        (model, Cmd.none)
         Nothing ->
             (model, Cmd.none)
 
@@ -294,7 +342,6 @@ requestSaveImage tags =
         tagsJson =
             List.map Json.Encode.string tags
 
-        --TODO: Make surre X-Origin requests are allowed
         url =
             "http://localhost:3000/list?action=save&tags=" ++ toString tagsJson
     in

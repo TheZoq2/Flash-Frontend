@@ -18,6 +18,7 @@ module Tags exposing
     , toggleTagInTagListList
     , startTagTextInput
     , cancelAddTag
+    , getNthTagListId
     )
 
 import Html exposing (..)
@@ -212,14 +213,20 @@ removeTagFromTagListList : Int -> Int -> TagListList -> TagListList
 removeTagFromTagListList listId tagId tagListList = 
     runOnTagList (removeTag tagId) listId tagListList
 
+-- Toggles the tag with tagId from the list with listId
+
 toggleTagInTagListList : Int -> Int -> TagListList -> TagListList
 toggleTagInTagListList listId tagId tagListList = 
     runOnTagList (toggleTag tagId) listId tagListList
 
 
+-- Togles the specified tag list
 toggleTagList : Int -> TagListList -> TagListList
 toggleTagList id list =
     runOnTagList (\list -> {list | enabled = not list.enabled}) id list
+
+
+-- Returns a list of selected tags in a tagListList
 
 selectedTags : TagListList -> List String
 selectedTags list =
@@ -273,13 +280,30 @@ tagListListHtml tagListList messages =
                 buttonSize = 1.5
 
                 toggleButton =
-                    flatButton [Style.InlineButton] [] (messages.onToggleList id) toggleCharacter buttonSize
+                    flatButton 
+                        [Style.InlineButton]
+                        []
+                        (messages.onToggleList id)
+                        toggleCharacter
+                        buttonSize
+
                 removeButton =
-                    flatButton [Style.InlineButton] [] (messages.onRemoveList id) removeCharacter buttonSize
+                    flatButton
+                        [Style.InlineButton]
+                        []
+                        (messages.onRemoveList id)
+                        removeCharacter
+                        buttonSize
 
                 addElement = case tagListList.textFieldTargetId of
                     Nothing ->
-                        flatButton [Style.InlineButton, Style.AddTagButton] [] (messages.onAddTag id) addCharacter buttonSize
+                        flatButton 
+                            [Style.InlineButton, Style.AddTagButton]
+                            []
+                            (messages.onAddTag id)
+                            addCharacter
+                            buttonSize
+
                     Just(targetId) ->
                         if targetId /= id then
                             flatButton 
@@ -319,7 +343,7 @@ tagListListHtml tagListList messages =
 
 
 
-getNthTagListId : TagListList -> Int -> Maybe(Int)
+getNthTagListId : TagListList -> Int -> Maybe Int
 getNthTagListId tagListList target =
     List.Extra.getAt target <| Dict.keys tagListList.tagLists
 
