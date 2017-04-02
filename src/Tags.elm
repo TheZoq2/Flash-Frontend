@@ -20,6 +20,7 @@ module Tags exposing
     , startTagTextInput
     , cancelAddTag
     , getNthTagListId
+    , getNthTag
     )
 
 import Html exposing (..)
@@ -227,6 +228,14 @@ toggleTagList id list =
     runOnTagList (\list -> {list | enabled = not list.enabled}) id list
 
 
+
+-- Returns a specific TagList from a tagListList
+getTagList : TagListList -> Int -> Maybe TagList
+getTagList tagListList listId =
+    Dict.get listId tagListList.tagLists
+
+
+
 -- Returns a list of selected tags in a tagListList
 
 selectedTags : TagListList -> List String
@@ -361,3 +370,15 @@ getNthTagListId : TagListList -> Int -> Maybe Int
 getNthTagListId tagListList target =
     List.Extra.getAt target <| Dict.keys tagListList.tagLists
 
+
+getNthTag : TagListList -> Int -> Int -> Maybe Int
+getNthTag tagListList listId target =
+    let
+        tagList =
+            getTagList tagListList listId
+    in
+        case tagList of
+            Just tagList ->
+                List.Extra.getAt target <| Dict.keys tagList.tags
+            Nothing ->
+                Nothing

@@ -27,6 +27,7 @@ type KeyReceiver
     | TagListList
     | TagList Int
     | TagField Int
+    | Tag Int Int
 
 
 type alias Model =
@@ -277,6 +278,12 @@ handleKeyboardInput model code =
                         removeTagList model id
                     'T' -> -- Toggle the list
                         toggleTagList model id
+                    code ->
+                        handleTagSelectorKeys model id code
+            Tag listId tagId ->
+                case Char.fromCode code of
+                    'I' ->
+                        ( {model | keyReceiver = TagList listId}, Cmd.none)
                     _ ->
                         (model, Cmd.none)
             _ ->
@@ -294,6 +301,24 @@ handleTagListSelectorKeys model code =
                 case receiverId of
                     Just id ->
                         ({ model | keyReceiver = TagList id}, Cmd.none)
+                    Nothing ->
+                        (model, Cmd.none)
+        Nothing ->
+            (model, Cmd.none)
+
+
+
+handleTagSelectorKeys : Model -> Int -> Char -> (Model, Cmd Msg)
+handleTagSelectorKeys model selectedListId code =
+    case List.Extra.elemIndex code keyboardSelectorList of
+        Just index ->
+            let
+                receiverId =
+                    Tags.getNthTag model.tags selectedListId index
+            in
+                case receiverId of
+                    Just receiverId ->
+                        ({model | keyReceiver = Tag selectedListId receiverId}, Cmd.none)
                     Nothing ->
                         (model, Cmd.none)
         Nothing ->
@@ -415,6 +440,8 @@ view model =
             case model.keyReceiver of
                 TagList id ->
                     Tags.List id
+                Tag listId tagId ->
+                    Tags.Single listId tagId
                 _ ->
                     Tags.None
     in
