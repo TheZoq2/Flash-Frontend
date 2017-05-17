@@ -1,0 +1,46 @@
+/*http://codepen.io/anon/pen/RVYxxa*/
+
+@-webkit-keyframes pulse {
+  50% {
+    background: white;
+  }
+}
+@keyframes pulse {
+  50% {
+    background: rgba(25, 142, 224);
+  }
+}
+.LoadingContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.LoadingPulse {
+  position: relative;
+  width: 60px;
+  height: 5px;
+  background: rgba(25, 142, 224, 0.2);
+  -webkit-animation: pulse 750ms infinite;
+          animation: pulse 750ms infinite;
+  -webkit-animation-delay: 250ms;
+          animation-delay: 250ms;
+}
+.LoadingPulse:before, .LoadingPulse:after {
+  content: '';
+  position: absolute;
+  display: block;
+  height: 5px;
+  width: 60px;
+  background: rgba(25, 142, 224, 0.2);
+  -webkit-animation: pulse 750ms infinite;
+          animation: pulse 750ms infinite;
+}
+.LoadingPulse:before {
+  left: -60px;
+}
+.LoadingPulse:after {
+  left: 60px;
+  -webkit-animation-delay: 500ms;
+          animation-delay: 500ms;
+}

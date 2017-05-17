@@ -64,6 +64,8 @@ type CssClasses
     | TagListButtonRow
     | AddTagButton
     | TagTextField
+    | LoadingPulse
+    | LoadingContainer
 
 
 

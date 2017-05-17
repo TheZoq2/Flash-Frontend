@@ -419,6 +419,11 @@ view model =
         addTagList =
             flatButton [Style.WideButton, Style.BlockButton] [] AddTagList "+" 2
 
+        loadingBar =
+            div [ Style.class [ Style.LoadingContainer ] ]
+                [  div [ Style.class [Style.LoadingPulse ] ] [ ] 
+                ]
+
         additionalRightPaneClasses =
             if model.keyReceiver == TagListList then
                 [ Style.TagEditorSelected ]
@@ -458,6 +463,7 @@ view model =
                     ]
                 ++ [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                     [ buttonRow
+                    , loadingBar
                     , Tags.tagListListHtml model.tags selectedTag listMessages
                     , addTagList
                     ]
