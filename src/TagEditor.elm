@@ -141,15 +141,9 @@ update msg model =
         RemoveTagList id ->
             removeTagList model id
         ToggleTag listId tagId ->
-            let
-                newTags = Tags.toggleTagInTagListList listId tagId model.tags
-            in
-                ({model | tags = newTags}, Cmd.none)
+            toggleTag model listId tagId
         RemoveTag listId tagId ->
-            let
-                newTags = Tags.removeTagFromTagListList listId tagId model.tags
-            in
-                ({model | tags = newTags}, Cmd.none)
+            removeTag model listId tagId
         CancelTagCreation ->
             (cancelTagCreation model, Cmd.none)
         TagTextFieldChanged text ->
@@ -188,9 +182,33 @@ removeTagList model id =
                     TagListList
                 TagField _ ->
                     TagListList
-                _ -> model.keyReceiver
+                old -> old
     in
         ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
+
+toggleTag : Model -> Int -> Int -> (Model, Cmd Msg)
+toggleTag model listId tagId =
+    let
+        newTags = Tags.toggleTagInTagListList listId tagId model.tags
+    in
+        ({model | tags = newTags}, Cmd.none)
+
+
+
+removeTag : Model -> Int -> Int -> (Model, Cmd Msg)
+removeTag model listId tagId =
+    let
+        newTags =
+            Tags.removeTagFromTagListList listId tagId model.tags
+
+        newReceiver =
+            case model.keyReceiver of
+                Tag listId _ ->
+                    TagList listId
+                old -> old
+    in
+        ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
+
 
 
 addTagList : Model -> (Model, Cmd Msg)
@@ -284,6 +302,10 @@ handleKeyboardInput model code =
                 case Char.fromCode code of
                     'I' ->
                         ( {model | keyReceiver = TagList listId}, Cmd.none)
+                    'R' ->
+                        removeTag model listId tagId
+                    'T' ->
+                        toggleTag model listId tagId
                     _ ->
                         (model, Cmd.none)
             _ ->
