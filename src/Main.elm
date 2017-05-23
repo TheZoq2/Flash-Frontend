@@ -38,12 +38,15 @@ init =
 
 type Msg
     = ListingFail Http.Error
+    | Search String
     | AlbumListFetched (Result Http.Error (List ( Int, String, String )))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Search searchString ->
+            (model, getImagesWithTags <| searchToTags searchString)
         ListingFail err ->
             ( { model | networkError = toString err }, Cmd.none )
 
@@ -60,6 +63,12 @@ update msg model =
                             _ = Debug.log "Album fetch error: " error
                         in
                             (model, Cmd.none)
+
+
+
+searchToTags : String -> List String
+searchToTags searchString =
+    String.split "," searchString
 
 
 
@@ -121,18 +130,20 @@ decodeAlbumList =
 
 view : Model -> Html Msg
 view model =
-    div [ Style.toStyle Style.albumContainer ]
-        ([ p [] [ text model.networkError ]
-         ]
-            ++ generateImageViews model.currentImages
-        )
+    div []
+    [ input [ placeholder "Search", onInput Search ] []
+    , div [ Style.toStyle Style.albumContainer ]
+       <| [ p [] [ text model.networkError ]
+          ]
+          ++ generateImageViews model.currentImages
+    ]
 
 
 generateImageViews : List AlbumEntry -> List (Html Msg)
 generateImageViews albumEntries =
     let
         imgPath =
-            "http://localhost:3000/album/image/"
+            "album/image/"
     in
         List.map
             (\entry ->
