@@ -30,9 +30,22 @@ type KeyReceiver
     | Tag Int Int
 
 
+type alias FileList =
+    { past: List Int
+    , current: Maybe Int
+    , future: List Int
+    }
+
+newFileList : List Int -> FileList
+newFileList list =
+    case List.head list of
+        Just a ->
+            FileList (List.drop 1 list) (Just a) []
+        Nothing ->
+            FileList [] Nothing []
+
 type alias Model =
     { currentImage : String
-    , currentImageDimensions : ( Int, Int )
     , lastError : String
     , keyReceiver : KeyReceiver
     , viewerSize: Size
@@ -43,7 +56,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" ( 0, 0 ) "" None (Size 0 0 ) Tags.emptyTagListList Nothing
+    ( Model "" "" None (Size 0 0 ) Tags.emptyTagListList Nothing
     , Cmd.batch
         [ requestNewImage Current
         , Task.perform WindowResized Window.size
