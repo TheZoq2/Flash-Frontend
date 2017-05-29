@@ -3,6 +3,7 @@ module TagEditor exposing (..)
 import Tags
 import Style
 import ImageViewer
+import FileList
 import Vec exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -30,36 +31,33 @@ type KeyReceiver
     | Tag Int Int
 
 
-type alias FileList =
-    { past: List Int
-    , current: Maybe Int
-    , future: List Int
+
+
+-- Data about a file that has been received from the server. The server sends more
+-- data than this but we don't process that for now
+type alias FileData =
+    { filePath: String
+    , tags: List String
     }
 
-newFileList : List Int -> FileList
-newFileList list =
-    case List.head list of
-        Just a ->
-            FileList (List.drop 1 list) (Just a) []
-        Nothing ->
-            FileList [] Nothing []
 
 type alias Model =
-    { currentImage : String
-    , lastError : String
+    { lastError : String
     , keyReceiver : KeyReceiver
     , viewerSize: Size
     , tags: Tags.TagListList
     , tagTextfieldContent: Maybe String
+    , searchText: String
+    , fileList: Maybe FileList.FileList
+    , currentImage : String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" "" None (Size 0 0 ) Tags.emptyTagListList Nothing
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing ""
     , Cmd.batch
-        [ requestNewImage Current
-        , Task.perform WindowResized Window.size
+        [ Task.perform WindowResized Window.size
         ]
     )
 
@@ -74,10 +72,13 @@ type Msg
     | RequestCurrent
     | RequestSave
     | NetworkError Http.Error
-    | NewImageReceived ImageResponse
     | OnSaved String
     | WindowResized Window.Size
     | Keypress Int
+    | SubmitSearch
+    | SearchTextChanged String
+    | NewFileList Int Int
+    | FileDataReceived FileData
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
@@ -94,29 +95,25 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestNext ->
-            ( model, requestNewImage Next )
-
+            selectNextFile model
         RequestPrev ->
-            ( model, requestNewImage Prev )
-
+            selectPrevFile model
+        -- TODO: Check if this is used anymore
         RequestCurrent ->
-            ( model, requestNewImage Current )
-
+            (model, Cmd.none)
         RequestSave ->
             ( model, requestSaveImage (getSelectedTags model) )
-
         OnSaved _ ->
-            ( model, requestNewImage Next )
-
+            selectNextFile model
         NetworkError e ->
             let
                 _ =
                     Debug.log "Network error" e
             in
                 ( model, Cmd.none )
-
-        NewImageReceived response ->
+        FileDataReceived response ->
             let
+                _ = Debug.log "" response
                 currentImage =
                     "" ++ response.filePath
 
@@ -172,6 +169,12 @@ update msg model =
                     (model, Cmd.none)
         Keypress code ->
             handleKeyboardInput model code
+        SubmitSearch ->
+            (model, submitSearch model.searchText)
+        SearchTextChanged newSearch ->
+            ({model | searchText = newSearch}, Cmd.none)
+        NewFileList listId length ->
+            ({model | fileList = Just <| FileList.new listId length }, updateFileData model)
 
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
@@ -272,11 +275,11 @@ handleKeyboardInput model code =
                 case Char.fromCode code of
                     'L' ->
                         --Next
-                        ( model, requestNewImage Next )
+                        selectPrevFile model
 
                     'H' ->
                         --Previous
-                        ( model, requestNewImage Prev )
+                        selectNextFile model
 
                     'S' ->
                         --Save
@@ -360,39 +363,54 @@ handleTagSelectorKeys model selectedListId code =
             (model, Cmd.none)
 
 
-type ImageDirection
-    = Next
-    | Prev
-    | Current
+selectNextFile : Model -> (Model, Cmd Msg)
+selectNextFile model =
+    jumpFileList 1 model
+
+selectPrevFile : Model -> (Model, Cmd Msg)
+selectPrevFile model =
+    jumpFileList -1 model
+
+jumpFileList : Int -> Model -> (Model, Cmd Msg)
+jumpFileList amount model =
+    case model.fileList of
+        Just list ->
+            ({model | fileList = Just <| FileList.jump amount list}, updateFileData model)
+        Nothing ->
+            (model, Cmd.none)
 
 
-checkHttpAttempt : Result Http.Error ImageResponse -> Msg
+decodeFileData : Json.Decode.Decoder FileData
+decodeFileData =
+    Json.Decode.map2 FileData
+        (field "file_path" Json.Decode.string)
+        (field "tags" (Json.Decode.list Json.Decode.string))
+
+
+checkHttpAttempt : Result Http.Error FileData -> Msg
 checkHttpAttempt res =
     case res of
         Ok val ->
-            NewImageReceived val
+            FileDataReceived val
         Err e ->
             NetworkError e
 
-
-requestNewImage : ImageDirection -> Cmd Msg
-requestNewImage direction =
+requestFileData : Int -> Int -> Cmd Msg
+requestFileData listId index =
     let
-        action =
-            case direction of
-                Next ->
-                    "next"
+        url = "list?action=get_data&list_id=" ++ toString listId ++ "&index=" ++ toString index
 
-                Prev ->
-                    "prev"
-
-                Current ->
-                    "current"
-
-        url =
-            "http://localhost:3000/list?action=" ++ action
+        _ = Debug.log "Requesting file data " url
     in
-        Http.send checkHttpAttempt (Http.get url decodeNewImage)
+        Http.send checkHttpAttempt (Http.get url decodeFileData)
+
+updateFileData : Model -> Cmd Msg
+updateFileData model =
+    case model.fileList of
+        Just list ->
+            requestFileData list.listId list.fileIndex
+        Nothing ->
+            Cmd.none
 
 
 requestSaveImage : List String -> Cmd Msg
@@ -405,27 +423,41 @@ requestSaveImage tags =
         url =
             "http://localhost:3000/list?action=save&tags=" ++ toString tagsJson
     in
-        Http.send checkHttpAttempt (Http.get url decodeNewImage)
+        Http.send checkHttpAttempt (Http.get url decodeFileData)
 
 
-type alias ImageResponse =
-    { filePath : String
-    , tags : List String
+
+checkHttpFileListAttempt : Result Http.Error FileListResponse -> Msg
+checkHttpFileListAttempt res =
+    case res of
+        Ok val ->
+            NewFileList val.id val.length
+        Err e ->
+            NetworkError e
+
+
+submitSearch : String -> Cmd Msg
+submitSearch text =
+    let
+        url =
+            "file_list/from_path?path=" ++ text
+        _ = Debug.log "Search url" url
+    in
+        Http.send checkHttpFileListAttempt (Http.get url decodeNewFileList)
+
+
+
+type alias FileListResponse =
+    { id: Int
+    , length: Int
     }
 
+decodeNewFileList : Json.Decode.Decoder FileListResponse
+decodeNewFileList =
+    Json.Decode.map2 FileListResponse
+        (field "id" Json.Decode.int)
+        (field "length" Json.Decode.int)
 
-decodeNewImage : Json.Decode.Decoder ImageResponse
-decodeNewImage =
-    let
-        decodeDimensions =
-            Json.Decode.map2 (,) (index 0 Json.Decode.int) (index 1 Json.Decode.int)
-
-        decodeMsg =
-            Json.Decode.map2 ImageResponse
-                (field "file_path" Json.Decode.string)
-                (field "tags" (Json.Decode.list Json.Decode.string))
-    in
-        decodeMsg
 
 
 getSelectedTags : Model -> List String
@@ -484,6 +516,12 @@ view model =
                     Tags.Single listId tagId
                 _ ->
                     Tags.None
+
+        searchField =
+            div []
+                [ input [ onInput SearchTextChanged ] [] 
+                , flatButton [Style.BlockButton] [] SubmitSearch "Search" 1
+                ]
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -501,6 +539,7 @@ view model =
                     , loadingBar
                     , Tags.tagListListHtml model.tags selectedTag listMessages
                     , addTagList
+                    , searchField
                     ]
                 ]
 
