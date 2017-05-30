@@ -174,7 +174,10 @@ update msg model =
         SearchTextChanged newSearch ->
             ({model | searchText = newSearch}, Cmd.none)
         NewFileList listId length ->
-            ({model | fileList = Just <| FileList.new listId length }, updateFileData model)
+            let
+                fileList = FileList.new listId length
+            in
+                ({model | fileList = Just fileList }, updateFileData fileList)
 
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
@@ -375,7 +378,10 @@ jumpFileList : Int -> Model -> (Model, Cmd Msg)
 jumpFileList amount model =
     case model.fileList of
         Just list ->
-            ({model | fileList = Just <| FileList.jump amount list}, updateFileData model)
+            let
+                newList = FileList.jump amount list
+            in
+                ({model | fileList = Just newList}, updateFileData newList)
         Nothing ->
             (model, Cmd.none)
 
@@ -404,13 +410,9 @@ requestFileData listId index =
     in
         Http.send checkHttpAttempt (Http.get url decodeFileData)
 
-updateFileData : Model -> Cmd Msg
-updateFileData model =
-    case model.fileList of
-        Just list ->
-            requestFileData list.listId list.fileIndex
-        Nothing ->
-            Cmd.none
+updateFileData : FileList.FileList -> Cmd Msg
+updateFileData fileList =
+    requestFileData fileList.listId fileList.fileIndex
 
 
 requestSaveImage : List String -> Cmd Msg
