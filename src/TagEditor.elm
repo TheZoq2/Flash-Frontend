@@ -49,13 +49,12 @@ type alias Model =
     , tagTextfieldContent: Maybe String
     , searchText: String
     , fileList: Maybe FileList.FileList
-    , currentImage : String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing ""
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         ]
@@ -112,16 +111,7 @@ update msg model =
             in
                 ( model, Cmd.none )
         FileDataReceived response ->
-            let
-                _ = Debug.log "" response
-                currentImage =
-                    "" ++ response.filePath
-
-            in
-                ({ model
-                        | currentImage = currentImage
-                    }
-                , Cmd.none)
+            (model, Cmd.none)
 
         WindowResized size ->
             let
@@ -524,17 +514,30 @@ view model =
                 [ input [ onInput SearchTextChanged ] [] 
                 , flatButton [Style.BlockButton] [] SubmitSearch "Search" 1
                 ]
-    in
-        div [ Style.class [ Style.TagEditorContainer ] ]
-            <|
-                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
-                    <| [
+
+        imageViewer =
+            case model.fileList of
+                Just fileList ->
+                    let
+                        imageUrl =
+                            "list?action=get_file&list_id="
+                            ++ (toString fileList.listId)
+                            ++ "&index="
+                            ++ (toString fileList.fileIndex)
+                    in
                         ImageViewer.imageViewerHtml
                             (model.viewerSize.width, model.viewerSize.height)
                             (0, 0)
                             1
-                            model.currentImage
-                        ]
+                            imageUrl
+                Nothing ->
+                    div [] []
+
+    in
+        div [ Style.class [ Style.TagEditorContainer ] ]
+            <|
+                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
+                    [imageViewer]
                     ]
                 ++ [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                     [ buttonRow
