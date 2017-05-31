@@ -383,11 +383,11 @@ decodeFileData =
         (field "tags" (Json.Decode.list Json.Decode.string))
 
 
-checkHttpAttempt : Result Http.Error FileData -> Msg
-checkHttpAttempt res =
+checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
+checkHttpAttempt func res=
     case res of
         Ok val ->
-            FileDataReceived val
+            func val
         Err e ->
             NetworkError e
 
@@ -398,7 +398,9 @@ requestFileData listId index =
 
         _ = Debug.log "Requesting file data " url
     in
-        Http.send checkHttpAttempt (Http.get url decodeFileData)
+        Http.send 
+            (checkHttpAttempt FileDataReceived)
+            (Http.get url decodeFileData)
 
 updateFileData : FileList.FileList -> Cmd Msg
 updateFileData fileList =
@@ -415,17 +417,10 @@ requestSaveImage tags =
         url =
             "http://localhost:3000/list?action=save&tags=" ++ toString tagsJson
     in
-        Http.send checkHttpAttempt (Http.get url decodeFileData)
+        Http.send 
+            (checkHttpAttempt FileDataReceived)
+            (Http.get url decodeFileData)
 
-
-
-checkHttpFileListAttempt : Result Http.Error FileListResponse -> Msg
-checkHttpFileListAttempt res =
-    case res of
-        Ok val ->
-            NewFileList val.id val.length
-        Err e ->
-            NetworkError e
 
 
 submitSearch : String -> Cmd Msg
@@ -435,7 +430,9 @@ submitSearch text =
             "file_list/from_path?path=" ++ text
         _ = Debug.log "Search url" url
     in
-        Http.send checkHttpFileListAttempt (Http.get url decodeNewFileList)
+        Http.send
+            (checkHttpAttempt (\val -> NewFileList val.id val.length))
+            (Http.get url decodeNewFileList)
 
 
 
