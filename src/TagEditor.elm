@@ -101,7 +101,7 @@ update msg model =
         RequestCurrent ->
             (model, Cmd.none)
         RequestSave ->
-            ( model, requestSaveImage (getSelectedTags model) )
+            ( model, requestSaveImage model <| getSelectedTags model)
         OnSaved _ ->
             selectNextFile model
         NetworkError e ->
@@ -276,7 +276,7 @@ handleKeyboardInput model code =
 
                     'S' ->
                         --Save
-                        ( model, requestSaveImage (getSelectedTags model) )
+                        ( model, requestSaveImage model <| getSelectedTags model)
 
                     'T' ->
                         --Modify tags
@@ -424,19 +424,26 @@ updateFileData fileList =
     requestFileData fileList.listId fileList.fileIndex
 
 
-requestSaveImage : List String -> Cmd Msg
-requestSaveImage tags =
-    let
-        --Encode the tag list
-        tagsJson =
-            List.map Json.Encode.string tags
+requestSaveImage : Model -> List String -> Cmd Msg
+requestSaveImage model tags =
+    case model.fileList of
+        Just fileList ->
+            let
+                --Encode the tag list
+                tagsJson =
+                    List.map Json.Encode.string tags
 
-        url =
-            "http://localhost:3000/list?action=save&tags=" ++ toString tagsJson
-    in
-        Http.send 
-            (checkHttpAttempt FileDataReceived)
-            (Http.get url decodeFileData)
+                url = fileListUrl
+                        "save"
+                        fileList.listId
+                        fileList.fileIndex
+                        [("tags", toString tagsJson)]
+            in
+                Http.send 
+                    (checkHttpAttempt FileDataReceived)
+                    (Http.get url decodeFileData)
+        Nothing ->
+            Cmd.none
 
 
 
