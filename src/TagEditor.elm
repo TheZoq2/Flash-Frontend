@@ -397,7 +397,7 @@ fileListUrl action listId fileIndex additionalVariables =
         variableStrings = List.intersperse "&"
                         <| List.map (\(name, value) -> name ++ "=" ++ value) variables
     in
-        List.foldl (++) baseUrl variableStrings
+        baseUrl ++ List.foldr (++) "" variableStrings
 
 
 checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
@@ -532,18 +532,11 @@ view model =
         imageViewer =
             case model.fileList of
                 Just fileList ->
-                    let
-                        imageUrl =
-                            "list?action=get_file&list_id="
-                            ++ (toString fileList.listId)
-                            ++ "&index="
-                            ++ (toString fileList.fileIndex)
-                    in
-                        ImageViewer.imageViewerHtml
-                            (model.viewerSize.width, model.viewerSize.height)
-                            (0, 0)
-                            1
-                            imageUrl
+                    ImageViewer.imageViewerHtml
+                        (model.viewerSize.width, model.viewerSize.height)
+                        (0, 0)
+                        1
+                        (fileListUrl "get_file" fileList.listId fileList.fileIndex [])
                 Nothing ->
                     div [] []
 
