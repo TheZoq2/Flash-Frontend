@@ -383,6 +383,23 @@ decodeFileData =
         (field "tags" (Json.Decode.list Json.Decode.string))
 
 
+fileListUrl : String -> Int -> Int -> List (String, String) -> String
+fileListUrl action listId fileIndex additionalVariables =
+    let
+        baseUrl = "list?"
+
+        variables = [ ("action", action)
+                    , ("list_id", toString listId)
+                    , ("index", toString fileIndex)
+                    ]
+                    ++ additionalVariables
+
+        variableStrings = List.intersperse "&"
+                        <| List.map (\(name, value) -> name ++ "=" ++ value) variables
+    in
+        List.foldl (++) baseUrl variableStrings
+
+
 checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
 checkHttpAttempt func res=
     case res of
@@ -394,7 +411,7 @@ checkHttpAttempt func res=
 requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
     let
-        url = "list?action=get_data&list_id=" ++ toString listId ++ "&index=" ++ toString index
+        url = fileListUrl "get_data" listId index []
 
         _ = Debug.log "Requesting file data " url
     in
