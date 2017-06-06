@@ -258,67 +258,62 @@ keyboardSelectorList =
 
 handleKeyboardInput : Model -> Int -> ( Model, Cmd Msg )
 handleKeyboardInput model code =
-    let
-        _ =
-            Debug.log "" (Char.fromCode code)
-        _ = Debug.log "Current receiver" model.keyReceiver
-    in
-        case model.keyReceiver of
-            None ->
-                case Char.fromCode code of
-                    'L' ->
-                        --Next
-                        selectPrevFile model
+    case model.keyReceiver of
+        None ->
+            case Char.fromCode code of
+                'L' ->
+                    --Next
+                    selectNextFile model
 
-                    'H' ->
-                        --Previous
-                        selectNextFile model
+                'H' ->
+                    --Previous
+                    selectNextFile model
 
-                    'S' ->
-                        --Save
-                        ( model, requestSaveImage model <| getSelectedTags model)
+                'S' ->
+                    --Save
+                    ( model, requestSaveImage model <| getSelectedTags model)
 
-                    'T' ->
-                        --Modify tags
-                        ( { model | keyReceiver = TagListList }, Cmd.none )
+                'T' ->
+                    --Modify tags
+                    ( { model | keyReceiver = TagListList }, Cmd.none )
 
-                    _ ->
-                        ( model, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
-            TagListList ->
-                case Char.fromCode code of
-                    'I' ->
-                        --Return to normal
-                        ( {model | keyReceiver = None}, Cmd.none)
-                    'A' ->
-                        addTagList model
-                    code ->
-                        --Select a subcomponent
-                        handleTagListSelectorKeys model code
-            TagList id ->
-                case Char.fromCode code of
-                    'I' ->
-                        ( {model | keyReceiver = TagListList}, Cmd.none)
-                    'A' ->
-                        startTagAddition model id
-                    'R' -> -- Remove the list
-                        removeTagList model id
-                    'T' -> -- Toggle the list
-                        toggleTagList model id
-                    code ->
-                        handleTagSelectorKeys model id code
-            Tag listId tagId ->
-                case Char.fromCode code of
-                    'I' ->
-                        ( {model | keyReceiver = TagList listId}, Cmd.none)
-                    'R' ->
-                        removeTag model listId tagId
-                    'T' ->
-                        toggleTag model listId tagId
-                    _ ->
-                        (model, Cmd.none)
-            _ ->
-                (model, Cmd.none)
+        TagListList ->
+            case Char.fromCode code of
+                'I' ->
+                    --Return to normal
+                    ( {model | keyReceiver = None}, Cmd.none)
+                'A' ->
+                    addTagList model
+                code ->
+                    --Select a subcomponent
+                    handleTagListSelectorKeys model code
+        TagList id ->
+            case Char.fromCode code of
+                'I' ->
+                    ( {model | keyReceiver = TagListList}, Cmd.none)
+                'A' ->
+                    startTagAddition model id
+                'R' -> -- Remove the list
+                    removeTagList model id
+                'T' -> -- Toggle the list
+                    toggleTagList model id
+                code ->
+                    handleTagSelectorKeys model id code
+        Tag listId tagId ->
+            case Char.fromCode code of
+                'I' ->
+                    ( {model | keyReceiver = TagList listId}, Cmd.none)
+                'R' ->
+                    removeTag model listId tagId
+                'T' ->
+                    toggleTag model listId tagId
+                _ ->
+                    (model, Cmd.none)
+        _ ->
+            (model, Cmd.none)
 
 
 handleTagListSelectorKeys : Model -> Char -> (Model, Cmd Msg)
@@ -412,8 +407,6 @@ requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
     let
         url = fileListUrl "get_data" listId index []
-
-        _ = Debug.log "Requesting file data " url
     in
         Http.send 
             (checkHttpAttempt FileDataReceived)
@@ -451,8 +444,7 @@ submitSearch : String -> Cmd Msg
 submitSearch text =
     let
         url =
-            "file_list/from_path?path=" ++ text
-        _ = Debug.log "Search url" url
+            "file_list.from_path?path=" ++ text
     in
         Http.send
             (checkHttpAttempt (\val -> NewFileList val.id val.length))
