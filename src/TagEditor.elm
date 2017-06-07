@@ -267,7 +267,7 @@ handleKeyboardInput model code =
 
                 'H' ->
                     --Previous
-                    selectNextFile model
+                    selectPrevFile model
 
                 'S' ->
                     --Save
@@ -444,7 +444,7 @@ submitSearch : String -> Cmd Msg
 submitSearch text =
     let
         url =
-            "file_list.from_path?path=" ++ text
+            "file_list/from_path?path=" ++ text
     in
         Http.send
             (checkHttpAttempt (\val -> NewFileList val.id val.length))
