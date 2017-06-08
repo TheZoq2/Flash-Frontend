@@ -78,6 +78,7 @@ type Msg
     | SearchTextChanged String
     | NewFileList Int Int
     | FileDataReceived FileData
+    | SaveComplete
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
@@ -111,6 +112,8 @@ update msg model =
             in
                 ( model, Cmd.none )
         FileDataReceived response ->
+            (model, Cmd.none)
+        SaveComplete ->
             (model, Cmd.none)
 
         WindowResized size ->
@@ -433,8 +436,8 @@ requestSaveImage model tags =
                         [("tags", toString tagsJson)]
             in
                 Http.send 
-                    (checkHttpAttempt FileDataReceived)
-                    (Http.get url decodeFileData)
+                    (checkHttpAttempt (\_ -> SaveComplete))
+                    (Http.get url <| Json.Decode.string)
         Nothing ->
             Cmd.none
 
