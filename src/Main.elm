@@ -10,23 +10,29 @@ import Json.Decode exposing (..)
 import Json.Encode
 import Http
 import Task
+import FileList exposing (FileList, fileListUrl)
+import Elements exposing (flatButton)
 
+-- Constants
+filesPerPage = 20
 
 --Model
 
 
 type alias Model =
-    { tagNames : List String
-    , currentImages : List AlbumEntry
-    , networkError : String
+    { searchQuery : String
+    , currentList : Maybe FileList
+    , page: Maybe Int
+    , networkError : Maybe String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { tagNames = []
-      , currentImages = []
-      , networkError = ""
+    ( { searchQuery = ""
+      , currentList = Nothing
+      , page = Nothing
+      , networkError = Nothing
       }
     , Cmd.none
     )
@@ -37,91 +43,44 @@ init =
 
 
 type Msg
-    = ListingFail Http.Error
-    | Search String
-    | AlbumListFetched (Result Http.Error (List ( Int, String, String )))
+    = NetworkError Http.Error
+    | SearchQueryChanged String
+    | SubmitSearch
+    | NewFileList Int Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Search searchString ->
-            (model, getImagesWithTags <| searchToTags searchString)
-        ListingFail err ->
-            ( { model | networkError = toString err }, Cmd.none )
-
-        AlbumListFetched result ->
-            let
-                _ =
-                    Debug.log "Response " result
-            in
-                case result of
-                    Ok result ->
-                        ( { model | currentImages = List.map albumEntryFromTuple result }, Cmd.none )
-                    Err error ->
-                        let
-                            _ = Debug.log "Album fetch error: " error
-                        in
-                            (model, Cmd.none)
+        SearchQueryChanged query ->
+            ({model | searchQuery = query}, Cmd.none)
+        SubmitSearch ->
+            (model, submitSearch model.searchQuery)
+        NetworkError err ->
+            ( { model | networkError = Just <| toString err }, Cmd.none )
+        NewFileList id length ->
+            ( { model | currentList = Just <| FileList.new id length }, Cmd.none )
 
 
-
-searchToTags : String -> List String
-searchToTags searchString =
-    String.split "," searchString
+checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
+checkHttpAttempt func res=
+    case res of
+        Ok val ->
+            func val
+        Err e ->
+            NetworkError e
 
 
 
---Makes a HTTP request to the server requesting a list of all the images
---with the specified tags
-
-
-getImagesWithTags : List String -> Cmd Msg
-getImagesWithTags tags =
+submitSearch : String -> Cmd Msg
+submitSearch text =
     let
-        tagsJson =
-            List.map Json.Encode.string tags
-
-        --TODO: Make surre X-Origin requests are allowed
         url =
-            "/album?tags=" ++ toString tagsJson
+            "search?query=" ++ text
     in
-        --Task.perform ListingFail AlbumListFetched (Http.get decodeAlbumList url)
-        --Task.perform AlbumListFetched (Http.get decodeAlbumList url)
-        Http.get url decodeAlbumList |> Http.send AlbumListFetched
-
-
-getThumbnail : ( Int, String, String ) -> String
-getThumbnail ( _, _, a ) =
-    a
-
-
-type alias AlbumEntry =
-    { id : Int
-    , path : String
-    , thumbnail_path : String
-    }
-
-
-albumEntryFromTuple : ( Int, String, String ) -> AlbumEntry
-albumEntryFromTuple ( id, path, thumbnail_path ) =
-    { id = id
-    , path = path
-    , thumbnail_path = thumbnail_path
-    }
-
-
-
---Decoding a list of images in the album as a tuple
-
-
-decodeAlbumList : Json.Decode.Decoder (List ( Int, String, String ))
-decodeAlbumList =
-    let
-        imgResponseDecode =
-            map3 (,,) (field "id" int) (field "path" string) (field "thumbnail_path" string)
-    in
-        Json.Decode.at [] (Json.Decode.list imgResponseDecode)
+        Http.send
+            (checkHttpAttempt (\val -> NewFileList val.id val.length))
+            (Http.get url FileList.decodeNewFileList)
 
 
 
@@ -130,33 +89,41 @@ decodeAlbumList =
 
 view : Model -> Html Msg
 view model =
-    div []
-    [ input [ placeholder "Search", onInput Search ] []
-    , div [ Style.toStyle Style.albumContainer ]
-       <| [ p [] [ text model.networkError ]
-          ]
-          ++ generateImageViews model.currentImages
-    ]
-
-
-generateImageViews : List AlbumEntry -> List (Html Msg)
-generateImageViews albumEntries =
     let
-        imgPath =
-            "album/image/"
+        searchForm =
+            Html.form [onSubmit SubmitSearch]
+                [ input [ placeholder "Search", onInput SearchQueryChanged ] []
+                , flatButton [] [] SubmitSearch "Search" 1
+                ]
+
+        networkErrorElem =
+            Maybe.withDefault (div [] []) 
+                <| Maybe.map (\message -> p [] [ text message ]) model.networkError 
     in
-        List.map
-            (\entry ->
-                div [ Style.toStyle Style.albumItemContainer ]
-                    [ a [ href (imgPath ++ entry.path) ]
-                        [ img
-                            [ src (imgPath ++ entry.thumbnail_path)
-                            ]
-                            []
-                        ]
-                    ]
-            )
-            albumEntries
+        div []
+            [ searchForm
+            , createThumbnailList model
+            , networkErrorElem
+            ]
+
+
+createThumbnailList : Model -> Html Msg
+createThumbnailList model =
+    case model.currentList of
+        Just fileList ->
+            let
+                fileIds =
+                    List.range 0 fileList.length
+
+                fileUrls = List.map (fileListUrl [] "get_thumbnail" fileList.listId) fileIds
+
+            in
+                div []
+                    <| List.map (\url -> img [src url] []) fileUrls
+        Nothing ->
+            p [] [text "No results"]
+
+
 
 
 

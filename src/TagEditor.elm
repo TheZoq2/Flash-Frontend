@@ -3,7 +3,7 @@ module TagEditor exposing (..)
 import Tags
 import Style
 import ImageViewer
-import FileList
+import FileList exposing (decodeNewFileList, fileListUrl)
 import Vec exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -381,23 +381,6 @@ decodeFileData =
         (field "tags" (Json.Decode.list Json.Decode.string))
 
 
-fileListUrl : String -> Int -> Int -> List (String, String) -> String
-fileListUrl action listId fileIndex additionalVariables =
-    let
-        baseUrl = "list?"
-
-        variables = [ ("action", action)
-                    , ("list_id", toString listId)
-                    , ("index", toString fileIndex)
-                    ]
-                    ++ additionalVariables
-
-        variableStrings = List.intersperse "&"
-                        <| List.map (\(name, value) -> name ++ "=" ++ value) variables
-    in
-        baseUrl ++ List.foldr (++) "" variableStrings
-
-
 checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
 checkHttpAttempt func res=
     case res of
@@ -409,7 +392,7 @@ checkHttpAttempt func res=
 requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
     let
-        url = fileListUrl "get_data" listId index []
+        url = fileListUrl [] "get_data" listId index
     in
         Http.send 
             (checkHttpAttempt FileDataReceived)
@@ -430,10 +413,10 @@ requestSaveImage model tags =
                     List.map Json.Encode.string tags
 
                 url = fileListUrl
+                        [("tags", toString tagsJson)]
                         "save"
                         fileList.listId
                         fileList.fileIndex
-                        [("tags", toString tagsJson)]
             in
                 Http.send 
                     (checkHttpAttempt (\_ -> SaveComplete))
@@ -453,18 +436,6 @@ submitSearch text =
             (checkHttpAttempt (\val -> NewFileList val.id val.length))
             (Http.get url decodeNewFileList)
 
-
-
-type alias FileListResponse =
-    { id: Int
-    , length: Int
-    }
-
-decodeNewFileList : Json.Decode.Decoder FileListResponse
-decodeNewFileList =
-    Json.Decode.map2 FileListResponse
-        (field "id" Json.Decode.int)
-        (field "length" Json.Decode.int)
 
 
 
@@ -538,7 +509,7 @@ view model =
                         (model.viewerSize.width, model.viewerSize.height)
                         (0, 0)
                         1
-                        (fileListUrl "get_file" fileList.listId fileList.fileIndex [])
+                        (fileListUrl [] "get_file" fileList.listId fileList.fileIndex)
                 Nothing ->
                     div [] []
 
