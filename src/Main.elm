@@ -115,11 +115,19 @@ createThumbnailList model =
                 fileIds =
                     List.range 0 (fileList.length - 1)
 
-                fileUrls = List.map (fileListUrl [] "get_thumbnail" fileList.listId) fileIds
-
+                fileElements fileId =
+                    let
+                        editorUrl = "tag_editor.html#list/"
+                                  ++ (toString fileList.listId)
+                                  ++ "/file/"
+                                  ++ (toString fileId)
+                    in
+                        a [href editorUrl]
+                            [ img [src <| fileListUrl [] "get_thumbnail" fileList.listId fileId] []
+                            ]
             in
                 div []
-                    <| List.map (\url -> img [src url] []) fileUrls
+                    <| List.map fileElements fileIds
         Nothing ->
             p [] [text "No results"]
 
