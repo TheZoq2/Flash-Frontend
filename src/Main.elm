@@ -113,7 +113,7 @@ createThumbnailList model =
         Just fileList ->
             let
                 fileIds =
-                    List.range 0 fileList.length
+                    List.range 0 (fileList.length - 1)
 
                 fileUrls = List.map (fileListUrl [] "get_thumbnail" fileList.listId) fileIds
 
