@@ -22,6 +22,7 @@ import List.Extra
 import UrlParser
 import Navigation
 import UrlParser
+import UrlParser exposing ((</>))
 
 
 -- MODEL
@@ -79,7 +80,7 @@ type Msg
     | Keypress Int
     | SubmitSearch
     | SearchTextChanged String
-    | NewFileList Int Int
+    | NewFileList Int Int Int
     | FileDataReceived FileData
     | SaveComplete
     | UrlChanged Navigation.Location
@@ -170,41 +171,37 @@ update msg model =
             (model, submitSearch model.searchText)
         SearchTextChanged newSearch ->
             ({model | searchText = newSearch}, Cmd.none)
-        NewFileList listId length ->
+        NewFileList selectedFile listId length ->
             let
-                fileList = FileList.new listId length
+                fileList = FileList.newWithSelected selectedFile listId length
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
         UrlChanged location ->
-            updateLocation model location
+            (model, updateLocation location)
 
 
 
-updateLocation : Model -> Navigation.Location -> (Model, Cmd Msg)
-updateLocation model location =
+type Route
+    = FileList Int
+    | File Int Int
+
+updateLocation : Navigation.Location -> Cmd Msg
+updateLocation location =
     let
-        type Route
-            = FileList Int
-            | File Int Int
-
         route =
             UrlParser.oneOf
                 [ UrlParser.map (UrlParser.s "list" </> UrlParser.int) FileList
-                , UrlParser.map (UrlParser.s "list" </> UrlParser.int </> "file" </> UrlParser.int) File
+                , UrlParser.map (UrlParser.s "list" </> UrlParser.int </> UrlParser.s "file" </> UrlParser.int) File
                 ]
 
-        (listId, fileId) = case route of
-            FileList list ->
-                (list, 0)
-            File list file ->
-                (list, file)
-
-        newModel =
-            {model | fileList = }
-
-        cmd = requestFileData newModel.fileList.listId newModel.fileList.fileIndex
     in
-        (updateLocation, cmd)
+        case Maybe.map route of
+            Just (FileList list) ->
+                requestFileListData 0 list
+            Just (File list file) ->
+                requestFileListData file list
+            Nothing ->
+                Cmd.none
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =
@@ -459,15 +456,29 @@ requestSaveImage model tags =
 
 
 
+submitFileListRequest : String -> (FileList.FileListResponse -> Cmd Msg) -> Cmd Msg
+submitFileListRequest url msgFunc =
+    Http.send
+        (checkHttpAttempt msgFunc)
+        (Http.get url decodeNewFileList)
+
 submitSearch : String -> Cmd Msg
 submitSearch text =
     let
         url =
             "file_list/from_path?path=" ++ text
     in
-        Http.send
-            (checkHttpAttempt (\val -> NewFileList val.id val.length))
-            (Http.get url decodeNewFileList)
+        submitFileListRequest url (\val -> NewFileList 0 val.id val.length)
+
+
+requestFileListData : Int -> Int -> Cmd Msg
+requestFileListData selected listId =
+    let
+        url =
+            "file_list?list_id=" ++ (toString listId)
+    in
+        submitFileListRequest url (\val -> NewFileList 0 val.id val.length)
+
 
 
 
@@ -581,7 +592,7 @@ subscriptions model =
 
 main : Program Never Model Msg
 main =
-    Html.program
+    Navigation.program UrlChanged
         { init = init
         , update = update
         , view = view

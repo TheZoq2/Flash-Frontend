@@ -1,6 +1,8 @@
 module FileList exposing
     ( FileList
+    , FileListResponse
     , new
+    , newWithSelected
     , jump
     , decodeNewFileList
     , fileListUrl
@@ -17,6 +19,19 @@ type alias FileList =
 new : Int -> Int -> FileList
 new id length =
     FileList id 0 length
+
+newWithSelected : Int -> Int -> Int -> FileList
+newWithSelected selected id length =
+    let
+        fileIndex =
+            if selected >= length then
+                length - 1
+            else if selected < 0 then
+                0
+            else
+                selected
+    in
+        FileList id fileIndex length
 
 
 
