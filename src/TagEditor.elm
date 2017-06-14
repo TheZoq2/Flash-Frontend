@@ -20,6 +20,8 @@ import Elements exposing (flatButton)
 import Dom
 import List.Extra
 import UrlParser
+import Navigation
+import UrlParser
 
 
 -- MODEL
@@ -53,8 +55,8 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Navigation.Location -> ( Model, Cmd Msg )
+init location =
     ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing
     , Cmd.batch
         [ Task.perform WindowResized Window.size
@@ -80,6 +82,7 @@ type Msg
     | NewFileList Int Int
     | FileDataReceived FileData
     | SaveComplete
+    | UrlChanged Navigation.Location
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
@@ -172,7 +175,36 @@ update msg model =
                 fileList = FileList.new listId length
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
+        UrlChanged location ->
+            updateLocation model location
 
+
+
+updateLocation : Model -> Navigation.Location -> (Model, Cmd Msg)
+updateLocation model location =
+    let
+        type Route
+            = FileList Int
+            | File Int Int
+
+        route =
+            UrlParser.oneOf
+                [ UrlParser.map (UrlParser.s "list" </> UrlParser.int) FileList
+                , UrlParser.map (UrlParser.s "list" </> UrlParser.int </> "file" </> UrlParser.int) File
+                ]
+
+        (listId, fileId) = case route of
+            FileList list ->
+                (list, 0)
+            File list file ->
+                (list, file)
+
+        newModel =
+            {model | fileList = }
+
+        cmd = requestFileData newModel.fileList.listId newModel.fileList.fileIndex
+    in
+        (updateLocation, cmd)
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =

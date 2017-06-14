@@ -13,9 +13,6 @@ import Task
 import FileList exposing (FileList, fileListUrl)
 import Elements exposing (flatButton)
 
--- Constants
-filesPerPage = 20
-
 --Model
 
 
