@@ -61,6 +61,7 @@ init location =
     ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing
     , Cmd.batch
         [ Task.perform WindowResized Window.size
+        , updateLocation location
         ]
     )
 
@@ -177,7 +178,10 @@ update msg model =
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
         UrlChanged location ->
-            (model, updateLocation location)
+            let
+                _ = Debug.log "" "Running UrlChanged"
+            in
+                (model, updateLocation location)
 
 
 
@@ -190,18 +194,20 @@ updateLocation location =
     let
         route =
             UrlParser.oneOf
-                [ UrlParser.map (UrlParser.s "list" </> UrlParser.int) FileList
-                , UrlParser.map (UrlParser.s "list" </> UrlParser.int </> UrlParser.s "file" </> UrlParser.int) File
+                [ UrlParser.map FileList (UrlParser.s "list" </> UrlParser.int)
+                , UrlParser.map File (UrlParser.s "list" </> UrlParser.int </> (UrlParser.s "file") </> UrlParser.int)
                 ]
-
     in
-        case Maybe.map route of
+        case UrlParser.parseHash route location of
             Just (FileList list) ->
                 requestFileListData 0 list
             Just (File list file) ->
                 requestFileListData file list
             Nothing ->
-                Cmd.none
+                let
+                    _ = Debug.log "Url is none" ""
+                in
+                    Cmd.none
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =
@@ -456,7 +462,7 @@ requestSaveImage model tags =
 
 
 
-submitFileListRequest : String -> (FileList.FileListResponse -> Cmd Msg) -> Cmd Msg
+submitFileListRequest : String -> (FileList.FileListResponse -> Msg) -> Cmd Msg
 submitFileListRequest url msgFunc =
     Http.send
         (checkHttpAttempt msgFunc)
@@ -477,7 +483,7 @@ requestFileListData selected listId =
         url =
             "file_list?list_id=" ++ (toString listId)
     in
-        submitFileListRequest url (\val -> NewFileList 0 val.id val.length)
+        submitFileListRequest url (\val -> NewFileList selected val.id val.length)
 
 
 
