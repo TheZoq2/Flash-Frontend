@@ -3,7 +3,7 @@ module TagEditor exposing (..)
 import Tags
 import Style
 import ImageViewer
-import FileList
+import FileList exposing (decodeNewFileList, fileListUrl)
 import Vec exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -19,6 +19,10 @@ import Css
 import Elements exposing (flatButton)
 import Dom
 import List.Extra
+import UrlParser
+import Navigation
+import UrlParser
+import UrlParser exposing ((</>))
 
 
 -- MODEL
@@ -52,11 +56,12 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Navigation.Location -> ( Model, Cmd Msg )
+init location =
     ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing
     , Cmd.batch
         [ Task.perform WindowResized Window.size
+        , updateLocation location
         ]
     )
 
@@ -76,9 +81,10 @@ type Msg
     | Keypress Int
     | SubmitSearch
     | SearchTextChanged String
-    | NewFileList Int Int
+    | NewFileList Int Int Int -- selectedFile listId length
     | FileDataReceived FileData
     | SaveComplete
+    | UrlChanged Navigation.Location
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
@@ -166,12 +172,42 @@ update msg model =
             (model, submitSearch model.searchText)
         SearchTextChanged newSearch ->
             ({model | searchText = newSearch}, Cmd.none)
-        NewFileList listId length ->
+        NewFileList selectedFile listId length ->
             let
-                fileList = FileList.new listId length
+                fileList = FileList.newWithSelected selectedFile listId length
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
+        UrlChanged location ->
+            let
+                _ = Debug.log "" "Running UrlChanged"
+            in
+                (model, updateLocation location)
 
+
+
+type Route
+    = FileList Int
+    | File Int Int
+
+updateLocation : Navigation.Location -> Cmd Msg
+updateLocation location =
+    let
+        route =
+            UrlParser.oneOf
+                [ UrlParser.map FileList (UrlParser.s "list" </> UrlParser.int)
+                , UrlParser.map File (UrlParser.s "list" </> UrlParser.int </> (UrlParser.s "file") </> UrlParser.int)
+                ]
+    in
+        case UrlParser.parseHash route location of
+            Just (FileList list) ->
+                requestFileListData 0 list
+            Just (File list file) ->
+                requestFileListData file list
+            Nothing ->
+                let
+                    _ = Debug.log "Url is none" ""
+                in
+                    Cmd.none
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =
@@ -381,23 +417,6 @@ decodeFileData =
         (field "tags" (Json.Decode.list Json.Decode.string))
 
 
-fileListUrl : String -> Int -> Int -> List (String, String) -> String
-fileListUrl action listId fileIndex additionalVariables =
-    let
-        baseUrl = "list?"
-
-        variables = [ ("action", action)
-                    , ("list_id", toString listId)
-                    , ("index", toString fileIndex)
-                    ]
-                    ++ additionalVariables
-
-        variableStrings = List.intersperse "&"
-                        <| List.map (\(name, value) -> name ++ "=" ++ value) variables
-    in
-        baseUrl ++ List.foldr (++) "" variableStrings
-
-
 checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
 checkHttpAttempt func res=
     case res of
@@ -409,7 +428,7 @@ checkHttpAttempt func res=
 requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
     let
-        url = fileListUrl "get_data" listId index []
+        url = fileListUrl [] "get_data" listId index
     in
         Http.send 
             (checkHttpAttempt FileDataReceived)
@@ -430,10 +449,10 @@ requestSaveImage model tags =
                     List.map Json.Encode.string tags
 
                 url = fileListUrl
+                        [("tags", toString tagsJson)]
                         "save"
                         fileList.listId
                         fileList.fileIndex
-                        [("tags", toString tagsJson)]
             in
                 Http.send 
                     (checkHttpAttempt (\_ -> SaveComplete))
@@ -443,28 +462,30 @@ requestSaveImage model tags =
 
 
 
+submitFileListRequest : String -> (FileList.FileListResponse -> Msg) -> Cmd Msg
+submitFileListRequest url msgFunc =
+    Http.send
+        (checkHttpAttempt msgFunc)
+        (Http.get url decodeNewFileList)
+
 submitSearch : String -> Cmd Msg
 submitSearch text =
     let
         url =
             "file_list/from_path?path=" ++ text
     in
-        Http.send
-            (checkHttpAttempt (\val -> NewFileList val.id val.length))
-            (Http.get url decodeNewFileList)
+        submitFileListRequest url (\val -> NewFileList 0 val.id val.length)
 
 
+requestFileListData : Int -> Int -> Cmd Msg
+requestFileListData selected listId =
+    let
+        url =
+            "file_list?list_id=" ++ (toString listId)
+    in
+        submitFileListRequest url (\val -> NewFileList selected val.id val.length)
 
-type alias FileListResponse =
-    { id: Int
-    , length: Int
-    }
 
-decodeNewFileList : Json.Decode.Decoder FileListResponse
-decodeNewFileList =
-    Json.Decode.map2 FileListResponse
-        (field "id" Json.Decode.int)
-        (field "length" Json.Decode.int)
 
 
 
@@ -538,7 +559,7 @@ view model =
                         (model.viewerSize.width, model.viewerSize.height)
                         (0, 0)
                         1
-                        (fileListUrl "get_file" fileList.listId fileList.fileIndex [])
+                        (fileListUrl [] "get_file" fileList.listId fileList.fileIndex)
                 Nothing ->
                     div [] []
 
@@ -577,7 +598,7 @@ subscriptions model =
 
 main : Program Never Model Msg
 main =
-    Html.program
+    Navigation.program UrlChanged
         { init = init
         , update = update
         , view = view

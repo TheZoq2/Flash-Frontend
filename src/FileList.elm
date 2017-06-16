@@ -1,8 +1,14 @@
 module FileList exposing
     ( FileList
+    , FileListResponse
     , new
+    , newWithSelected
     , jump
+    , decodeNewFileList
+    , fileListUrl
     )
+
+import Json.Decode exposing (..)
 
 type alias FileList =
     { listId: Int
@@ -13,6 +19,19 @@ type alias FileList =
 new : Int -> Int -> FileList
 new id length =
     FileList id 0 length
+
+newWithSelected : Int -> Int -> Int -> FileList
+newWithSelected selected id length =
+    let
+        fileIndex =
+            if selected >= length then
+                length - 1
+            else if selected < 0 then
+                0
+            else
+                selected
+    in
+        FileList id fileIndex length
 
 
 
@@ -28,3 +47,35 @@ jump amount list =
             { list | fileIndex = newIndex }
         else
             list
+
+
+
+type alias FileListResponse =
+    { id: Int
+    , length: Int
+    }
+
+decodeNewFileList : Json.Decode.Decoder FileListResponse
+decodeNewFileList =
+    Json.Decode.map2 FileListResponse
+        (field "id" Json.Decode.int)
+        (field "length" Json.Decode.int)
+
+
+fileListUrl :List (String, String) -> String -> Int -> Int ->  String
+fileListUrl additionalVariables action listId fileIndex =
+    let
+        baseUrl = "list?"
+
+        variables = [ ("action", action)
+                    , ("list_id", toString listId)
+                    , ("index", toString fileIndex)
+                    ]
+                    ++ additionalVariables
+
+        variableStrings = List.intersperse "&"
+                        <| List.map (\(name, value) -> name ++ "=" ++ value) variables
+    in
+        baseUrl ++ List.foldr (++) "" variableStrings
+
+
