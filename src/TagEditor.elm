@@ -81,7 +81,7 @@ type Msg
     | Keypress Int
     | SubmitSearch
     | SearchTextChanged String
-    | NewFileList Int Int Int
+    | NewFileList Int Int Int -- selectedFile listId length
     | FileDataReceived FileData
     | SaveComplete
     | UrlChanged Navigation.Location
