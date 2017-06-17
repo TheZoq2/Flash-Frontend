@@ -69,7 +69,6 @@ init location =
 
 -- UPDATE
 
-
 type Msg
     = RequestNext
     | RequestPrev
@@ -195,7 +194,8 @@ updateLocation location =
         route =
             UrlParser.oneOf
                 [ UrlParser.map FileList (UrlParser.s "list" </> UrlParser.int)
-                , UrlParser.map File (UrlParser.s "list" </> UrlParser.int </> (UrlParser.s "file") </> UrlParser.int)
+                , UrlParser.map File
+                    (UrlParser.s "list" </> UrlParser.int </> (UrlParser.s "file") </> UrlParser.int)
                 ]
     in
         case UrlParser.parseHash route location of
