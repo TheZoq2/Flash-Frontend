@@ -56,12 +56,13 @@ type alias Model =
     , fileList: Maybe FileList.FileList
     -- The id of the tag list containing the tags already on the image
     , oldTagList: Maybe Int
+    , imageLoaded: Bool
     }
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing Nothing
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing Nothing True
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         , updateLocation location
@@ -77,15 +78,15 @@ type Msg
     | RequestPrev
     | RequestSave
     | NetworkError Http.Error
-    | OnSaved String
+    | OnSaved
     | WindowResized Window.Size
     | Keypress Int
     | SubmitSearch
     | SearchTextChanged String
     | NewFileList Int Int Int -- selectedFile listId length
     | FileDataReceived FileData
-    | SaveComplete
     | UrlChanged Navigation.Location
+    | ImageLoaded
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
@@ -107,7 +108,7 @@ update msg model =
             selectPrevFile model
         RequestSave ->
             ( model, requestSaveImage model <| getSelectedTags model)
-        OnSaved _ ->
+        OnSaved ->
             selectNextFile model
         NetworkError e ->
             let
@@ -117,22 +118,28 @@ update msg model =
                 ( model, Cmd.none )
         FileDataReceived data ->
             (onFileDataReceived data model, Cmd.none)
-        SaveComplete ->
-            (model, Cmd.none)
         UrlChanged location ->
-            let
-                _ = Debug.log "" "Running UrlChanged"
-            in
-                (model, updateLocation location)
+            (model, updateLocation location)
         WindowResized size ->
             let
                 viewerSize =
                     Size ((toFloat size.width) - Style.totalSidebarSize) (toFloat size.height)
-
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
-            --(model, Cmd.none)
-        --TODO: Write a general function for dealing with taglistlist messages
+        ImageLoaded ->
+                ( {model | imageLoaded = True}, Cmd.none)
+        Keypress code ->
+            handleKeyboardInput model code
+        SubmitSearch ->
+            (model, submitSearch model.searchText)
+        SearchTextChanged newSearch ->
+            ({model | searchText = newSearch}, Cmd.none)
+        NewFileList selectedFile listId length ->
+            let
+                fileList = FileList.newWithSelected selectedFile listId length
+            in
+                ({model | fileList = Just fileList }, updateFileData fileList)
+        -- TagList related messages
         AddTagList ->
             addTagList model
         AddTag id ->
@@ -168,17 +175,6 @@ update msg model =
                         ( {model | keyReceiver = None}, Cmd.none)
                 Ok () ->
                     (model, Cmd.none)
-        Keypress code ->
-            handleKeyboardInput model code
-        SubmitSearch ->
-            (model, submitSearch model.searchText)
-        SearchTextChanged newSearch ->
-            ({model | searchText = newSearch}, Cmd.none)
-        NewFileList selectedFile listId length ->
-            let
-                fileList = FileList.newWithSelected selectedFile listId length
-            in
-                ({model | fileList = Just fileList }, updateFileData fileList)
 
 
 
@@ -400,7 +396,7 @@ jumpFileList amount model =
             let
                 newList = FileList.jump amount list
             in
-                ({model | fileList = Just newList}, updateFileData newList)
+                ({model | fileList = Just newList, imageLoaded = False}, updateFileData newList)
         Nothing ->
             (model, Cmd.none)
 
@@ -450,7 +446,7 @@ requestSaveImage model tags =
                         fileList.fileIndex
             in
                 Http.send 
-                    (checkHttpAttempt (\_ -> SaveComplete))
+                    (checkHttpAttempt (\_ -> OnSaved))
                     (Http.get url <| Json.Decode.string)
         Nothing ->
             Cmd.none
@@ -540,9 +536,13 @@ view model =
             flatButton [Style.WideButton, Style.BlockButton] [] AddTagList "+" 2
 
         loadingBar =
-            div [ Style.class [ Style.LoadingContainer ] ]
-                [  div [ Style.class [Style.LoadingPulse ] ] [ ] 
-                ]
+            case model.imageLoaded of
+                False ->
+                    div [ Style.class [ Style.LoadingContainer ] ]
+                        [  div [ Style.class [Style.LoadingPulse ] ] [ ] 
+                        ]
+                True ->
+                    div [] []
 
         additionalRightPaneClasses =
             if model.keyReceiver == TagListList then
@@ -580,13 +580,13 @@ view model =
             case model.fileList of
                 Just fileList ->
                     ImageViewer.imageViewerHtml
+                        ImageLoaded
                         (model.viewerSize.width, model.viewerSize.height)
                         (0, 0)
                         1
                         (fileListUrl [] "get_file" fileList.listId fileList.fileIndex)
                 Nothing ->
                     div [] []
-
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
