@@ -66,6 +66,8 @@ type CssClasses
     | TagTextField
     | LoadingPulse
     | LoadingContainer
+    | Thumbnail
+    | ThumbnailContainer
 
 
 
@@ -148,6 +150,22 @@ globalStyle =
             ]
          , Css.class TagListContainer
             [ margin2 (px (tagEditorStdMargin * 3)) zero
+            ]
+         , Css.class Thumbnail
+            [ display block
+            , width (px 300)
+            , height (px 200)
+            , children 
+                [ img
+                    [ Css.width (Css.pct 100)
+                    , Css.height (Css.pct 100)
+                    , Css.property "object-fit" "contain"
+                    ]
+                ]
+            ]
+         , Css.class ThumbnailContainer
+            [ displayFlex
+            , flexWrap wrap
             ]
          ]
             ++ tagEditorCss
