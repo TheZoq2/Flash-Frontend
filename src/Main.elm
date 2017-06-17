@@ -109,8 +109,13 @@ createThumbnailList model =
     case model.currentList of
         Just fileList ->
             let
+                amount = if fileList.length - 1 < 20 then
+                        fileList.length - 1
+                    else
+                        20
+
                 fileIds =
-                    List.range 0 (fileList.length - 1)
+                    List.range 0 amount
 
                 fileElements fileId =
                     let
@@ -119,11 +124,11 @@ createThumbnailList model =
                                   ++ "/file/"
                                   ++ (toString fileId)
                     in
-                        a [href editorUrl]
+                        a [href editorUrl, Style.class [Style.Thumbnail]]
                             [ img [src <| fileListUrl [] "get_thumbnail" fileList.listId fileId] []
                             ]
             in
-                div []
+                div [Style.class [Style.ThumbnailContainer]]
                     <| List.map fileElements fileIds
         Nothing ->
             p [] [text "No results"]

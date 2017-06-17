@@ -56,9 +56,7 @@ type alias Model =
     , tags: Tags.TagListList
     -- The contents of the currently selected tag text input field
     , tagTextfieldContent: Maybe String
-    -- The current text in the search box
-    , searchText: String
-    -- The list of files currently being viewed
+    -- The current list of files
     , fileList: Maybe FileList.FileList
     -- The id of the tag list containing the tags already on the image
     , oldTagList: Maybe Int
@@ -71,7 +69,7 @@ type alias Model =
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing Nothing True True
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing Nothing Nothing True True
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         , updateLocation location
@@ -90,8 +88,6 @@ type Msg
     | OnSaved
     | WindowResized Window.Size
     | Keypress Int
-    | SubmitSearch
-    | SearchTextChanged String
     | NewFileList Int Int Int -- selectedFile listId length
     | FileDataReceived FileData
     | UrlChanged Navigation.Location
@@ -139,10 +135,6 @@ update msg model =
                 ( {model | imageLoaded = True}, Cmd.none)
         Keypress code ->
             handleKeyboardInput model code
-        SubmitSearch ->
-            (model, submitSearch model.searchText)
-        SearchTextChanged newSearch ->
-            ({model | searchText = newSearch}, Cmd.none)
         NewFileList selectedFile listId length ->
             let
                 fileList = FileList.newWithSelected selectedFile listId length
@@ -469,14 +461,6 @@ submitFileListRequest url msgFunc =
         (checkHttpAttempt msgFunc)
         (Http.get url decodeNewFileList)
 
-submitSearch : String -> Cmd Msg
-submitSearch text =
-    let
-        url =
-            "file_list/from_path?path=" ++ text
-    in
-        submitFileListRequest url (\val -> NewFileList 0 val.id val.length)
-
 
 requestFileListData : Int -> Int -> Cmd Msg
 requestFileListData selected listId =
@@ -580,12 +564,6 @@ view model =
                 _ ->
                     Tags.None
 
-        searchField =
-            div []
-                [ input [ onInput SearchTextChanged ] [] 
-                , flatButton [Style.BlockButton] [] SubmitSearch "Search" 1
-                ]
-
         viewerWidth = model.viewerSize.width - if model.sidebarVisible then
                 Style.totalSidebarSize
             else
@@ -609,7 +587,6 @@ view model =
                 , loadingBar
                 , Tags.tagListListHtml model.tags selectedTag listMessages
                 , addTagList
-                , searchField
                 ]
             ]
     in
