@@ -48,21 +48,30 @@ type alias FileData =
 
 type alias Model =
     { lastError : String
+    -- The current part of the page that receives keypresses
     , keyReceiver : KeyReceiver
+    -- The size of the image viewer
     , viewerSize: Size
+    -- The currently selected tags
     , tags: Tags.TagListList
+    -- The contents of the currently selected tag text input field
     , tagTextfieldContent: Maybe String
+    -- The current text in the search box
     , searchText: String
+    -- The list of files currently being viewed
     , fileList: Maybe FileList.FileList
     -- The id of the tag list containing the tags already on the image
     , oldTagList: Maybe Int
+    -- False if the current image is not done loading
     , imageLoaded: Bool
+    -- Wether or not the sidebar is shown
+    , sidebarVisible: Bool
     }
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing Nothing True
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing Nothing True True
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         , updateLocation location
@@ -123,7 +132,7 @@ update msg model =
         WindowResized size ->
             let
                 viewerSize =
-                    Size ((toFloat size.width) - Style.totalSidebarSize) (toFloat size.height)
+                    Size ((toFloat size.width)) (toFloat size.height)
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
         ImageLoaded ->
@@ -306,7 +315,8 @@ handleKeyboardInput model code =
                 'T' ->
                     --Modify tags
                     ( { model | keyReceiver = TagListList }, Cmd.none )
-
+                'B' ->
+                    ( { model | sidebarVisible = not model.sidebarVisible}, Cmd.none)
                 _ ->
                     ( model, Cmd.none )
 
@@ -576,31 +586,43 @@ view model =
                 , flatButton [Style.BlockButton] [] SubmitSearch "Search" 1
                 ]
 
+        viewerWidth = model.viewerSize.width - if model.sidebarVisible then
+                Style.totalSidebarSize
+            else
+                0
+
         imageViewer =
             case model.fileList of
                 Just fileList ->
                     ImageViewer.imageViewerHtml
                         ImageLoaded
-                        (model.viewerSize.width, model.viewerSize.height)
+                        (viewerWidth, model.viewerSize.height)
                         (0, 0)
                         1
                         (fileListUrl [] "get_file" fileList.listId fileList.fileIndex)
                 Nothing ->
                     div [] []
+
+        sidebar =
+            [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
+                [ buttonRow
+                , loadingBar
+                , Tags.tagListListHtml model.tags selectedTag listMessages
+                , addTagList
+                , searchField
+                ]
+            ]
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
                 [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
                     [imageViewer]
-                    ]
-                ++ [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
-                    [ buttonRow
-                    , loadingBar
-                    , Tags.tagListListHtml model.tags selectedTag listMessages
-                    , addTagList
-                    , searchField
-                    ]
                 ]
+                ++ ( if model.sidebarVisible then
+                         sidebar
+                     else
+                         []
+                   )
 
 
 
