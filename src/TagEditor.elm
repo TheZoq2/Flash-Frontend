@@ -39,6 +39,7 @@ type KeyReceiver
 
 -- Data about a file that has been received from the server. The server sends more
 -- data than this but we don't process that for now
+
 type alias FileData =
     { filePath: String
     , tags: List String
@@ -53,12 +54,14 @@ type alias Model =
     , tagTextfieldContent: Maybe String
     , searchText: String
     , fileList: Maybe FileList.FileList
+    -- The id of the tag list containing the tags already on the image
+    , oldTagList: Maybe Int
     }
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing "" Nothing Nothing
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         , updateLocation location
@@ -73,7 +76,6 @@ init location =
 type Msg
     = RequestNext
     | RequestPrev
-    | RequestCurrent
     | RequestSave
     | NetworkError Http.Error
     | OnSaved String
@@ -104,9 +106,6 @@ update msg model =
             selectNextFile model
         RequestPrev ->
             selectPrevFile model
-        -- TODO: Check if this is used anymore
-        RequestCurrent ->
-            (model, Cmd.none)
         RequestSave ->
             ( model, requestSaveImage model <| getSelectedTags model)
         OnSaved _ ->
@@ -117,7 +116,7 @@ update msg model =
                     Debug.log "Network error" e
             in
                 ( model, Cmd.none )
-        FileDataReceived response ->
+        FileDataReceived data ->
             (model, Cmd.none)
         SaveComplete ->
             (model, Cmd.none)
@@ -484,6 +483,20 @@ requestFileListData selected listId =
             "file_list?list_id=" ++ (toString listId)
     in
         submitFileListRequest url (\val -> NewFileList selected val.id val.length)
+
+
+
+-- onFileDataReceived : FileData -> Model -> Model
+-- onFileDataReceived data model =
+--     let
+--         newTagList = case model.oldTagList of
+--             Just id ->
+-- 
+--             Nothing ->
+--                 model.taglistlist
+-- 
+-- 
+--     in
 
 
 

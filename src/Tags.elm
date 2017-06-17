@@ -92,6 +92,10 @@ addTagToList : String -> TagList -> TagList
 addTagToList tagText list=
     {list | tags = Dict.insert list.nextId (newTag tagText) list.tags, nextId = list.nextId + 1}
 
+addTagsToList : List String -> TagList -> TagList
+addTagsToList tags oldList =
+    List.foldl addTagToList oldList tags
+
 
 removeTag : Int -> TagList -> TagList
 removeTag id list =
