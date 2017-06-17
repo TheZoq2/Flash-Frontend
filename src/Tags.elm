@@ -6,6 +6,7 @@ module Tags exposing
     , SelectedTag(..)
     , emptyTagList
     , addTagToList
+    , addTagsToList
     , removeTag
     , tagListSelectedTags
     , selectedTags
@@ -162,12 +163,14 @@ emptyTagListList =
 
 --Adds a tag list to a tag list list
 
-addTagList : TagList -> TagListList -> TagListList
+addTagList : TagList -> TagListList -> (TagListList, Int)
 addTagList addedList targetList =
-    { targetList 
+    ( { targetList
         | tagLists = Dict.insert targetList.nextId addedList targetList.tagLists
         , nextId = targetList.nextId + 1
         }
+    , targetList.nextId
+    )
 
 removeTagList : Int -> TagListList -> TagListList
 removeTagList listId tagListList =

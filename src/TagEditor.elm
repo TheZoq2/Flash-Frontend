@@ -116,10 +116,14 @@ update msg model =
             in
                 ( model, Cmd.none )
         FileDataReceived data ->
-            (model, Cmd.none)
+            (onFileDataReceived data model, Cmd.none)
         SaveComplete ->
             (model, Cmd.none)
-
+        UrlChanged location ->
+            let
+                _ = Debug.log "" "Running UrlChanged"
+            in
+                (model, updateLocation location)
         WindowResized size ->
             let
                 viewerSize =
@@ -175,11 +179,6 @@ update msg model =
                 fileList = FileList.newWithSelected selectedFile listId length
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
-        UrlChanged location ->
-            let
-                _ = Debug.log "" "Running UrlChanged"
-            in
-                (model, updateLocation location)
 
 
 
@@ -203,10 +202,7 @@ updateLocation location =
             Just (File list file) ->
                 requestFileListData file list
             Nothing ->
-                let
-                    _ = Debug.log "Url is none" ""
-                in
-                    Cmd.none
+                Cmd.none
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =
@@ -261,7 +257,7 @@ removeTag model listId tagId =
 addTagList : Model -> (Model, Cmd Msg)
 addTagList model =
     let
-        newTags = Tags.addTagList Tags.emptyTagList model.tags
+        (newTags, _) = Tags.addTagList Tags.emptyTagList model.tags
     in
         ( {model | tags = newTags }, Cmd.none)
 
@@ -486,17 +482,32 @@ requestFileListData selected listId =
 
 
 
--- onFileDataReceived : FileData -> Model -> Model
--- onFileDataReceived data model =
---     let
---         newTagList = case model.oldTagList of
---             Just id ->
--- 
---             Nothing ->
---                 model.taglistlist
--- 
--- 
---     in
+onFileDataReceived : FileData -> Model -> Model
+onFileDataReceived data model =
+    let
+        -- Remove the old tag list containing old tags
+        newTagListList = case model.oldTagList of
+            Just id ->
+                Tags.removeTagList id model.tags
+            Nothing ->
+                model.tags
+
+        uniqueTags =
+            List.filter (\tag -> (List.member tag <| getSelectedTags model) == False) <| data.tags
+
+
+        -- Add a new tag list with the old tags if they exist
+        (newNewTagListList, id) = case uniqueTags of
+            [] ->
+                (newTagListList, Nothing)
+            tags ->
+                let
+                    list = Tags.addTagsToList uniqueTags <| Tags.emptyTagList
+                    (listList, id) = Tags.addTagList list newTagListList
+                in
+                    (listList, Just id)
+    in
+        {model | tags = newNewTagListList, oldTagList = id}
 
 
 
