@@ -133,15 +133,13 @@ update msg model =
                                ++ (toString fileList.fileIndex)
                     Nothing ->
                         ""
-
             in
-                (onFileDataReceived data model, Navigation.modifyUrl newUrl)
+                (onFileDataReceived data {model | oldUrl = newUrl } , Navigation.modifyUrl newUrl)
         UrlChanged location ->
-            if location.href /= model.oldUrl then
-                ({ model | oldUrl = location.href }, updateLocation location)
+            if location.hash /= model.oldUrl then
+                ({model | oldUrl = location.hash}, updateLocation location)
             else
                 (model, Cmd.none)
-
         WindowResized size ->
             let
                 viewerSize =
