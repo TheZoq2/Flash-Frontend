@@ -200,7 +200,7 @@ tagEditorCss =
     , Css.class TagEditorButtonRow
         [ displayFlex
         , descendants
-            [ a
+            [ Css.class Button
                 [ width <| Css.px buttonWidth
                 , height <| Css.px tagEditorStdHeight
                 , borderBottom3 (Css.px 1) Css.solid dividerColor
@@ -212,6 +212,7 @@ tagEditorCss =
         , lineHeight <| Css.px tagEditorStdHeight
         , color primaryTextColor
         , textDecoration Css.none
+        , cursor pointer
         , hover
             [ backgroundColor buttonHoverColor]
         ]

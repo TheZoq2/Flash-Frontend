@@ -64,12 +64,14 @@ type alias Model =
     , imageLoaded: Bool
     -- Wether or not the sidebar is shown
     , sidebarVisible: Bool
+    -- The previous URL of the page
+    , oldUrl: String
     }
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing Nothing Nothing True True
+    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing Nothing Nothing True True ""
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         , updateLocation location
@@ -127,7 +129,7 @@ update msg model =
                     Just fileList ->
                         "#list/"
                                ++ (toString fileList.listId)
-                               ++ "/"
+                               ++ "/file/"
                                ++ (toString fileList.fileIndex)
                     Nothing ->
                         ""
@@ -135,7 +137,11 @@ update msg model =
             in
                 (onFileDataReceived data model, Navigation.modifyUrl newUrl)
         UrlChanged location ->
-            (model, updateLocation location)
+            if location.href /= model.oldUrl then
+                ({ model | oldUrl = location.href }, updateLocation location)
+            else
+                (model, Cmd.none)
+
         WindowResized size ->
             let
                 viewerSize =

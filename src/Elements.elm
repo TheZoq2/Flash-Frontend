@@ -9,7 +9,7 @@ import Style
 --Complete elements
 flatButton : List Style.CssClasses -> List (Html.Attribute a) -> a -> String -> Float -> Html a
 flatButton classes attributes onClickMsg buttonText fontSize =
-    a 
+    p
         (
             [ Style.class (classes ++ [Style.Button])
             , onClick onClickMsg
