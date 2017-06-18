@@ -122,7 +122,18 @@ update msg model =
             in
                 ( model, Cmd.none )
         FileDataReceived data ->
-            (onFileDataReceived data model, Cmd.none)
+            let
+                newUrl = case model.fileList of
+                    Just fileList ->
+                        "#list/"
+                               ++ (toString fileList.listId)
+                               ++ "/"
+                               ++ (toString fileList.fileIndex)
+                    Nothing ->
+                        ""
+
+            in
+                (onFileDataReceived data model, Navigation.modifyUrl newUrl)
         UrlChanged location ->
             (model, updateLocation location)
         WindowResized size ->
