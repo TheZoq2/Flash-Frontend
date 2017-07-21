@@ -1,15 +1,11 @@
 module Main exposing (..)
 
-import Tags
 import Style
 import Html exposing (..)
 import Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Json.Decode exposing (..)
-import Json.Encode
 import Http
-import Task
 import FileList exposing (FileList, fileListUrl)
 import Elements exposing (flatButton)
 
