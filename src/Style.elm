@@ -3,16 +3,15 @@ port module Style exposing (..)
 import Css exposing (..)
 import Css.File exposing (..)
 import Css.Elements exposing (..)
-import Css.Namespace exposing (namespace)
 import Html.Attributes exposing (style)
-import Html
 import Html.CssHelpers
-import Vec exposing (..)
+import Html
 
 
 port files : CssFileStructure -> Cmd msg
 
 
+albumContainer : List Css.Mixin
 albumContainer =
     [ displayFlex
     , flexDirection row
@@ -20,6 +19,7 @@ albumContainer =
     ]
 
 
+albumItemContainer : List Css.Mixin
 albumItemContainer =
     [ height (px 300)
     , margin (px 10)
@@ -74,43 +74,53 @@ type CssClasses
 --Some very common parameters
 
 
+primaryTextColor : Css.Color
 primaryTextColor =
     hex "ffffff"
 
+dividerColor : Css.Color
 dividerColor =
     hex "444444"
 
 
+primaryBackgroundColor : Css.Color
 primaryBackgroundColor =
     hex "1c1c1c"
 
-
+secondaryBackgroundColor : Css.Color
 secondaryBackgroundColor =
     hex "1f1f1f"
 
+buttonHoverColor : Css.Color
 buttonHoverColor =
     hex "333"
 
 
+tagListSelectedBackgroundColor : Css.Color
 tagListSelectedBackgroundColor =
     hex "292929"
 
 
+disabledTagColor : Css.Color
 disabledTagColor =
     (rgb 100 100 100)
 
 
+tagEditorSidebarWidth : Float
 tagEditorSidebarWidth =
     350
 
 
+tagEditorStdMargin : Float
 tagEditorStdMargin =
     10
 
+tagEditorStdHeight : Float
 tagEditorStdHeight = 
     40
 
 
+defaultMaxHeight : Float
 defaultMaxHeight =
     1000
 
@@ -119,6 +129,7 @@ defaultMaxHeight =
 --The style to apply to all files in the project
 
 
+globalStyle : List Css.Stylesheet
 globalStyle =
     [(stylesheet)
         ([ body
@@ -178,9 +189,12 @@ globalStyle =
 
 --Tag editor specific styles
 
+buttonWidth : Float
 buttonWidth =
     tagEditorSidebarWidth / 3
 
+
+tagEditorCss : List Css.Snippet
 tagEditorCss =
     [ Css.class TagEditorContainer
         [ displayFlex
@@ -263,6 +277,7 @@ tagEditorCss =
     ]
 
 
+tagListManagerCss : List Css.Snippet
 tagListManagerCss =
     [ Css.class TagListManager
         [ children
@@ -280,6 +295,7 @@ tagListManagerCss =
     ]
 
 
+imageViewerStyle : List Css.Snippet
 imageViewerStyle =
     [ Css.class ImageViewer
         [ overflow hidden
@@ -297,11 +313,13 @@ cssFiles =
     toFileStructure [ ( "output/css/GlobalStyle.css", Css.File.compile globalStyle ) ]
 
 
+totalSidebarSize : Float
 totalSidebarSize =
     tagEditorSidebarWidth + tagEditorStdMargin * 2
 
 
 
+styleFromSize : {width: Float, height: Float} -> Html.Attribute msg
 styleFromSize size =
     toStyle
         [ width (px size.width)

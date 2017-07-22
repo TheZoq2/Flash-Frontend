@@ -15,7 +15,6 @@ import Elements exposing (flatButton)
 type alias Model =
     { searchQuery : String
     , currentList : Maybe FileList
-    , page: Maybe Int
     , networkError : Maybe String
     }
 
@@ -24,8 +23,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { searchQuery = ""
       , currentList = Nothing
-      , page = Nothing
-      , networkError = Nothing
+      , networkError = Just "Failed to fetch data"
       }
     , Cmd.none
     )
@@ -86,7 +84,7 @@ view model =
         searchForm =
             Html.form [onSubmit SubmitSearch]
                 [ input [ placeholder "Search", onInput SearchQueryChanged ] []
-                , flatButton [] [] SubmitSearch "Search" 1
+                , flatButton [] [] SubmitSearch "🔍" 1
                 ]
 
         networkErrorElem =
@@ -94,18 +92,26 @@ view model =
                 <| Maybe.map (\message -> p [] [ text message ]) model.networkError 
     in
         div []
-            [ searchForm
-            , createThumbnailList model
-            , networkErrorElem
+            [ networkErrorElem
+            , searchForm
+            , createThumbnailList model.currentList
             ]
 
 
-createThumbnailList : Model -> Html Msg
-createThumbnailList model =
-    case model.currentList of
+createThumbnailList : Maybe FileList -> Html Msg
+createThumbnailList fileList =
+    let
+        noList = 
+            p [] [text "No results"]
+    in
+    case fileList of
+        Nothing ->
+            noList
+        --TODO Match length=0
         Just fileList ->
             let
-                amount = if fileList.length - 1 < 20 then
+                amount =
+                    if fileList.length - 1 < 20 then
                         fileList.length - 1
                     else
                         20
@@ -126,8 +132,6 @@ createThumbnailList model =
             in
                 div [Style.class [Style.ThumbnailContainer]]
                     <| List.map fileElements fileIds
-        Nothing ->
-            p [] [text "No results"]
 
 
 
