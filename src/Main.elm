@@ -6,7 +6,7 @@ import Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import FileList exposing (FileList, FileListSource, FileListResponse, fileListUrl)
+import FileList exposing (FileList, FileListSource, FileListResponse, fileListFileUrl)
 import Elements exposing (flatButton)
 
 
@@ -17,7 +17,7 @@ type alias Model =
     { searchQuery : String
     , currentList : Maybe FileList
     , networkError : Maybe String
-    , otherFileLists: List (Int, String)
+    , otherFileLists: List (Int, Int, String)
     }
 
 
@@ -58,10 +58,10 @@ update msg model =
         NewFileListListing fileLists ->
             let
                 otherFileLists = 
-                    List.filterMap (\{id, source} ->
+                    List.filterMap (\{id, length, source} ->
                         case source of
                             FileList.Folder path ->
-                                Just (id, path)
+                                Just (id, length, path)
                             FileList.Search ->
                                 Nothing
                         ) fileLists
@@ -116,15 +116,23 @@ view model =
 
         existingListListing =
             li [] <| List.map 
-                        (\(id, path) -> ul [] [a [href (tagEditorUrl id 0)] [text path]])
+                         (\(id, length, path) ->
+                             ul [] [flatButton [Style.BlockButton] [] (NewFileList id length) path 1])
                         model.otherFileLists
     in
-        container []
-            [ networkErrorElem
-            , searchForm
-            , createThumbnailList model.currentList
-            , existingListListing
-            ]
+        case model.currentList of
+            Just currentList ->
+                container []
+                    [ networkErrorElem
+                    , searchForm
+                    , createThumbnailList currentList
+                    ]
+            Nothing ->
+                container []
+                    [ networkErrorElem
+                    , searchForm
+                    , existingListListing
+                    ]
 
 
 tagEditorUrl : Int -> Int -> String
@@ -135,34 +143,25 @@ tagEditorUrl listId fileId =
               ++ (toString fileId)
 
 
-createThumbnailList : Maybe FileList -> Html Msg
+createThumbnailList : FileList -> Html Msg
 createThumbnailList fileList =
     let
-        noList = 
-            p [] [text "No results"]
+        amount =
+            if fileList.length - 1 < 20 then
+                fileList.length - 1
+            else
+                20
+
+        fileIds =
+            List.range 0 amount
+
+        fileElements fileId =
+            a [href <| tagEditorUrl fileList.listId fileId, Style.class [Style.Thumbnail]]
+                [ img [src <| fileListFileUrl [] "get_thumbnail" fileList.listId fileId] []
+                ]
     in
-    case fileList of
-        Nothing ->
-            noList
-        --TODO Match length=0
-        Just fileList ->
-            let
-                amount =
-                    if fileList.length - 1 < 20 then
-                        fileList.length - 1
-                    else
-                        20
-
-                fileIds =
-                    List.range 0 amount
-
-                fileElements fileId =
-                    a [href <| tagEditorUrl fileList.listId fileId, Style.class [Style.Thumbnail]]
-                        [ img [src <| fileListUrl [] "get_thumbnail" fileList.listId fileId] []
-                        ]
-            in
-                div [Style.class [Style.ThumbnailContainer]]
-                    <| List.map fileElements fileIds
+        div [Style.class [Style.ThumbnailContainer]]
+            <| List.map fileElements fileIds
 
 
 

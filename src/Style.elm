@@ -179,6 +179,9 @@ globalStyle =
             [ displayFlex
             , flexWrap wrap
             ]
+         , Css.Elements.li
+            [ listStyle none
+            ]
          ]
             ++ tagEditorCss
             ++ tagListManagerCss

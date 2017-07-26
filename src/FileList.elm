@@ -6,7 +6,8 @@ module FileList exposing
     , newWithSelected
     , jump
     , fileListDecoder
-    , fileListUrl
+    , fileListFileUrl
+    , fileListListUrl
     , requestFileListListing
     )
 
@@ -96,14 +97,12 @@ fileListDecoder =
         (field "source" fileListSourceDecoder)
 
 
-fileListUrl :List (String, String) -> String -> Int -> Int ->  String
-fileListUrl additionalVariables action listId fileIndex =
+fileListUrl : List (String, String) -> String -> String
+fileListUrl additionalVariables action =
     let
         baseUrl = "list?"
 
         variables = [ ("action", action)
-                    , ("list_id", toString listId)
-                    , ("index", toString fileIndex)
                     ]
                     ++ additionalVariables
 
@@ -111,6 +110,20 @@ fileListUrl additionalVariables action listId fileIndex =
                         <| List.map (\(name, value) -> name ++ "=" ++ value) variables
     in
         baseUrl ++ List.foldr (++) "" variableStrings
+
+fileListListUrl : List(String, String) -> String -> Int -> String
+fileListListUrl additionalVariables action listId =
+    let
+        variables =
+            [ ("list_id", toString listId)
+            ]
+            ++ additionalVariables
+    in
+        fileListUrl variables action
+
+fileListFileUrl : List (String, String) -> String -> Int -> Int ->  String
+fileListFileUrl additionalVariables action listId fileIndex =
+    fileListListUrl ([ ("index", toString fileIndex) ] ++ additionalVariables) action listId
 
 
 fileListListingDecoder : Json.Decode.Decoder (List FileListResponse)
@@ -130,7 +143,7 @@ checkHttpAttempt func errFunc res=
 requestFileListListing : (List FileListResponse -> msg) -> (Http.Error -> msg) -> Cmd msg
 requestFileListListing onSuccess onError =
     let
-        url = "list_file_lists"
+        url = fileListUrl [] "lists"
     in
         Http.send
             (checkHttpAttempt onSuccess onError)

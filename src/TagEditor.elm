@@ -3,11 +3,9 @@ module TagEditor exposing (..)
 import Tags
 import Style
 import ImageViewer
-import FileList exposing (fileListDecoder, fileListUrl)
+import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
 import Vec exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
 import Json.Decode exposing (..)
 import Json.Encode
 import Http
@@ -15,7 +13,6 @@ import Task
 import Window
 import Keyboard
 import Char
-import Css
 import Elements exposing (flatButton)
 import Dom
 import List.Extra
@@ -299,6 +296,7 @@ cancelTagCreation model =
 
 
 
+keyboardSelectorList : List Char
 keyboardSelectorList =
     ['J', 'K', 'L', 'H', 'S', 'D', 'F', 'G']
 
@@ -436,7 +434,7 @@ checkHttpAttempt func res=
 requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
     let
-        url = fileListUrl [] "get_data" listId index
+        url = fileListFileUrl [] "get_data" listId index
     in
         Http.send 
             (checkHttpAttempt FileDataReceived)
@@ -456,7 +454,7 @@ requestSaveImage model tags =
                 tagsJson =
                     List.map Json.Encode.string tags
 
-                url = fileListUrl
+                url = fileListFileUrl
                         [("tags", toString tagsJson)]
                         "save"
                         fileList.listId
@@ -481,7 +479,7 @@ requestFileListData : Int -> Int -> Cmd Msg
 requestFileListData selected listId =
     let
         url =
-            "file_list?list_id=" ++ (toString listId)
+            fileListListUrl [] "list_info" listId
     in
         submitFileListRequest url (\val -> NewFileList selected val.id val.length)
 
@@ -597,7 +595,7 @@ view model =
                         (viewerWidth, model.viewerSize.height)
                         (0, 0)
                         1
-                        (fileListUrl [] "get_file" fileList.listId fileList.fileIndex)
+                        (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
                 Nothing ->
                     div [] []
 
