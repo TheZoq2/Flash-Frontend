@@ -1,14 +1,16 @@
 module FileList exposing
     ( FileList
     , FileListResponse
+    , FileListSource
     , new
     , newWithSelected
     , jump
-    , decodeNewFileList
+    , fileListDecoder
     , fileListUrl
     )
 
 import Json.Decode exposing (..)
+import Http
 
 type alias FileList =
     { listId: Int
@@ -50,16 +52,47 @@ jump amount list =
 
 
 
+type FileListSource
+    = Folder String
+    | Search
+
 type alias FileListResponse =
     { id: Int
     , length: Int
+    , source: FileListSource
     }
 
-decodeNewFileList : Json.Decode.Decoder FileListResponse
-decodeNewFileList =
-    Json.Decode.map2 FileListResponse
+fileListSourceDecoder : Json.Decode.Decoder FileListSource
+fileListSourceDecoder =
+    let
+        folderDecoder : Json.Decode.Decoder FileListSource
+        folderDecoder =
+            Json.Decode.map Folder
+                (field "Folder" Json.Decode.string)
+
+        searchDecoder : Json.Decode.Decoder FileListSource
+        searchDecoder =
+            Json.Decode.string 
+                |> Json.Decode.andThen(\str ->
+                        case str of 
+                            "Search" -> Json.Decode.succeed Search
+                            somethingElse ->
+                                Json.Decode.fail <| somethingElse ++ "is not a file list source"
+                    )
+                
+    in
+        Json.Decode.oneOf
+            [ folderDecoder
+            , searchDecoder
+            ]
+
+
+fileListDecoder : Json.Decode.Decoder FileListResponse
+fileListDecoder =
+    Json.Decode.map3 FileListResponse
         (field "id" Json.Decode.int)
         (field "length" Json.Decode.int)
+        (field "source" fileListSourceDecoder)
 
 
 fileListUrl :List (String, String) -> String -> Int -> Int ->  String
@@ -78,4 +111,27 @@ fileListUrl additionalVariables action listId fileIndex =
     in
         baseUrl ++ List.foldr (++) "" variableStrings
 
+
+decodeFileListListing : Json.Decode.Decoder (List FileListResponse)
+decodeFileListListing =
+    Json.Decode.list fileListDecoder
+
+
+checkHttpAttempt : (a -> msg) -> Result Http.Error a -> msg
+checkHttpAttempt func res=
+    case res of
+        Ok val ->
+            func val
+        Err e ->
+            Http.NetworkError e
+
+
+requestFileListListing : (List (Int, FileListSource) -> msg) -> Cmd msg
+requestFileListListing onSuccess =
+    let
+        url = "list_file_lists"
+    in
+        Http.send
+            (checkHttpAttempt onSuccess)
+            (Http.get url fileListDecoder)
 

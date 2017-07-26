@@ -6,8 +6,9 @@ import Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import FileList exposing (FileList, fileListUrl)
+import FileList exposing (FileList, FileListSource, fileListUrl)
 import Elements exposing (flatButton)
+
 
 --Model
 
@@ -16,6 +17,7 @@ type alias Model =
     { searchQuery : String
     , currentList : Maybe FileList
     , networkError : Maybe String
+    , otherFileLists: List (Int, FileListSource)
     }
 
 
@@ -23,7 +25,8 @@ init : ( Model, Cmd Msg )
 init =
     ( { searchQuery = ""
       , currentList = Nothing
-      , networkError = Just "Failed to fetch data"
+      , networkError = Nothing
+      , otherFileLists = []
       }
     , Cmd.none
     )
@@ -62,7 +65,6 @@ checkHttpAttempt func res=
             NetworkError e
 
 
-
 submitSearch : String -> Cmd Msg
 submitSearch text =
     let
@@ -71,7 +73,7 @@ submitSearch text =
     in
         Http.send
             (checkHttpAttempt (\val -> NewFileList val.id val.length))
-            (Http.get url FileList.decodeNewFileList)
+            (Http.get url FileList.fileListDecoder)
 
 
 
@@ -82,16 +84,24 @@ view : Model -> Html Msg
 view model =
     let
         searchForm =
-            Html.form [onSubmit SubmitSearch]
+            Html.form [onSubmit SubmitSearch, Style.class [Style.SearchContainer]]
                 [ input [ placeholder "Search", onInput SearchQueryChanged ] []
-                , flatButton [] [] SubmitSearch "🔍" 1
+                , flatButton [Style.InlineButton] [] SubmitSearch "🔍" 1.5
                 ]
 
         networkErrorElem =
-            Maybe.withDefault (div [] []) 
-                <| Maybe.map (\message -> p [] [ text message ]) model.networkError 
+            Maybe.withDefault (div [] [])
+                <| Maybe.map (\message -> p [] [ text message ]) model.networkError
+
+        container properties =
+            case model.currentList of
+                Just _ ->
+                    div properties
+                Nothing ->
+                    div
+                        (properties ++ [Style.class [Style.AlbumIndexContainer]])
     in
-        div []
+        container []
             [ networkErrorElem
             , searchForm
             , createThumbnailList model.currentList
@@ -157,3 +167,6 @@ main =
         , view = view
         , subscriptions = subscriptions
         }
+
+
+

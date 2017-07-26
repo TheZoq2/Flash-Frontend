@@ -3,7 +3,7 @@ module TagEditor exposing (..)
 import Tags
 import Style
 import ImageViewer
-import FileList exposing (decodeNewFileList, fileListUrl)
+import FileList exposing (fileListDecoder, fileListUrl)
 import Vec exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -474,7 +474,7 @@ submitFileListRequest : String -> (FileList.FileListResponse -> Msg) -> Cmd Msg
 submitFileListRequest url msgFunc =
     Http.send
         (checkHttpAttempt msgFunc)
-        (Http.get url decodeNewFileList)
+        (Http.get url fileListDecoder)
 
 
 requestFileListData : Int -> Int -> Cmd Msg

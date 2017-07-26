@@ -26,6 +26,7 @@ albumItemContainer =
     ]
 
 
+toStyle : List Css.Mixin -> Html.Attribute msg
 toStyle =
     Css.asPairs >> Html.Attributes.style
 
@@ -39,8 +40,7 @@ toStyle =
 
 
 type CssClasses
-    = AlbumContainer
-    | AlbumItemContainer
+    = AlbumIndexContainer
     | TagListContainer
     | RemoveButton
     | TagListName
@@ -68,6 +68,7 @@ type CssClasses
     | LoadingContainer
     | Thumbnail
     | ThumbnailContainer
+    | SearchContainer
 
 
 
@@ -182,6 +183,7 @@ globalStyle =
             ++ tagEditorCss
             ++ tagListManagerCss
             ++ imageViewerStyle
+            ++ albumStyle
         )
     ]
 
@@ -246,7 +248,7 @@ tagEditorCss =
         [ fontSize <| (Css.em 1)
         , displayFlex
         , descendants
-            [ span 
+            [ span
                 [ flexGrow (Css.num 1)
                 , cursor Css.pointer
                 , hover
@@ -304,6 +306,29 @@ imageViewerStyle =
         [ Css.width (Css.pct 100)
         , Css.height (Css.pct 100)
         , Css.property "object-fit" "contain"
+        ]
+    ]
+
+
+albumSearchMaxWidth : Css.Px
+albumSearchMaxWidth =
+    px 960
+
+albumStyle : List Css.Snippet
+albumStyle =
+    [ Css.class SearchContainer
+        [ displayFlex
+        , margin2 (px 0) auto
+        , maxWidth albumSearchMaxWidth
+        , descendants
+            [ input
+                [ Css.flexGrow <| Css.num 1
+                ]
+            ]
+        ]
+    , Css.class AlbumIndexContainer
+        [ maxWidth albumSearchMaxWidth
+        , margin3 (px 100) auto (px 0)
         ]
     ]
 
