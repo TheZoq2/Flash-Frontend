@@ -1,12 +1,13 @@
 module FileList exposing
     ( FileList
     , FileListResponse
-    , FileListSource
+    , FileListSource(Folder, Search)
     , new
     , newWithSelected
     , jump
     , fileListDecoder
     , fileListUrl
+    , requestFileListListing
     )
 
 import Json.Decode exposing (..)
@@ -112,26 +113,26 @@ fileListUrl additionalVariables action listId fileIndex =
         baseUrl ++ List.foldr (++) "" variableStrings
 
 
-decodeFileListListing : Json.Decode.Decoder (List FileListResponse)
-decodeFileListListing =
+fileListListingDecoder : Json.Decode.Decoder (List FileListResponse)
+fileListListingDecoder =
     Json.Decode.list fileListDecoder
 
 
-checkHttpAttempt : (a -> msg) -> Result Http.Error a -> msg
-checkHttpAttempt func res=
+checkHttpAttempt : (a -> msg) -> (Http.Error -> msg)-> Result Http.Error a -> msg
+checkHttpAttempt func errFunc res=
     case res of
         Ok val ->
             func val
         Err e ->
-            Http.NetworkError e
+            errFunc e
 
 
-requestFileListListing : (List (Int, FileListSource) -> msg) -> Cmd msg
-requestFileListListing onSuccess =
+requestFileListListing : (List FileListResponse -> msg) -> (Http.Error -> msg) -> Cmd msg
+requestFileListListing onSuccess onError =
     let
         url = "list_file_lists"
     in
         Http.send
-            (checkHttpAttempt onSuccess)
-            (Http.get url fileListDecoder)
+            (checkHttpAttempt onSuccess onError)
+            (Http.get url fileListListingDecoder)
 
