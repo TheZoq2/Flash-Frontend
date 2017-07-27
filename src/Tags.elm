@@ -61,9 +61,9 @@ htmlFromTag tag onTextClick onRemoveButton =
 
 
 
-htmlFromListOfTags : List (Tag, msg, msg) -> Html msg
-htmlFromListOfTags list =
-    ul []
+htmlFromListOfTags : List (Style.CssClasses) -> List (Tag, msg, msg) -> Html msg
+htmlFromListOfTags additionalClasses list =
+    ul [Style.class additionalClasses]
         <| List.map 
             (\(tag, onTextClick, onRemoveButton) -> li [] [htmlFromTag tag onTextClick onRemoveButton]) 
             list
@@ -142,7 +142,7 @@ tagListHtml list onTextClick onRemoveButton =
         (\key value acc -> acc ++ [(value, (onTextClick key), (onRemoveButton key))])
         []
         list.tags
-    |> htmlFromListOfTags
+    |> (htmlFromListOfTags <| if not list.enabled then [Style.DisabledTag] else [])
 
 
 
@@ -363,7 +363,7 @@ tagListListHtml tagListList selectedTag messages =
     in
         ul []
             <| List.map 
-                    (\(id, (tag, onText, onRemove)) -> 
+                    (\(id, (tag, onText, onRemove)) ->
                         div [Style.class ([Style.TagList] ++ (listClasses id tag))]
                             [ tagListHtml tag onText onRemove
                             , buildButtonRow tag id
