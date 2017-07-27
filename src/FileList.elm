@@ -1,14 +1,18 @@
 module FileList exposing
     ( FileList
     , FileListResponse
+    , FileListSource(Folder, Search)
     , new
     , newWithSelected
     , jump
-    , decodeNewFileList
-    , fileListUrl
+    , fileListDecoder
+    , fileListFileUrl
+    , fileListListUrl
+    , requestFileListListing
     )
 
 import Json.Decode exposing (..)
+import Http
 
 type alias FileList =
     { listId: Int
@@ -50,26 +54,55 @@ jump amount list =
 
 
 
+type FileListSource
+    = Folder String
+    | Search
+
 type alias FileListResponse =
     { id: Int
     , length: Int
+    , source: FileListSource
     }
 
-decodeNewFileList : Json.Decode.Decoder FileListResponse
-decodeNewFileList =
-    Json.Decode.map2 FileListResponse
+fileListSourceDecoder : Json.Decode.Decoder FileListSource
+fileListSourceDecoder =
+    let
+        folderDecoder : Json.Decode.Decoder FileListSource
+        folderDecoder =
+            Json.Decode.map Folder
+                (field "Folder" Json.Decode.string)
+
+        searchDecoder : Json.Decode.Decoder FileListSource
+        searchDecoder =
+            Json.Decode.string 
+                |> Json.Decode.andThen(\str ->
+                        case str of 
+                            "Search" -> Json.Decode.succeed Search
+                            somethingElse ->
+                                Json.Decode.fail <| somethingElse ++ "is not a file list source"
+                    )
+                
+    in
+        Json.Decode.oneOf
+            [ folderDecoder
+            , searchDecoder
+            ]
+
+
+fileListDecoder : Json.Decode.Decoder FileListResponse
+fileListDecoder =
+    Json.Decode.map3 FileListResponse
         (field "id" Json.Decode.int)
         (field "length" Json.Decode.int)
+        (field "source" fileListSourceDecoder)
 
 
-fileListUrl :List (String, String) -> String -> Int -> Int ->  String
-fileListUrl additionalVariables action listId fileIndex =
+fileListUrl : List (String, String) -> String -> String
+fileListUrl additionalVariables action =
     let
         baseUrl = "list?"
 
         variables = [ ("action", action)
-                    , ("list_id", toString listId)
-                    , ("index", toString fileIndex)
                     ]
                     ++ additionalVariables
 
@@ -78,4 +111,41 @@ fileListUrl additionalVariables action listId fileIndex =
     in
         baseUrl ++ List.foldr (++) "" variableStrings
 
+fileListListUrl : List(String, String) -> String -> Int -> String
+fileListListUrl additionalVariables action listId =
+    let
+        variables =
+            [ ("list_id", toString listId)
+            ]
+            ++ additionalVariables
+    in
+        fileListUrl variables action
+
+fileListFileUrl : List (String, String) -> String -> Int -> Int ->  String
+fileListFileUrl additionalVariables action listId fileIndex =
+    fileListListUrl ([ ("index", toString fileIndex) ] ++ additionalVariables) action listId
+
+
+fileListListingDecoder : Json.Decode.Decoder (List FileListResponse)
+fileListListingDecoder =
+    Json.Decode.list fileListDecoder
+
+
+checkHttpAttempt : (a -> msg) -> (Http.Error -> msg)-> Result Http.Error a -> msg
+checkHttpAttempt func errFunc res=
+    case res of
+        Ok val ->
+            func val
+        Err e ->
+            errFunc e
+
+
+requestFileListListing : (List FileListResponse -> msg) -> (Http.Error -> msg) -> Cmd msg
+requestFileListListing onSuccess onError =
+    let
+        url = fileListUrl [] "lists"
+    in
+        Http.send
+            (checkHttpAttempt onSuccess onError)
+            (Http.get url fileListListingDecoder)
 

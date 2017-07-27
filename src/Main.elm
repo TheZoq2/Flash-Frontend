@@ -6,8 +6,11 @@ import Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import FileList exposing (FileList, fileListUrl)
+import FileList exposing (FileList, FileListSource, FileListResponse, fileListFileUrl)
 import Elements exposing (flatButton)
+import Json.Decode
+import Navigation
+
 
 --Model
 
@@ -15,8 +18,8 @@ import Elements exposing (flatButton)
 type alias Model =
     { searchQuery : String
     , currentList : Maybe FileList
-    , page: Maybe Int
     , networkError : Maybe String
+    , otherFileLists: List (Int, Int, String)
     }
 
 
@@ -24,10 +27,10 @@ init : ( Model, Cmd Msg )
 init =
     ( { searchQuery = ""
       , currentList = Nothing
-      , page = Nothing
       , networkError = Nothing
+      , otherFileLists = []
       }
-    , Cmd.none
+    , FileList.requestFileListListing NewFileListListing NetworkError
     )
 
 
@@ -40,6 +43,9 @@ type Msg
     | SearchQueryChanged String
     | SubmitSearch
     | NewFileList Int Int
+    | NewFileListListing (List FileListResponse)
+    | OtherFileListClicked Int
+    | FileListLastSavedReceived Int Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,6 +59,37 @@ update msg model =
             ( { model | networkError = Just <| toString err }, Cmd.none )
         NewFileList id length ->
             ( { model | currentList = Just <| FileList.new id length }, Cmd.none )
+        NewFileListListing fileLists ->
+            updateFileListListings model fileLists
+        OtherFileListClicked id ->
+            onOtherFileListClicked model id
+        FileListLastSavedReceived listId index ->
+            (model, Navigation.load <| tagEditorUrl listId index)
+
+
+
+updateFileListListings : Model -> List FileListResponse -> (Model, Cmd Msg)
+updateFileListListings model fileLists =
+    let
+        otherFileLists = 
+            List.filterMap (\{id, length, source} ->
+                case source of
+                    FileList.Folder path ->
+                        Just (id, length, path)
+                    FileList.Search ->
+                        Nothing
+                ) fileLists
+    in
+        ({ model | otherFileLists = otherFileLists}, Cmd.none)
+
+
+onOtherFileListClicked : Model -> Int -> (Model, Cmd Msg)
+onOtherFileListClicked model id =
+    ( model
+    , Http.send
+        (checkHttpAttempt <| FileListLastSavedReceived id)
+        (Http.get (FileList.fileListListUrl [] "list_last_saved_index" id) Json.Decode.int)
+    )
 
 
 checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
@@ -64,7 +101,6 @@ checkHttpAttempt func res=
             NetworkError e
 
 
-
 submitSearch : String -> Cmd Msg
 submitSearch text =
     let
@@ -73,7 +109,7 @@ submitSearch text =
     in
         Http.send
             (checkHttpAttempt (\val -> NewFileList val.id val.length))
-            (Http.get url FileList.decodeNewFileList)
+            (Http.get url FileList.fileListDecoder)
 
 
 
@@ -84,50 +120,71 @@ view : Model -> Html Msg
 view model =
     let
         searchForm =
-            Html.form [onSubmit SubmitSearch]
+            Html.form [onSubmit SubmitSearch, Style.class [Style.SearchContainer]]
                 [ input [ placeholder "Search", onInput SearchQueryChanged ] []
-                , flatButton [] [] SubmitSearch "Search" 1
+                , flatButton [Style.InlineButton] [] SubmitSearch "🔍" 1.5
                 ]
 
         networkErrorElem =
-            Maybe.withDefault (div [] []) 
-                <| Maybe.map (\message -> p [] [ text message ]) model.networkError 
+            Maybe.withDefault (div [] [])
+                <| Maybe.map (\message -> p [] [ text message ]) model.networkError
+
+        container properties =
+            case model.currentList of
+                Just _ ->
+                    div properties
+                Nothing ->
+                    div
+                        (properties ++ [Style.class [Style.AlbumIndexContainer]])
+
+        existingListListing =
+            li [] <| List.map 
+                         (\(id, length, path) ->
+                             ul [] [flatButton [Style.BlockButton] [] (OtherFileListClicked id) path 1])
+                        model.otherFileLists
     in
-        div []
-            [ searchForm
-            , createThumbnailList model
-            , networkErrorElem
-            ]
+        case model.currentList of
+            Just currentList ->
+                container []
+                    [ networkErrorElem
+                    , searchForm
+                    , createThumbnailList currentList
+                    ]
+            Nothing ->
+                container []
+                    [ networkErrorElem
+                    , searchForm
+                    , existingListListing
+                    ]
 
 
-createThumbnailList : Model -> Html Msg
-createThumbnailList model =
-    case model.currentList of
-        Just fileList ->
-            let
-                amount = if fileList.length - 1 < 20 then
-                        fileList.length - 1
-                    else
-                        20
+tagEditorUrl : Int -> Int -> String
+tagEditorUrl listId fileId =
+    "tag_editor.html#list/"
+              ++ (toString listId)
+              ++ "/file/"
+              ++ (toString fileId)
 
-                fileIds =
-                    List.range 0 amount
 
-                fileElements fileId =
-                    let
-                        editorUrl = "tag_editor.html#list/"
-                                  ++ (toString fileList.listId)
-                                  ++ "/file/"
-                                  ++ (toString fileId)
-                    in
-                        a [href editorUrl, Style.class [Style.Thumbnail]]
-                            [ img [src <| fileListUrl [] "get_thumbnail" fileList.listId fileId] []
-                            ]
-            in
-                div [Style.class [Style.ThumbnailContainer]]
-                    <| List.map fileElements fileIds
-        Nothing ->
-            p [] [text "No results"]
+createThumbnailList : FileList -> Html Msg
+createThumbnailList fileList =
+    let
+        amount =
+            if fileList.length - 1 < 20 then
+                fileList.length - 1
+            else
+                20
+
+        fileIds =
+            List.range 0 amount
+
+        fileElements fileId =
+            a [href <| tagEditorUrl fileList.listId fileId, Style.class [Style.Thumbnail]]
+                [ img [src <| fileListFileUrl [] "get_thumbnail" fileList.listId fileId] []
+                ]
+    in
+        div [Style.class [Style.ThumbnailContainer]]
+            <| List.map fileElements fileIds
 
 
 
@@ -153,3 +210,6 @@ main =
         , view = view
         , subscriptions = subscriptions
         }
+
+
+
