@@ -8,6 +8,8 @@ import Html.Events exposing (..)
 import Http
 import FileList exposing (FileList, FileListSource, FileListResponse, fileListFileUrl)
 import Elements exposing (flatButton)
+import Json.Decode
+import Navigation
 
 
 --Model
@@ -42,6 +44,8 @@ type Msg
     | SubmitSearch
     | NewFileList Int Int
     | NewFileListListing (List FileListResponse)
+    | OtherFileListClicked Int
+    | FileListLastSavedReceived Int Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -56,17 +60,36 @@ update msg model =
         NewFileList id length ->
             ( { model | currentList = Just <| FileList.new id length }, Cmd.none )
         NewFileListListing fileLists ->
-            let
-                otherFileLists = 
-                    List.filterMap (\{id, length, source} ->
-                        case source of
-                            FileList.Folder path ->
-                                Just (id, length, path)
-                            FileList.Search ->
-                                Nothing
-                        ) fileLists
-            in
-                ({ model | otherFileLists = otherFileLists}, Cmd.none)
+            updateFileListListings model fileLists
+        OtherFileListClicked id ->
+            onOtherFileListClicked model id
+        FileListLastSavedReceived listId index ->
+            (model, Navigation.load <| tagEditorUrl listId index)
+
+
+
+updateFileListListings : Model -> List FileListResponse -> (Model, Cmd Msg)
+updateFileListListings model fileLists =
+    let
+        otherFileLists = 
+            List.filterMap (\{id, length, source} ->
+                case source of
+                    FileList.Folder path ->
+                        Just (id, length, path)
+                    FileList.Search ->
+                        Nothing
+                ) fileLists
+    in
+        ({ model | otherFileLists = otherFileLists}, Cmd.none)
+
+
+onOtherFileListClicked : Model -> Int -> (Model, Cmd Msg)
+onOtherFileListClicked model id =
+    ( model
+    , Http.send
+        (checkHttpAttempt <| FileListLastSavedReceived id)
+        (Http.get (FileList.fileListListUrl [] "list_last_saved_index" id) Json.Decode.int)
+    )
 
 
 checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
@@ -117,7 +140,7 @@ view model =
         existingListListing =
             li [] <| List.map 
                          (\(id, length, path) ->
-                             ul [] [flatButton [Style.BlockButton] [] (NewFileList id length) path 1])
+                             ul [] [flatButton [Style.BlockButton] [] (OtherFileListClicked id) path 1])
                         model.otherFileLists
     in
         case model.currentList of
