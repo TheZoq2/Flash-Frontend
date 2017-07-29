@@ -41,7 +41,7 @@ handleMouseMove event geometry =
     let
         (movedX, movedY) = event.movement
         moved =
-            vec2 movedX movedY
+            vec2 -movedX -movedY
     in
         case List.member Mouse.Left event.buttons of
             True ->
@@ -56,7 +56,7 @@ handleZoom scaling clientXY geometry =
         zoom = geometry.zoom * scaling
 
         newPosition =
-            Math.Vector2.sub clientXY (scale scaling (add clientXY geometry.position))
+            Math.Vector2.sub (scale scaling (add clientXY geometry.position)) clientXY 
     in
         Geometry newPosition zoom
 
@@ -73,8 +73,8 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename {moveMsg, downM
         containerCss = 
             [ Css.width <| Css.px (w * zoom)
             , Css.height <| Css.px (h * zoom)
-            , Css.left <| Css.px x
-            , Css.top <| Css.px y
+            , Css.left <| Css.px -x
+            , Css.top <| Css.px -y
             , Css.position Css.relative
             ]
 

@@ -218,8 +218,6 @@ update msg model =
                 clientXY = Math.Vector2.fromTuple event.mouseEvent.clientPos
 
                 newGeometry = (ImageViewer.handleZoom zoomModifier clientXY model.imageGeometry)
-
-                _ = Debug.log "" [model.imageGeometry, newGeometry]
             in
                 ({model | imageGeometry = newGeometry}, Cmd.none)
         NoOp ->
