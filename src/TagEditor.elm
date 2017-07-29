@@ -20,6 +20,9 @@ import UrlParser
 import Navigation
 import UrlParser
 import UrlParser exposing ((</>))
+import Math.Vector2 exposing (Vec2, vec2)
+import Mouse
+import Scroll
 
 
 -- MODEL
@@ -47,7 +50,7 @@ type alias Model =
     { lastError : String
     -- The current part of the page that receives keypresses
     , keyReceiver : KeyReceiver
-    -- The size of the image viewer
+    -- The current size of the window
     , viewerSize: Size
     -- The currently selected tags
     , tags: Tags.TagListList
@@ -63,12 +66,25 @@ type alias Model =
     , sidebarVisible: Bool
     -- The previous URL of the page
     , oldUrl: String
+    -- Geometry of the current image
+    , imageGeometry: ImageViewer.Geometry
     }
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( Model "" None (Size 0 0 ) Tags.emptyTagListList Nothing Nothing Nothing True True ""
+    ( { lastError = ""
+      , keyReceiver = None
+      , viewerSize = (Size 0 0 )
+      , tags = Tags.emptyTagListList
+      , tagTextfieldContent = Nothing
+      , fileList = Nothing
+      , oldTagList = Nothing
+      , imageLoaded = True
+      , sidebarVisible = True
+      , oldUrl = ""
+      , imageGeometry = ImageViewer.initGeometry
+      }
     , Cmd.batch
         [ Task.perform WindowResized Window.size
         , updateLocation location
@@ -91,6 +107,9 @@ type Msg
     | FileDataReceived FileData
     | UrlChanged Navigation.Location
     | ImageLoaded
+    | MouseMovedOnImage Mouse.Event
+    | ImageScrolled Scroll.Event
+    | NoOp -- For events that are only handled because we want to prevent default
     -- Tag list specific messages
     | AddTagList
     | AddTag Int
@@ -188,6 +207,23 @@ update msg model =
                         ( {model | keyReceiver = None}, Cmd.none)
                 Ok () ->
                     (model, Cmd.none)
+        MouseMovedOnImage event ->
+            ( {model | imageGeometry = (ImageViewer.handleMouseMove event model.imageGeometry)}
+            , Cmd.none
+            )
+        ImageScrolled event ->
+            let
+                zoomModifier = 1.0 - event.deltaY * 0.05
+
+                clientXY = Math.Vector2.fromTuple event.mouseEvent.clientPos
+
+                newGeometry = (ImageViewer.handleZoom zoomModifier clientXY model.imageGeometry)
+
+                _ = Debug.log "" [model.imageGeometry, newGeometry]
+            in
+                ({model | imageGeometry = newGeometry}, Cmd.none)
+        NoOp ->
+            (model, Cmd.none)
 
 
 
@@ -588,16 +624,24 @@ view model =
                 0
 
         imageViewer =
-            case model.fileList of
-                Just fileList ->
-                    ImageViewer.imageViewerHtml
-                        ImageLoaded
-                        (viewerWidth, model.viewerSize.height)
-                        (0, 0)
-                        1
-                        (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
-                Nothing ->
-                    div [] []
+            let
+                events =
+                    ImageViewer.MouseEvents
+                        MouseMovedOnImage
+                        ImageScrolled
+                        NoOp
+
+            in
+                case model.fileList of
+                    Just fileList ->
+                        ImageViewer.imageViewerHtml
+                            ImageLoaded
+                            (vec2 viewerWidth model.viewerSize.height)
+                            model.imageGeometry
+                            (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                            events
+                    Nothing ->
+                        div [] []
 
         sidebar =
             [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]

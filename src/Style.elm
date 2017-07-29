@@ -7,7 +7,6 @@ import Html.Attributes exposing (style)
 import Html.CssHelpers
 import Html
 
-
 port files : CssFileStructure -> Cmd msg
 
 
@@ -203,6 +202,9 @@ tagEditorCss : List Css.Snippet
 tagEditorCss =
     [ Css.class TagEditorContainer
         [ displayFlex
+        ]
+    , Css.class TagEditorContentContainer
+        [ overflow hidden
         ]
     , Css.class TagEditorRightPane
         [ maxHeight (px 1000)
