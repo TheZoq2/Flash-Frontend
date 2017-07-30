@@ -1,11 +1,21 @@
 module TagEditor exposing (..)
 
+import EditorModel exposing 
+    ( Model
+    , FileData
+    , KeyReceiver(..)
+    )
+import EditorMsg exposing
+    ( Msg(..)
+    )
+import EditorView exposing
+    ( view)
+
 import Tags
-import Style
 import ImageViewer
 import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
+
 import Vec exposing (..)
-import Html exposing (..)
 import Json.Decode exposing (..)
 import Json.Encode
 import Http
@@ -13,7 +23,6 @@ import Task
 import Window
 import Keyboard
 import Char
-import Elements exposing (flatButton)
 import Dom
 import List.Extra
 import UrlParser
@@ -21,54 +30,6 @@ import Navigation
 import UrlParser
 import UrlParser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
-import Mouse
-import Scroll
-
-
--- MODEL
-
-type KeyReceiver
-    = None
-    | TagListList
-    | TagList Int
-    | TagField Int
-    | Tag Int Int
-
-
-
-
--- Data about a file that has been received from the server. The server sends more
--- data than this but we don't process that for now
-
-type alias FileData =
-    { filePath: String
-    , tags: List String
-    }
-
-
-type alias Model =
-    { lastError : String
-    -- The current part of the page that receives keypresses
-    , keyReceiver : KeyReceiver
-    -- The current size of the window
-    , viewerSize: Size
-    -- The currently selected tags
-    , tags: Tags.TagListList
-    -- The contents of the currently selected tag text input field
-    , tagTextfieldContent: Maybe String
-    -- The current list of files
-    , fileList: Maybe FileList.FileList
-    -- The id of the tag list containing the tags already on the image
-    , oldTagList: Maybe Int
-    -- False if the current image is not done loading
-    , imageLoaded: Bool
-    -- Wether or not the sidebar is shown
-    , sidebarVisible: Bool
-    -- The previous URL of the page
-    , oldUrl: String
-    -- Geometry of the current image
-    , imageGeometry: ImageViewer.Geometry
-    }
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
@@ -93,34 +54,8 @@ init location =
 
 
 
--- UPDATE
 
-type Msg
-    = RequestNext
-    | RequestPrev
-    | RequestSave
-    | NetworkError Http.Error
-    | OnSaved
-    | WindowResized Window.Size
-    | Keypress Int
-    | NewFileList Int Int Int -- selectedFile listId length
-    | FileDataReceived FileData
-    | UrlChanged Navigation.Location
-    | ImageLoaded
-    | MouseMovedOnImage Mouse.Event
-    | ImageScrolled Scroll.Event
-    | NoOp -- For events that are only handled because we want to prevent default
-    -- Tag list specific messages
-    | AddTagList
-    | AddTag Int
-    | StartTagAddition Int
-    | ToggleTagList Int
-    | RemoveTagList Int
-    | ToggleTag Int Int
-    | RemoveTag Int Int
-    | TagTextFieldChanged String
-    | CancelTagCreation
-    | FocusResult (Result Dom.Error ())
+-- UPDATE
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -225,6 +160,7 @@ update msg model =
 
 
 
+-- Handling navigation and url updates
 type Route
     = FileList Int
     | File Int Int
@@ -246,6 +182,7 @@ updateLocation location =
                 requestFileListData file list
             Nothing ->
                 Cmd.none
+
 
 startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =
@@ -558,109 +495,6 @@ onFileDataReceived data model =
 getSelectedTags : Model -> List String
 getSelectedTags model =
     Tags.selectedTags model.tags
-
-
-
--- VIEW
-
-view : Model -> Html Msg
-view model =
-    let
-        prevButton =
-            flatButton [Style.BlockButton] [] RequestPrev "‹" 3
-
-        nextButton =
-            flatButton [Style.BlockButton] [] RequestNext "›" 3
-
-        saveButton =
-            flatButton [Style.BlockButton] [] RequestSave "✔" 1.5
-
-        buttonRow =
-            div [ Style.class [ Style.TagEditorButtonRow ] ] [ prevButton, nextButton, saveButton ]
-
-        addTagList =
-            flatButton [Style.WideButton, Style.BlockButton] [] AddTagList "+" 2
-
-        loadingBar =
-            case model.imageLoaded of
-                False ->
-                    div [ Style.class [ Style.LoadingContainer ] ]
-                        [  div [ Style.class [Style.LoadingPulse ] ] [ ] 
-                        ]
-                True ->
-                    div [] []
-
-        additionalRightPaneClasses =
-            if model.keyReceiver == TagListList then
-                [ Style.TagEditorSelected ]
-            else
-                []
-
-        listMessages =
-                { onAddTag = StartTagAddition
-                , onRemoveList = RemoveTagList
-                , onToggleList = ToggleTagList
-                , onTagRemoveButton = RemoveTag
-                , onTagTextClick = ToggleTag
-                , onTagnameUnfocus = CancelTagCreation
-                , onTagSubmit = AddTag
-                , onTextChanged = TagTextFieldChanged
-                }
-
-        selectedTag =
-            case model.keyReceiver of
-                TagList id ->
-                    Tags.List id
-                Tag listId tagId ->
-                    Tags.Single listId tagId
-                _ ->
-                    Tags.None
-
-        viewerWidth = model.viewerSize.width - if model.sidebarVisible then
-                Style.totalSidebarSize
-            else
-                0
-
-        imageViewer =
-            let
-                events =
-                    ImageViewer.MouseEvents
-                        MouseMovedOnImage
-                        ImageScrolled
-                        NoOp
-
-            in
-                case model.fileList of
-                    Just fileList ->
-                        ImageViewer.imageViewerHtml
-                            ImageLoaded
-                            (vec2 viewerWidth model.viewerSize.height)
-                            model.imageGeometry
-                            (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
-                            events
-                    Nothing ->
-                        div [] []
-
-        sidebar =
-            [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
-                [ buttonRow
-                , loadingBar
-                , Tags.tagListListHtml model.tags selectedTag listMessages
-                , addTagList
-                ]
-            ]
-    in
-        div [ Style.class [ Style.TagEditorContainer ] ]
-            <|
-                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
-                    [imageViewer]
-                ]
-                ++ ( if model.sidebarVisible then
-                         sidebar
-                     else
-                         []
-                   )
-
 
 
 
