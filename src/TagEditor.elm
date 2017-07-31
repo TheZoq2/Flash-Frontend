@@ -14,6 +14,7 @@ import EditorView exposing
 import Tags
 import ImageViewer
 import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
+import Touch
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
