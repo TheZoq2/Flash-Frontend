@@ -14,22 +14,8 @@ import Style
 import ImageViewer
 import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
 
-import Vec exposing (..)
 import Html exposing (..)
-import Json.Decode exposing (..)
-import Json.Encode
-import Http
-import Task
-import Window
-import Keyboard
-import Char
 import Elements exposing (flatButton)
-import Dom
-import List.Extra
-import UrlParser
-import Navigation
-import UrlParser
-import UrlParser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
 
 
@@ -99,6 +85,9 @@ view model =
                     ImageViewer.MouseEvents
                         MouseMovedOnImage
                         ImageScrolled
+                        ImageTouchStart
+                        ImageTouchMove
+                        ImageTouchEnd
                         NoOp
 
             in

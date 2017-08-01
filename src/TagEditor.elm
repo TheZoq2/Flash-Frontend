@@ -46,6 +46,7 @@ init location =
       , sidebarVisible = True
       , oldUrl = ""
       , imageGeometry = ImageViewer.initGeometry
+      , imageTouchState = ImageViewer.initTouchState
       }
     , Cmd.batch
         [ Task.perform WindowResized Window.size
@@ -156,9 +157,30 @@ update msg model =
                 newGeometry = (ImageViewer.handleZoom zoomModifier clientXY model.imageGeometry)
             in
                 ({model | imageGeometry = newGeometry}, Cmd.none)
+        ImageTouchStart event ->
+            imageTouchStartEnd event model
+        ImageTouchEnd event ->
+            imageTouchStartEnd event model
+        ImageTouchMove event ->
+            imageTouchMove event model
         NoOp ->
             (model, Cmd.none)
 
+
+imageTouchStartEnd : Touch.Event -> Model -> (Model, Cmd Msg)
+imageTouchStartEnd event model =
+    ({model | imageTouchState = ImageViewer.handleTouchStartEnd event model.imageTouchState}, Cmd.none)
+
+imageTouchMove : Touch.Event -> Model -> (Model, Cmd Msg)
+imageTouchMove event model =
+    let
+        (touchState, geometry) =
+            ImageViewer.handleTouchMove
+                event
+                model.imageTouchState
+                model.imageGeometry
+    in
+        ({model | imageTouchState = touchState, imageGeometry = geometry}, Cmd.none)
 
 
 -- Handling navigation and url updates

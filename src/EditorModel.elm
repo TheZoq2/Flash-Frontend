@@ -53,6 +53,8 @@ type alias Model =
     , oldUrl: String
     -- Geometry of the current image
     , imageGeometry: ImageViewer.Geometry
+    -- The current touches of the image viewer
+    , imageTouchState: ImageViewer.TouchState
     }
 
 
