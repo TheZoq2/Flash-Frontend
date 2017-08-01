@@ -5,7 +5,7 @@ module ImageViewer
         , initGeometry
         , MouseEvents
         , handleMouseMove
-        , handleZoom
+        , zoomGeometry
         , TouchState
         , initTouchState
         , handleTouchStartEnd
@@ -27,6 +27,9 @@ import Math.Vector2 exposing (..)
 
 import Style
 
+{-|
+  Tracks the zoom level and position of an image
+-}
 type alias Geometry =
     { position: Vec2
     , zoom: Float
@@ -36,35 +39,42 @@ initGeometry : Geometry
 initGeometry =
     Geometry (vec2 0 0) 1
 
-type alias MouseEvents msg =
-    { moveMsg: Mouse.Event -> msg
-    , scrollMsg: Scroll.Event -> msg
-    , touchStart: Touch.Event -> msg
-    , touchMove: Touch.Event -> msg
-    , touchEnd: Touch.Event -> msg
-    -- This is unused, but needed for preventing the default behaviour of images
-    , downMsg: msg
-    }
-
+{-|
+  Tracks the current touches on the image
+-}
 type alias TouchState =
     { touches: Dict.Dict Int Touch.Coordinates
     }
 
+{-|
+  Convenience alias for a type storing a touch identifier and its corresponding
+  coordinate
+-}
 type alias Touches = Dict.Dict Int Vec2
 
 initTouchState : TouchState
 initTouchState =
     TouchState Dict.empty
 
+{-|
+  Converts a `Touch.Coordinat` to a `Math.Vector2.Vec2`
+-}
 touchCoordToVec : Touch.Coordinates -> Vec2
 touchCoordToVec coord =
     fromTuple <| Touch.clientPos coord
 
 
+{-|
+  Handles touch start and end events
+-}
 handleTouchStartEnd : Touch.Event -> TouchState -> TouchState
 handleTouchStartEnd event state =
     { state | touches = event.touches }
 
+
+{-|
+  Handles touch move events updating the current touch state and geometry
+-}
 handleTouchMove : Touch.Event -> TouchState -> Geometry -> (TouchState, Geometry)
 handleTouchMove event state geometry =
     let
@@ -78,6 +88,9 @@ handleTouchMove event state geometry =
     in
         ({state | touches = event.touches}, handleTouchMoveVec oldTouches newTouches geometry)
 
+{-|
+  Handles touch moves without caring about touch state and with Touch.Coordinate converted to Vec
+-}
 handleTouchMoveVec : Touches -> Touches -> Geometry -> Geometry
 handleTouchMoveVec oldTouches newTouches geometry =
     case Dict.toList newTouches of
@@ -91,10 +104,16 @@ handleTouchMoveVec oldTouches newTouches geometry =
         _ ->
             handleMultitouchMove oldTouches newTouches geometry
 
+{-|
+  Handles updating the geometry on single finger touches
+-}
 handleSingletouchMove : Vec2 -> Vec2 -> Geometry -> Geometry
 handleSingletouchMove oldPosition newPosition geometry =
     moveGeometry (Math.Vector2.sub newPosition oldPosition) geometry
 
+{-|
+  Handles updating the geometry on multi-finger touches
+-}
 handleMultitouchMove : Touches -> Touches ->  Geometry -> Geometry
 handleMultitouchMove oldTouches newTouches geometry =
     case Dict.toList newTouches of
@@ -110,12 +129,15 @@ handleMultitouchMove oldTouches newTouches geometry =
                 center = add newFirst (Math.Vector2.sub newSecond newFirst)
             in
                 moveGeometry (Math.Vector2.sub center oldCenter)
-                    <| handleZoom (newDistance / oldDistance) center geometry
+                    <| zoomGeometry (newDistance / oldDistance) center geometry
         _ -> -- We only care about the pinch gesture
             geometry
 
 
 
+{-|
+  Handles mousemove events
+-}
 handleMouseMove : Mouse.Event -> Geometry -> Geometry
 handleMouseMove event geometry =
     let
@@ -130,22 +152,45 @@ handleMouseMove event geometry =
                 geometry
 
 
-handleZoom : Float -> Vec2 -> Geometry -> Geometry
-handleZoom scaling clientXY geometry =
+{-|
+  Zooms the specified geometry by scaling amount keeping pivot in the center of the screen
+-}
+zoomGeometry : Float -> Vec2 -> Geometry -> Geometry
+zoomGeometry scaling pivot geometry =
     let
         zoom = geometry.zoom * scaling
 
         newPosition =
-            Math.Vector2.sub (scale scaling (add clientXY geometry.position)) clientXY 
+            Math.Vector2.sub (scale scaling (add pivot geometry.position)) pivot
     in
         Geometry newPosition zoom
 
 
+{-|
+  Moves the geometry `moved` amount
+-}
 moveGeometry : Vec2 -> Geometry -> Geometry
 moveGeometry moved geometry =
     {geometry | position = (add geometry.position (scale -1 moved))}
 
 
+{-|
+  Convenience record for passing all event handlers to the view
+-}
+type alias MouseEvents msg =
+    { moveMsg: Mouse.Event -> msg
+    , scrollMsg: Scroll.Event -> msg
+    , touchStart: Touch.Event -> msg
+    , touchMove: Touch.Event -> msg
+    , touchEnd: Touch.Event -> msg
+    -- This is unused, but needed for preventing the default behaviour of images
+    , downMsg: msg
+    }
+
+
+{-|
+  Generates html for an image viewer
+-}
 imageViewerHtml : msg -> Vec2 -> Geometry -> String -> MouseEvents msg -> Html msg
 imageViewerHtml onLoaded containerSize {position, zoom} filename events =
     let
@@ -184,6 +229,9 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename events =
             ]
 
 
+{-|
+  Event handler for image onLoad events
+-}
 onLoadSrc : msg -> Html.Attribute msg
 onLoadSrc msg =
     on "load" (Json.Decode.succeed msg)
