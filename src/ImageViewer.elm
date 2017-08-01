@@ -50,9 +50,15 @@ type alias TouchState =
     { touches: Dict.Dict Int Touch.Coordinates
     }
 
+type alias Touches = Dict.Dict Int Vec2
+
 initTouchState : TouchState
 initTouchState =
     TouchState Dict.empty
+
+touchCoordToVec : Touch.Coordinates -> Vec2
+touchCoordToVec coord =
+    fromTuple <| Touch.clientPos coord
 
 
 handleTouchStartEnd : Touch.Event -> TouchState -> TouchState
@@ -62,29 +68,52 @@ handleTouchStartEnd event state =
 handleTouchMove : Touch.Event -> TouchState -> Geometry -> (TouchState, Geometry)
 handleTouchMove event state geometry =
     let
-        -- Calculate the movement of all the touches
+        touchesToCoords {touches} =
+            Dict.map (\id coord -> touchCoordToVec coord) touches
 
-        calculateMovement id touch =
-            let
-                (newX, newY) = Touch.clientPos touch
-                -- We should be able to safely use default here because assuming
-                -- onStart and onEnd events are handled, the TouchState should match
-                -- The new touches
-                (oldX, oldY) = Touch.clientPos <| Maybe.withDefault touch <| Dict.get id state.touches
-            in
-                (newX - oldX, newY-oldY)
-
-        movement = Dict.map calculateMovement event.touches
-
-        newGeometry = case Dict.toList movement of
-            [(id, moved)] ->
-                moveGeometry (fromTuple moved) geometry
-            [] -> --This should never happen but it needs to be handled
-                geometry
-            movementList ->
-                geometry
+        oldTouches =
+            touchesToCoords state
+        newTouches =
+            touchesToCoords event
     in
-        ({state | touches = event.touches}, newGeometry)
+        ({state | touches = event.touches}, handleTouchMoveVec oldTouches newTouches geometry)
+
+handleTouchMoveVec : Touches -> Touches -> Geometry -> Geometry
+handleTouchMoveVec oldTouches newTouches geometry =
+    case Dict.toList newTouches of
+        [(id, coordinates)] ->
+            handleSingletouchMove
+                (Maybe.withDefault coordinates <| Dict.get id oldTouches)
+                (coordinates)
+                geometry
+        [] -> --This should never happen but it needs to be handled
+            geometry
+        _ ->
+            handleMultitouchMove oldTouches newTouches geometry
+
+handleSingletouchMove : Vec2 -> Vec2 -> Geometry -> Geometry
+handleSingletouchMove oldPosition newPosition geometry =
+    moveGeometry (Math.Vector2.sub newPosition oldPosition) geometry
+
+handleMultitouchMove : Touches -> Touches ->  Geometry -> Geometry
+handleMultitouchMove oldTouches newTouches geometry =
+    case Dict.toList newTouches of
+        [(id1, newFirst), (id2, newSecond)] ->
+            let
+                oldFirst = Maybe.withDefault newFirst <| Dict.get id1 oldTouches
+                oldSecond = Maybe.withDefault newSecond <| Dict.get id2 oldTouches
+
+                oldDistance = Math.Vector2.distance oldFirst oldSecond
+                newDistance = Math.Vector2.distance newFirst newSecond
+
+                oldCenter = add oldFirst (Math.Vector2.sub oldSecond oldFirst)
+                center = add newFirst (Math.Vector2.sub newSecond newFirst)
+            in
+                moveGeometry (Math.Vector2.sub center oldCenter)
+                    <| handleZoom (newDistance / oldDistance) center geometry
+        _ -> -- We only care about the pinch gesture
+            geometry
+
 
 
 handleMouseMove : Mouse.Event -> Geometry -> Geometry
