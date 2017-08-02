@@ -9,7 +9,17 @@ import EditorMsg exposing
     ( Msg(..)
     )
 import EditorView exposing
-    ( view)
+    ( view )
+
+import EditorTagListUpdaters exposing
+    ( addTagList
+    , toggleTagList
+    , toggleTag
+    , removeTag
+    , removeTagList
+    , startTagAddition
+    , cancelTagCreation
+    )
 
 import Tags
 import ImageViewer
@@ -31,6 +41,7 @@ import Navigation
 import UrlParser
 import UrlParser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
+
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
@@ -167,6 +178,11 @@ update msg model =
             (model, Cmd.none)
 
 
+updateModelTags : (Tags.TagListList -> Tags.TagListList) -> Model -> Model
+updateModelTags updateFunc model =
+    ({model | tags = updateFunc model.tags})
+
+
 imageTouchStartEnd : Touch.Event -> Model -> (Model, Cmd Msg)
 imageTouchStartEnd event model =
     ({model | imageTouchState = ImageViewer.handleTouchStartEnd event model.imageTouchState}, Cmd.none)
@@ -207,86 +223,7 @@ updateLocation location =
                 Cmd.none
 
 
-startTagAddition : Model -> Int -> (Model, Cmd Msg)
-startTagAddition model tagListId =
-    let
-        newTags = Tags.startTagTextInput tagListId model.tags
-        cmd = Dom.focus "tag_input_field" |> Task.attempt FocusResult
-    in
-        ({model | tags = newTags, keyReceiver = TagField tagListId}, cmd)
 
-
-removeTagList : Model -> Int -> (Model, Cmd Msg)
-removeTagList model id =
-    let
-        newTags =
-            Tags.removeTagList id model.tags
-
-        newReceiver =
-            case model.keyReceiver of
-                TagList _ ->
-                    TagListList
-                TagField _ ->
-                    TagListList
-                old -> old
-    in
-        ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
-
-toggleTag : Model -> Int -> Int -> (Model, Cmd Msg)
-toggleTag model listId tagId =
-    let
-        newTags = Tags.toggleTagInTagListList listId tagId model.tags
-    in
-        ({model | tags = newTags}, Cmd.none)
-
-
-
-removeTag : Model -> Int -> Int -> (Model, Cmd Msg)
-removeTag model listId tagId =
-    let
-        newTags =
-            Tags.removeTagFromTagListList listId tagId model.tags
-
-        newReceiver =
-            case model.keyReceiver of
-                Tag listId _ ->
-                    TagList listId
-                old -> old
-    in
-        ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
-
-
-
-addTagList : Model -> (Model, Cmd Msg)
-addTagList model =
-    let
-        (newTags, _) = Tags.addTagList Tags.emptyTagList model.tags
-    in
-        ( {model | tags = newTags }, Cmd.none)
-
-
-toggleTagList : Model -> Int -> (Model, Cmd Msg)
-toggleTagList model id =
-    let
-        newTags = Tags.toggleTagList id model.tags
-    in
-        ({model | tags = newTags}, Cmd.none)
-
-
-
-cancelTagCreation : Model -> Model
-cancelTagCreation model =
-    let
-        newReceiver = case model.keyReceiver of
-            TagField id ->
-                TagList id
-            _ ->
-                None
-    in
-        {model | tagTextfieldContent = Nothing
-               , tags = Tags.cancelAddTag model.tags
-               , keyReceiver = newReceiver
-               }
 
 
 
