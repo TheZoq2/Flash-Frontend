@@ -154,7 +154,7 @@ update msg model =
 
                 clientXY = Math.Vector2.fromTuple event.mouseEvent.clientPos
 
-                newGeometry = (ImageViewer.handleZoom zoomModifier clientXY model.imageGeometry)
+                newGeometry = (ImageViewer.zoomGeometry zoomModifier clientXY model.imageGeometry)
             in
                 ({model | imageGeometry = newGeometry}, Cmd.none)
         ImageTouchStart event ->
