@@ -24,7 +24,9 @@ import EditorTagListUpdaters exposing
 import Tags
 import ImageViewer
 import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
+import Mouse
 import Touch
+import Scroll
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
@@ -82,11 +84,7 @@ update msg model =
         OnSaved ->
             selectNextFile model
         NetworkError e ->
-            let
-                _ =
-                    Debug.log "Network error" e
-            in
-                ( model, Cmd.none )
+            networkError e model
         FileDataReceived data ->
             let
                 newUrl = case model.fileList of
@@ -111,7 +109,7 @@ update msg model =
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
         ImageLoaded ->
-                ( {model | imageLoaded = True}, Cmd.none)
+                ( {model | imageLoaded = True, imageGeometry = ImageViewer.initGeometry}, Cmd.none)
         Keypress code ->
             handleKeyboardInput model code
         NewFileList selectedFile listId length ->
@@ -147,27 +145,11 @@ update msg model =
         TagTextFieldChanged text ->
             ({model | tagTextfieldContent = Just text}, Cmd.none)
         FocusResult result ->
-            case result of
-                Err (Dom.NotFound id) ->
-                    let
-                        _ = Debug.log "Failed to find dom element when trying to focus on" id
-                    in
-                        ( {model | keyReceiver = None}, Cmd.none)
-                Ok () ->
-                    (model, Cmd.none)
+            handleFocusResult result model
         MouseMovedOnImage event ->
-            ( {model | imageGeometry = (ImageViewer.handleMouseMove event model.imageGeometry)}
-            , Cmd.none
-            )
+            mouseMovedOnImage event model
         ImageScrolled event ->
-            let
-                zoomModifier = 1.0 - event.deltaY * 0.05
-
-                clientXY = Math.Vector2.fromTuple event.mouseEvent.clientPos
-
-                newGeometry = (ImageViewer.zoomGeometry zoomModifier clientXY model.imageGeometry)
-            in
-                ({model | imageGeometry = newGeometry}, Cmd.none)
+            imageScrolled event model
         ImageTouchStart event ->
             imageTouchStartEnd event model
         ImageTouchEnd event ->
@@ -197,6 +179,45 @@ imageTouchMove event model =
                 model.imageGeometry
     in
         ({model | imageTouchState = touchState, imageGeometry = geometry}, Cmd.none)
+
+imageScrolled : Scroll.Event -> Model -> (Model, Cmd Msg)
+imageScrolled event model =
+    let
+        zoomModifier = 1.0 - event.deltaY * 0.05
+
+        clientXY = Math.Vector2.fromTuple event.mouseEvent.clientPos
+
+        newGeometry = (ImageViewer.zoomGeometry zoomModifier clientXY model.imageGeometry)
+    in
+        ({model | imageGeometry = newGeometry}, Cmd.none)
+
+
+mouseMovedOnImage : Mouse.Event -> Model -> (Model, Cmd Msg)
+mouseMovedOnImage event model =
+    ( {model | imageGeometry = (ImageViewer.handleMouseMove event model.imageGeometry)}
+    , Cmd.none
+    )
+
+
+handleFocusResult : (Result Dom.Error ()) -> Model -> (Model, Cmd Msg)
+handleFocusResult result model =
+    case result of
+        Err (Dom.NotFound id) ->
+            let
+                _ = Debug.log "Failed to find dom element when trying to focus on" id
+            in
+                ( {model | keyReceiver = None}, Cmd.none)
+        Ok () ->
+            (model, Cmd.none)
+
+
+networkError : Http.Error -> Model -> (Model, Cmd Msg)
+networkError e model =
+    let
+        _ =
+            Debug.log "Network error" e
+    in
+        ( model, Cmd.none )
 
 
 -- Handling navigation and url updates
