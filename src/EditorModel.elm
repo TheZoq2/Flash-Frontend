@@ -10,6 +10,8 @@ import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
 
 import Vec exposing (..)
 
+import WebGL.Texture
+
 
 
 type KeyReceiver
@@ -55,6 +57,8 @@ type alias Model =
     , imageGeometry: ImageViewer.Geometry
     -- The current touches of the image viewer
     , imageTouchState: ImageViewer.TouchState
+    -- The current texture used to render the image
+    , imageTexture: Maybe WebGL.Texture.Texture
     }
 
 

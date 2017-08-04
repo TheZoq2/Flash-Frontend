@@ -10,9 +10,9 @@ module ImageViewer
         , initTouchState
         , handleTouchStartEnd
         , handleTouchMove
+        , textureParameters
         )
 
-import Css
 import Html exposing (..)
 import Html.Attributes exposing (src)
 import Html.Events exposing (on, onWithOptions, defaultOptions)
@@ -24,10 +24,9 @@ import MultiTouch
 import Dict
 
 import WebGL exposing (Mesh, Shader)
+import WebGL.Texture exposing (Texture, nonPowerOfTwoOptions)
 
 import Math.Vector2 exposing (..)
-
-import Style
 
 {-|
   Tracks the zoom level and position of an image
@@ -193,19 +192,17 @@ type alias MouseEvents msg =
 {-|
   Generates html for an image viewer
 -}
-imageViewerHtml : msg -> Vec2 -> Geometry -> String -> MouseEvents msg -> Html msg
-imageViewerHtml onLoaded containerSize geometry filename events =
-    let
-        {moveMsg, downMsg, scrollMsg, touchStart, touchMove, touchEnd} = events
-
-        mouseDownOptions =
-            {defaultOptions | preventDefault = True}
-    in
-        webGlRenderer containerSize geometry events
+imageViewerHtml : Vec2 -> Geometry -> Maybe Texture -> MouseEvents msg -> Html msg
+imageViewerHtml containerSize geometry texture msgs =
+    case texture of
+        Just texture ->
+            webGlRenderer containerSize geometry msgs texture
+        Nothing ->
+            div [] []
 
 
-webGlRenderer : Vec2 -> Geometry -> MouseEvents msg -> Html msg
-webGlRenderer viewerSize geometry msgs =
+webGlRenderer : Vec2 -> Geometry -> MouseEvents msg -> Texture -> Html msg
+webGlRenderer viewerSize geometry msgs texture =
     let
         {moveMsg, downMsg, scrollMsg, touchStart, touchMove, touchEnd} = msgs
 
@@ -226,7 +223,7 @@ webGlRenderer viewerSize geometry msgs =
                 vertexShader
                 fragmentShader
                 glSquare
-                (uniforms geometry viewerSize (vec2 100 100))
+                (uniforms geometry viewerSize texture)
             ]
 
 glSquare : Mesh Vertex
@@ -253,13 +250,19 @@ type alias Uniforms =
     , zoom: Float
     , viewerSize: Vec2
     , imageSize: Vec2
+    , texture: Texture
     }
 
-uniforms : Geometry -> Vec2 -> Vec2 -> Uniforms
-uniforms {position, zoom} viewerSize imageSize =
-    Uniforms position zoom viewerSize imageSize
+uniforms : Geometry -> Vec2 -> Texture -> Uniforms
+uniforms {position, zoom} viewerSize texture =
+    let
+        imageSize = fromTuple 
+                <| (\(x,y) -> (toFloat x, toFloat y))
+                <| WebGL.Texture.size texture
+    in
+        Uniforms position zoom viewerSize imageSize texture
 
-vertexShader : Shader Vertex Uniforms {}
+vertexShader : Shader Vertex Uniforms {vCoord: Vec2}
 vertexShader =
     [glsl|
         attribute vec2 position;
@@ -269,6 +272,8 @@ vertexShader =
         uniform float zoom;
         uniform vec2 imageSize;
         uniform vec2 viewerSize;
+
+        varying vec2 vCoord;
 
 
         void main() {
@@ -280,7 +285,7 @@ vertexShader =
 
             // Put the image in the top left corner and make 0 < {x,y} < 1
             mat4 transform =
-                mat4( 
+                mat4(
                       2, 0, 0, 0
                     , 0, -2, 0, 0
                     , 0, 0, 0, 0
@@ -288,18 +293,33 @@ vertexShader =
                     );
 
             gl_Position = transform * vec4(localPos + -globalPos, 0., 1.);
+            vCoord = coord;
         }
     |]
 
-fragmentShader : Shader {} Uniforms {}
+fragmentShader : Shader {} Uniforms {vCoord: Vec2}
 fragmentShader =
     [glsl|
         precision mediump float;
 
+        uniform sampler2D texture;
+
+        varying vec2 vCoord;
+
         void main() {
-            gl_FragColor = vec4(0.5, 0, 0, 1);
+            gl_FragColor = texture2D(texture, vCoord);
         }
     |]
+
+
+textureParameters : WebGL.Texture.Options
+textureParameters =
+    let
+        default = WebGL.Texture.nonPowerOfTwoOptions
+    in
+    { default |
+        flipY = False
+    }
 
 {-|
   Event handler for image onLoad events

@@ -43,6 +43,7 @@ import Navigation
 import UrlParser
 import UrlParser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
+import WebGL.Texture
 
 
 
@@ -60,6 +61,7 @@ init location =
       , oldUrl = ""
       , imageGeometry = ImageViewer.initGeometry
       , imageTouchState = ImageViewer.initTouchState
+      , imageTexture = Nothing
       }
     , Cmd.batch
         [ Task.perform WindowResized Window.size
@@ -108,8 +110,6 @@ update msg model =
                     Size ((toFloat size.width)) (toFloat size.height)
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
-        ImageLoaded ->
-                ( {model | imageLoaded = True, imageGeometry = ImageViewer.initGeometry}, Cmd.none)
         Keypress code ->
             handleKeyboardInput model code
         NewFileList selectedFile listId length ->
@@ -158,6 +158,13 @@ update msg model =
             imageTouchMove event model
         NoOp ->
             (model, Cmd.none)
+        TextureLoaded texture ->
+            ({model | imageTexture = Just texture}, Cmd.none)
+        TextureLoadError e ->
+            let
+                _ = Debug.log "" e
+            in
+                (model, Cmd.none)
 
 
 updateModelTags : (Tags.TagListList -> Tags.TagListList) -> Model -> Model
@@ -383,14 +390,29 @@ checkHttpAttempt func res=
         Err e ->
             NetworkError e
 
+checkTextureLoadAttempt : (a -> Msg) -> Result WebGL.Texture.Error a -> Msg
+checkTextureLoadAttempt msg res =
+    case res of
+        Ok val ->
+            msg val
+        Err e ->
+            TextureLoadError e
+
 requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
     let
         url = fileListFileUrl [] "get_data" listId index
     in
-        Http.send 
-            (checkHttpAttempt FileDataReceived)
-            (Http.get url decodeFileData)
+        Cmd.batch
+            [ Http.send
+                (checkHttpAttempt FileDataReceived)
+                (Http.get url decodeFileData)
+            , Task.attempt
+                (checkTextureLoadAttempt TextureLoaded)
+                <| WebGL.Texture.loadWith 
+                        ImageViewer.textureParameters
+                        (fileListFileUrl [] "get_file" listId index)
+            ]
 
 updateFileData : FileList.FileList -> Cmd Msg
 updateFileData fileList =

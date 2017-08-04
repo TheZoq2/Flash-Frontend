@@ -94,10 +94,10 @@ view model =
                 case model.fileList of
                     Just fileList ->
                         ImageViewer.imageViewerHtml
-                            ImageLoaded
                             (vec2 viewerWidth model.viewerSize.height)
                             model.imageGeometry
-                            (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                            --(fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                            model.imageTexture
                             events
                     Nothing ->
                         div [] []
