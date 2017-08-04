@@ -23,6 +23,8 @@ import Touch
 import MultiTouch
 import Dict
 
+import WebGL exposing (Mesh, Shader)
+
 import Math.Vector2 exposing (..)
 
 import Style
@@ -192,42 +194,112 @@ type alias MouseEvents msg =
   Generates html for an image viewer
 -}
 imageViewerHtml : msg -> Vec2 -> Geometry -> String -> MouseEvents msg -> Html msg
-imageViewerHtml onLoaded containerSize {position, zoom} filename events =
+imageViewerHtml onLoaded containerSize geometry filename events =
     let
         {moveMsg, downMsg, scrollMsg, touchStart, touchMove, touchEnd} = events
-
-        (x, y) =
-            toTuple position
-
-        (w, h) =
-            toTuple containerSize
-
-        containerCss = 
-            [ Css.width <| Css.px (w * zoom)
-            , Css.height <| Css.px (h * zoom)
-            , Css.left <| Css.px -x
-            , Css.top <| Css.px -y
-            , Css.position Css.relative
-            ]
 
         mouseDownOptions =
             {defaultOptions | preventDefault = True}
     in
-        div [Style.toStyle containerCss]
-            [ img
-                [ Style.class [Style.ImageViewerImage]
-                , src filename
-                , onLoadSrc onLoaded
-                , Mouse.onMove moveMsg
-                , onWithOptions "mousedown" mouseDownOptions (Json.Decode.succeed downMsg)
-                , MultiTouch.onStart touchStart
-                , MultiTouch.onMove touchMove
-                , MultiTouch.onEnd touchEnd
-                , Scroll.onScroll scrollMsg
-                ]
-                []
+        webGlRenderer containerSize geometry events
+
+
+webGlRenderer : Vec2 -> Geometry -> MouseEvents msg -> Html msg
+webGlRenderer viewerSize geometry msgs =
+    let
+        {moveMsg, downMsg, scrollMsg, touchStart, touchMove, touchEnd} = msgs
+
+        mouseDownOptions =
+            {defaultOptions | preventDefault = True}
+    in
+        WebGL.toHtml
+            [ Html.Attributes.width <| round <| getX viewerSize
+            , Html.Attributes.height <| round <| getY viewerSize
+            , Mouse.onMove moveMsg
+            , onWithOptions "mousedown" mouseDownOptions (Json.Decode.succeed downMsg)
+            , MultiTouch.onStart touchStart
+            , MultiTouch.onMove touchMove
+            , MultiTouch.onEnd touchEnd
+            , Scroll.onScroll scrollMsg
+            ]
+            [ WebGL.entity
+                vertexShader
+                fragmentShader
+                glSquare
+                (uniforms geometry viewerSize (vec2 100 100))
             ]
 
+glSquare : Mesh Vertex
+glSquare =
+    [ ( Vertex (vec2 0 0) (vec2 0 0)
+      , Vertex (vec2 0 1) (vec2 0 1)
+      , Vertex (vec2 1 1) (vec2 1 1)
+      )
+    , ( Vertex (vec2 0 0) (vec2 0 0)
+      , Vertex (vec2 1 1) (vec2 1 1)
+      , Vertex (vec2 1 0) (vec2 1 0)
+      )
+    ]
+        |> WebGL.triangles
+
+
+type alias Vertex =
+    { position: Vec2
+    , coord: Vec2
+    }
+
+type alias Uniforms =
+    { imagePosition: Vec2
+    , zoom: Float
+    , viewerSize: Vec2
+    , imageSize: Vec2
+    }
+
+uniforms : Geometry -> Vec2 -> Vec2 -> Uniforms
+uniforms {position, zoom} viewerSize imageSize =
+    Uniforms position zoom viewerSize imageSize
+
+vertexShader : Shader Vertex Uniforms {}
+vertexShader =
+    [glsl|
+        attribute vec2 position;
+        attribute vec2 coord;
+
+        uniform vec2 imagePosition;
+        uniform float zoom;
+        uniform vec2 imageSize;
+        uniform vec2 viewerSize;
+
+
+        void main() {
+            // The local position of each vertex
+            vec2 localPos = position*imageSize / viewerSize * zoom;
+
+            // The position of the image
+            vec2 globalPos = imagePosition / viewerSize;
+
+            // Put the image in the top left corner and make 0 < {x,y} < 1
+            mat4 transform =
+                mat4( 
+                      2, 0, 0, 0
+                    , 0, -2, 0, 0
+                    , 0, 0, 0, 0
+                    , -1, 1, 0, 1
+                    );
+
+            gl_Position = transform * vec4(localPos + -globalPos, 0., 1.);
+        }
+    |]
+
+fragmentShader : Shader {} Uniforms {}
+fragmentShader =
+    [glsl|
+        precision mediump float;
+
+        void main() {
+            gl_FragColor = vec4(0.5, 0, 0, 1);
+        }
+    |]
 
 {-|
   Event handler for image onLoad events
