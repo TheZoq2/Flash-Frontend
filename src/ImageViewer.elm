@@ -29,7 +29,16 @@ import Math.Vector2 exposing (..)
 
 import Style
 
-velocityDecay = 0.7
+velocityDecay = 0.2
+
+{-|
+  When moving the image, the velocity is set to Raw which has not been recalculated
+  into PixelsPerSecond. When the next animation frame is provided, the velocity is
+  updated to pixels per second which is what is used for movement
+-}
+type VelocityUnit
+    = Raw Vec2
+    | PixelsPerSecond Vec2
 
 {-|
   Tracks the zoom level and position of an image
@@ -37,12 +46,12 @@ velocityDecay = 0.7
 type alias Geometry =
     { position: Vec2
     , zoom: Float
-    , velocity: Vec2
+    , velocity: VelocityUnit
     }
 
 initGeometry : Geometry
 initGeometry =
-    Geometry (vec2 0 0) 1 (vec2 0 0)
+    Geometry (vec2 0 0) 1 (Raw (vec2 0 0))
 
 {-|
   Tracks the current touches on the image
@@ -117,7 +126,7 @@ handleSingletouchMove oldPosition newPosition geometry =
     let
         moved = moveGeometry (Math.Vector2.sub newPosition oldPosition) geometry
     in
-        {moved | velocity = (scale 60 (Math.Vector2.sub newPosition oldPosition))}
+        {moved | velocity = Raw (scale 60 (Math.Vector2.sub newPosition oldPosition))}
 
 {-|
   Handles updating the geometry on multi-finger touches
@@ -171,7 +180,7 @@ zoomGeometry scaling pivot geometry =
         newPosition =
             Math.Vector2.sub (scale scaling (add pivot geometry.position)) pivot
     in
-        Geometry newPosition zoom (vec2 0 0)
+        Geometry newPosition zoom (Raw (vec2 0 0))
 
 
 {-|
@@ -185,11 +194,23 @@ moveGeometry moved geometry =
 onAnimationFrame : Time.Time -> Geometry -> Geometry
 onAnimationFrame frametime geometry =
     let
+        velocity = case geometry.velocity of
+            Raw vel ->
+                scale (1/frametime) vel
+            PixelsPerSecond vel ->
+                if (distance vel (vec2 0 0)) < 0.1 then
+                    vec2 0 0
+                else
+                    vel
+
         frameSeconds = Time.inSeconds frametime
-        moved = (scale frameSeconds geometry.velocity)
+        moved = (scale frameSeconds velocity)
         newGeometry = moveGeometry moved geometry
+
+        newVelocity = PixelsPerSecond
+                (Math.Vector2.sub velocity (scale (velocityDecay*frameSeconds) velocity))
     in
-        {newGeometry | velocity = (scale velocityDecay geometry.velocity)}
+        {newGeometry | velocity = newVelocity}
 
 
 {-|
