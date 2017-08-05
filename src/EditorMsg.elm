@@ -16,6 +16,7 @@ import Navigation
 import Mouse
 import Scroll
 import Touch
+import Time
 
 
 type Msg
@@ -36,6 +37,7 @@ type Msg
     | ImageTouchStart Touch.Event
     | ImageTouchMove Touch.Event
     | ImageTouchEnd Touch.Event
+    | Frame Time.Time
     | NoOp -- For events that are only handled because we want to prevent default
     -- Tag list specific messages
     | AddTagList

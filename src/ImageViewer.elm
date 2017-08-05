@@ -10,6 +10,7 @@ module ImageViewer
         , initTouchState
         , handleTouchStartEnd
         , handleTouchMove
+        , onAnimationFrame
         )
 
 import Css
@@ -22,10 +23,13 @@ import Scroll
 import Touch
 import MultiTouch
 import Dict
+import Time
 
 import Math.Vector2 exposing (..)
 
 import Style
+
+velocityDecay = 0.7
 
 {-|
   Tracks the zoom level and position of an image
@@ -33,11 +37,12 @@ import Style
 type alias Geometry =
     { position: Vec2
     , zoom: Float
+    , velocity: Vec2
     }
 
 initGeometry : Geometry
 initGeometry =
-    Geometry (vec2 0 0) 1
+    Geometry (vec2 0 0) 1 (vec2 0 0)
 
 {-|
   Tracks the current touches on the image
@@ -109,7 +114,10 @@ handleTouchMoveVec oldTouches newTouches geometry =
 -}
 handleSingletouchMove : Vec2 -> Vec2 -> Geometry -> Geometry
 handleSingletouchMove oldPosition newPosition geometry =
-    moveGeometry (Math.Vector2.sub newPosition oldPosition) geometry
+    let
+        moved = moveGeometry (Math.Vector2.sub newPosition oldPosition) geometry
+    in
+        {moved | velocity = (scale 60 (Math.Vector2.sub newPosition oldPosition))}
 
 {-|
   Handles updating the geometry on multi-finger touches
@@ -163,7 +171,7 @@ zoomGeometry scaling pivot geometry =
         newPosition =
             Math.Vector2.sub (scale scaling (add pivot geometry.position)) pivot
     in
-        Geometry newPosition zoom
+        Geometry newPosition zoom (vec2 0 0)
 
 
 {-|
@@ -172,6 +180,16 @@ zoomGeometry scaling pivot geometry =
 moveGeometry : Vec2 -> Geometry -> Geometry
 moveGeometry moved geometry =
     {geometry | position = (add geometry.position (scale -1 moved))}
+
+
+onAnimationFrame : Time.Time -> Geometry -> Geometry
+onAnimationFrame frametime geometry =
+    let
+        frameSeconds = Time.inSeconds frametime
+        moved = (scale frameSeconds geometry.velocity)
+        newGeometry = moveGeometry moved geometry
+    in
+        {newGeometry | velocity = (scale velocityDecay geometry.velocity)}
 
 
 {-|

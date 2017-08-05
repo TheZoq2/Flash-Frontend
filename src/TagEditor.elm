@@ -43,6 +43,8 @@ import Navigation
 import UrlParser
 import UrlParser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
+import AnimationFrame
+import Time exposing (Time)
 
 
 
@@ -156,9 +158,15 @@ update msg model =
             imageTouchStartEnd event model
         ImageTouchMove event ->
             imageTouchMove event model
+        Frame time ->
+            onAnimationFrame time model
         NoOp ->
             (model, Cmd.none)
 
+
+onAnimationFrame : Time -> Model -> (Model, Cmd Msg)
+onAnimationFrame time model =
+    ({model | imageGeometry = (ImageViewer.onAnimationFrame time model.imageGeometry)}, Cmd.none)
 
 updateModelTags : (Tags.TagListList -> Tags.TagListList) -> Model -> Model
 updateModelTags updateFunc model =
@@ -487,6 +495,7 @@ subscriptions model =
     Sub.batch
         [ Window.resizes WindowResized
         , Keyboard.downs Keypress
+        , AnimationFrame.diffs Frame
         ]
 
 
