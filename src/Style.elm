@@ -58,6 +58,7 @@ type CssClasses
     | WideButton
     | InlineButton
     | BlockButton
+    | RoundedSquareButton
     | Tag
     | TagList
     | TagListButtonRow
@@ -248,6 +249,9 @@ tagEditorCss =
         [ lineHeight <| (Css.em 1)
         , display Css.inlineBlock
         , width <| (Css.em 1)
+        ]
+    , Css.class RoundedSquareButton
+        [ width <| Css.em 1
         ]
     , Css.class Tag
         [ fontSize <| (Css.em 1)

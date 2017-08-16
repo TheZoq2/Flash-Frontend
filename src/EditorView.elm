@@ -15,8 +15,25 @@ import ImageViewer
 import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
 
 import Html exposing (..)
-import Elements exposing (flatButton, floatingLayer)
+import Elements exposing (flatButton)
 import Math.Vector2 exposing (Vec2, vec2)
+import Css
+
+
+lowerBar : Model -> Html Msg
+lowerBar model =
+    div
+        [ Style.toStyle
+            [ Css.position Css.absolute
+            , Css.bottom <| Css.px 0
+            , Css.width <| Css.pct 100
+            ]
+        ]
+        [ div [Style.toStyle [Css.margin2 (Css.px 0) Css.auto]]
+            [ flatButton [Style.RoundedSquareButton] [] RequestNext "▲" 2
+            ]
+        ]
+
 
 -- VIEW
 
@@ -112,10 +129,8 @@ view model =
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
-                [ floatingLayer [p [] [text "fuck you"]]]
-                ++
                 [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
-                    [imageViewer]
+                    [imageViewer, lowerBar model]
                 ]
                 ++ ( if model.sidebarVisible then
                          sidebar
