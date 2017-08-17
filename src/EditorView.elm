@@ -22,17 +22,23 @@ import Css
 
 lowerBar : Model -> Html Msg
 lowerBar model =
-    div
-        [ Style.toStyle
-            [ Css.position Css.absolute
-            , Css.bottom <| Css.px 0
-            , Css.width <| Css.pct 100
+    let
+        buttonStyle =
+            Style.toStyle
+                [ Css.margin2 (Css.px 0) Css.auto
+                ]
+    in
+        div
+            [ Style.toStyle
+                [ Css.position Css.absolute
+                , Css.bottom <| Css.px 0
+                , Css.width <| Css.pct 100
+                ]
             ]
-        ]
-        [ div [Style.toStyle [Css.margin2 (Css.px 0) Css.auto]]
-            [ flatButton [Style.RoundedSquareButton] [] RequestNext "▲" 2
+            [ div [Style.toStyle [Css.margin2 (Css.px 0) Css.auto]]
+                [ flatButton [Style.RoundedSquareButton] [buttonStyle] RequestNext "▲" 1.5
+                ]
             ]
-        ]
 
 
 -- VIEW
