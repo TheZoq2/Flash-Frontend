@@ -205,9 +205,10 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename events =
         containerCss = 
             [ Css.width <| Css.px (w * zoom)
             , Css.height <| Css.px (h * zoom)
-            , Css.left <| Css.px -x
-            , Css.top <| Css.px -y
-            , Css.position Css.relative
+            , Css.transforms <|
+                [ Css.translateX <| Css.px -x
+                , Css.translateY <| Css.px -y
+                ]
             ]
 
         mouseDownOptions =
