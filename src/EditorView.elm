@@ -27,18 +27,32 @@ lowerBar model =
             Style.toStyle
                 [ Css.margin2 (Css.px 0) Css.auto
                 ]
+
+        showButton =
+            div [Style.toStyle [Css.margin2 (Css.px 0) Css.auto]]
+              [ flatButton [Style.RoundedSquareButton] [buttonStyle] RequestNext "▲" 1.5
+              ]
+
+        imageBar =
+            case model.fileList of
+                Just fileList ->
+                    div []
+                        []
+                Nothing ->
+                    div [] []
+
+        container children =
+            div
+                [ Style.toStyle
+                    [ Css.position Css.absolute
+                    , Css.bottom <| Css.px 0
+                    , Css.width <| Css.pct 100
+                    ]
+                ]
+                children
+
     in
-        div
-            [ Style.toStyle
-                [ Css.position Css.absolute
-                , Css.bottom <| Css.px 0
-                , Css.width <| Css.pct 100
-                ]
-            ]
-            [ div [Style.toStyle [Css.margin2 (Css.px 0) Css.auto]]
-                [ flatButton [Style.RoundedSquareButton] [buttonStyle] RequestNext "▲" 1.5
-                ]
-            ]
+        container <| [showButton, imageBar]
 
 
 -- VIEW
