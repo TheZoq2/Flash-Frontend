@@ -202,7 +202,7 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename events =
         (w, h) =
             toTuple containerSize
 
-        containerCss = 
+        containerCss =
             [ Css.width <| Css.px (w * zoom)
             , Css.height <| Css.px (h * zoom)
             , Css.transforms <|

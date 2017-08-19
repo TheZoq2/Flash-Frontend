@@ -12,3 +12,11 @@
 {
 	justify-content: center;
 }
+
+.EditorThumbnailContainer > .Thumbnail {
+    transition: all 0.25s ease-out
+}
+
+.EditorThumbnailContainer > .Thumbnail:hover {
+    transform: scaleX(1.05) scaleY(1.05) translateY(-10px)
+}

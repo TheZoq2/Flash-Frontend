@@ -79,6 +79,8 @@ update msg model =
             selectNextFile model
         RequestPrev ->
             selectPrevFile model
+        RequestId id ->
+            selectFileId id model
         RequestSave ->
             ( model, requestSaveImage model <| getSelectedTags model)
         OnSaved ->
@@ -355,6 +357,18 @@ selectNextFile model =
 selectPrevFile : Model -> (Model, Cmd Msg)
 selectPrevFile model =
     jumpFileList -1 model
+
+
+selectFileId : Int -> Model -> (Model, Cmd Msg)
+selectFileId id model =
+    case model.fileList of
+        Just fileList ->
+            let
+                jumpAmount = id - fileList.fileIndex
+            in
+                jumpFileList jumpAmount model
+        Nothing ->
+            (model, Cmd.none)
 
 jumpFileList : Int -> Model -> (Model, Cmd Msg)
 jumpFileList amount model =

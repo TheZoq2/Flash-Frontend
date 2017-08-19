@@ -54,6 +54,7 @@ type CssClasses
     | TagEditorSelected
     | ImageViewer
     | ImageViewerImage
+    | EditorImageContainer
     | Button
     | WideButton
     | InlineButton
@@ -67,7 +68,9 @@ type CssClasses
     | LoadingPulse
     | LoadingContainer
     | Thumbnail
-    | ThumbnailContainer
+    | AlbumThumbnailContainer
+    | EditorThumbnailContainer
+    | SelectedThumbnail
     | SearchContainer
 
 
@@ -110,6 +113,10 @@ disabledTagColor =
 tagEditorSidebarWidth : Float
 tagEditorSidebarWidth =
     350
+
+tagEditorLowerBarHeight: Float
+tagEditorLowerBarHeight =
+    100
 
 
 tagEditorStdMargin : Float
@@ -165,8 +172,6 @@ globalStyle =
             ]
          , Css.class Thumbnail
             [ display block
-            , width (px 300)
-            , height (px 200)
             , children 
                 [ img
                     [ Css.width (Css.pct 100)
@@ -174,10 +179,6 @@ globalStyle =
                     , Css.property "object-fit" "contain"
                     ]
                 ]
-            ]
-         , Css.class ThumbnailContainer
-            [ displayFlex
-            , flexWrap wrap
             ]
          , Css.Elements.li
             [ listStyle none
@@ -203,9 +204,6 @@ tagEditorCss : List Css.Snippet
 tagEditorCss =
     [ Css.class TagEditorContainer
         [ displayFlex
-        ]
-    , Css.class TagEditorContentContainer
-        [ overflow hidden
         ]
     , Css.class TagEditorRightPane
         [ maxHeight (px 1000)
@@ -316,6 +314,31 @@ imageViewerStyle =
         , Css.height (Css.pct 100)
         , Css.property "object-fit" "contain"
         ]
+    , Css.class EditorThumbnailContainer
+        [ displayFlex
+        , justifyContent center
+        , height <| Css.px 100
+        , children
+            [ Css.class Thumbnail
+                [ height <| Css.px 100
+                , margin <| Css.px 2
+                , cursor pointer
+                ]
+            , Css.class SelectedThumbnail
+                [ transforms [translateY <| Css.px -10, scaleX 1.1, scaleY 1.1]
+                , border3 (Css.px 2) solid <| Css.hex "3b9ddb"
+                ]
+            ]
+        ]
+    , Css.class EditorImageContainer
+        [ flexGrow <| num 1
+        , overflow hidden
+        ]
+    , Css.class TagEditorContentContainer
+        [ overflow hidden
+        , displayFlex
+        , flexDirection column
+        ]
     ]
 
 
@@ -338,6 +361,16 @@ albumStyle =
     , Css.class AlbumIndexContainer
         [ maxWidth albumSearchMaxWidth
         , margin3 (px 100) auto (px 0)
+        ]
+     , Css.class AlbumThumbnailContainer
+        [ displayFlex
+        , flexWrap wrap
+        , children
+            [ Css.class Thumbnail 
+                [ width (px 300)
+                , height (px 200)
+                ]
+            ]
         ]
     ]
 

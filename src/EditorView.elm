@@ -1,4 +1,4 @@
-module EditorView exposing (view)
+module EditorView exposing (view, imageIdList)
 
 import EditorModel exposing 
     ( Model
@@ -15,10 +15,35 @@ import ImageViewer
 import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
 
 import Html exposing (..)
-import Elements exposing (flatButton)
+import Elements exposing (flatButton, thumbnail)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
 
+imageIdList : FileList -> Int -> (List Int, Int, List Int)
+imageIdList fileList range =
+    let
+        start = max (fileList.fileIndex - range) 0
+        end = min (fileList.fileIndex + range) (fileList.length - 1)
+    in
+        ( List.range start (fileList.fileIndex - 1)
+        , fileList.fileIndex
+        , List.range (fileList.fileIndex + 1) (end)
+        )
+
+thumbnailList : Int -> (Int -> Msg) -> (List Int, Int, List Int) -> List (Html Msg)
+thumbnailList listId onClick (previousIds, currentId, nextIds) =
+    let
+        thumbnailUrlFromId id =
+            fileListFileUrl [] "get_thumbnail"  listId id
+
+        thumbnailCreatorFromId additionalAttributes id =
+            thumbnail additionalAttributes (thumbnailUrlFromId id) (onClick id)
+    in
+        List.map (thumbnailCreatorFromId []) previousIds
+        ++
+        [thumbnailCreatorFromId [Style.class [Style.SelectedThumbnail]] currentId]
+        ++
+        List.map (thumbnailCreatorFromId []) nextIds
 
 lowerBar : Model -> Html Msg
 lowerBar model =
@@ -28,31 +53,27 @@ lowerBar model =
                 [ Css.margin2 (Css.px 0) Css.auto
                 ]
 
-        showButton =
-            div [Style.toStyle [Css.margin2 (Css.px 0) Css.auto]]
-              [ flatButton [Style.RoundedSquareButton] [buttonStyle] RequestNext "▲" 1.5
-              ]
-
         imageBar =
             case model.fileList of
                 Just fileList ->
-                    div []
-                        []
+                    div [Style.class [Style.EditorThumbnailContainer]]
+                        <| thumbnailList fileList.listId
+                            RequestId
+                            <| imageIdList fileList 4
                 Nothing ->
                     div [] []
 
         container children =
             div
                 [ Style.toStyle
-                    [ Css.position Css.absolute
-                    , Css.bottom <| Css.px 0
+                    [ Css.bottom <| Css.px 0
                     , Css.width <| Css.pct 100
                     ]
                 ]
                 children
 
     in
-        container <| [showButton, imageBar]
+        container <| [imageBar]
 
 
 -- VIEW
@@ -149,8 +170,8 @@ view model =
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
-                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ] 
-                    [imageViewer, lowerBar model]
+                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ]
+                    [ div [Style.class [Style.EditorImageContainer]] [imageViewer], lowerBar model]
                 ]
                 ++ ( if model.sidebarVisible then
                          sidebar
