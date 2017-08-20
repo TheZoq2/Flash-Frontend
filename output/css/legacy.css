@@ -20,3 +20,14 @@
 .EditorThumbnailContainer > .Thumbnail:hover {
     transform: scaleX(1.05) scaleY(1.05) translateY(-10px)
 }
+
+.hoverArea + g {
+    visibility: hidden;
+}
+.hoverArea + g:hover {
+    visibility: visible;
+}
+.hoverArea:hover + g {
+    stroke: #f00;
+    visibility: visible;
+}

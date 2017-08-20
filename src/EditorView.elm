@@ -15,7 +15,8 @@ import ImageViewer
 import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
 
 import Html exposing (..)
-import Elements exposing (flatButton, thumbnail)
+import Elements exposing (flatButton, thumbnail, hoverButton)
+import Graphics exposing (menuIcon)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
 
@@ -73,7 +74,11 @@ lowerBar model =
                 children
 
     in
-        container <| [imageBar]
+        container <| if model.sidebarVisible then
+            [imageBar]
+        else
+            []
+
 
 
 -- VIEW
@@ -170,6 +175,7 @@ view model =
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
+                [ hoverButton RequestNext menuIcon (0,0) 30] ++
                 [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ]
                     [ div [Style.class [Style.EditorImageContainer]] [imageViewer], lowerBar model]
                 ]
