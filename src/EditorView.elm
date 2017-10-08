@@ -165,22 +165,46 @@ view model =
                         div [] []
 
         sidebar =
-            [ div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
+            div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , loadingBar
                 , Tags.tagListListHtml model.tags selectedTag listMessages
                 , addTagList
                 ]
-            ]
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
-                [ hoverButton RequestNext menuIcon (0,0) 30] ++
-                [ div [ Style.class [ Style.TagEditorContentContainer], Style.styleFromSize model.viewerSize ]
-                    [ div [Style.class [Style.EditorImageContainer]] [imageViewer], lowerBar model]
+                [ div
+                    [ Style.class [ Style.TagEditorContentContainer]
+                    , Style.styleFromSize model.viewerSize 
+                    ]
+                    [ div [ Style.class [Style.EditorImageContainer]]
+                        [ imageViewer
+                        ]
+                    , lowerBar model
+                    ]
                 ]
-                ++ ( if model.sidebarVisible then
+                ++ [ if model.sidebarVisible then
                          sidebar
                      else
-                         []
-                   )
+                         hoverLayer
+                   ]
+
+
+hoverLayer : Html Msg
+hoverLayer =
+    div
+        [Style.class [Style.HoverLayer]]
+        [ flatButton 
+            [Style.BlockButton]
+            [Style.toStyle [Css.float Css.left]]
+            RequestPrev
+            "‹"
+            3
+        , flatButton 
+            [Style.BlockButton]
+            [Style.toStyle [Css.float Css.right]]
+            RequestNext
+            "›"
+            3
+        ]

@@ -21,7 +21,7 @@ flatButton classes attributes onClickMsg buttonText fontSize =
             , Style.toStyle 
                 [ Css.fontSize (Css.em fontSize)
                 ]
-            ] 
+            ]
             ++ attributes
         )
         [ text buttonText ]

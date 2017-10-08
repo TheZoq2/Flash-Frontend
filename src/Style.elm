@@ -72,6 +72,7 @@ type CssClasses
     | EditorThumbnailContainer
     | SelectedThumbnail
     | SearchContainer
+    | HoverLayer
 
 
 
@@ -282,6 +283,16 @@ tagEditorCss =
         [ border zero
         , backgroundColor Css.transparent
         , color primaryTextColor
+        ]
+    , Css.class HoverLayer
+        [ position absolute
+        , top <| px 0
+        , left <| px 0
+        , width <| pct 100
+        , property "pointer-events" "none"
+        , children
+            [ everything [property "pointer-events" "all"]
+            ]
         ]
     ]
 
