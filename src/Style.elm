@@ -115,6 +115,10 @@ tagEditorSidebarWidth : Float
 tagEditorSidebarWidth =
     350
 
+tagEditorThumbnailHeight : Float
+tagEditorThumbnailHeight =
+    100
+
 tagEditorLowerBarHeight: Float
 tagEditorLowerBarHeight =
     100
@@ -331,7 +335,7 @@ imageViewerStyle =
         , height <| Css.px 100
         , children
             [ Css.class Thumbnail
-                [ height <| Css.px 100
+                [ height <| Css.px tagEditorThumbnailHeight
                 , margin <| Css.px 2
                 , cursor pointer
                 ]

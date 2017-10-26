@@ -1,6 +1,7 @@
 module ImageViewer
     exposing
         ( imageViewerHtml
+        , videoViewer
         , Geometry
         , initGeometry
         , MouseEvents
@@ -229,6 +230,25 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename events =
                 []
             ]
 
+videoViewer : msg -> Vec2 -> String -> Html msg
+videoViewer onLoadStart containerSize url =
+    let
+        (w, h) =
+            toTuple containerSize
+
+        css =
+            [ Css.width <| Css.px w
+            , Css.height <| Css.px h
+            ]
+    in
+        video
+            [ src url
+            , Style.toStyle css
+            , onVideoLoadStart onLoadStart
+            , Html.Attributes.controls True
+            ]
+            []
+
 
 {-|
   Event handler for image onLoad events
@@ -236,5 +256,12 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename events =
 onLoadSrc : msg -> Html.Attribute msg
 onLoadSrc msg =
     on "load" (Json.Decode.succeed msg)
+
+{-|
+  Event handler for video onLoadStart events
+-}
+onVideoLoadStart : msg -> Html.Attribute msg
+onVideoLoadStart msg =
+    on "loadStart" (Json.Decode.succeed msg)
 
 

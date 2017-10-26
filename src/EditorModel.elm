@@ -2,6 +2,8 @@ module EditorModel exposing
     ( Model
     , FileData
     , KeyReceiver(..)
+    , FileKind(..)
+    , fileKindFromExtension
     )
 
 import Tags
@@ -30,6 +32,16 @@ type alias FileData =
     , tags: List String
     }
 
+type FileKind
+    = Image
+    | Video
+
+fileKindFromExtension : String -> FileKind
+fileKindFromExtension extension =
+    case extension of
+        "mp4" -> Video
+        _ -> Image
+
 
 type alias Model =
     { lastError : String
@@ -55,6 +67,8 @@ type alias Model =
     , imageGeometry: ImageViewer.Geometry
     -- The current touches of the image viewer
     , imageTouchState: ImageViewer.TouchState
+    -- The type of the currently viewed file
+    , fileKind: FileKind
     }
 
 
