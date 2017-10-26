@@ -80,7 +80,52 @@ lowerBar model =
         else
             []
 
+mediaViewer : Model -> Html Msg
+mediaViewer model =
+    let
+        (viewerWidth, viewerHeight) = if model.sidebarVisible then
+                ( model.viewerSize.width - Style.totalSidebarSize
+                , model.viewerSize.height - Style.tagEditorThumbnailHeight
+                )
+            else
+                ( model.viewerSize.width
+                , model.viewerSize.height
+                )
 
+        imageViewer fileList =
+            let
+                events =
+                    ImageViewer.MouseEvents
+                        MouseMovedOnImage
+                        ImageScrolled
+                        ImageTouchStart
+                        ImageTouchMove
+                        ImageTouchEnd
+                        NoOp
+
+            in
+                ImageViewer.imageViewerHtml
+                    ImageLoaded
+                    (vec2 viewerWidth viewerHeight)
+                    model.imageGeometry
+                    (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                    events
+
+        videoViewer fileList = 
+            ImageViewer.videoViewer
+                ImageLoaded
+                (vec2 viewerWidth viewerHeight)
+                (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+    in
+        case model.fileList of
+            Just fileList ->
+                case model.fileKind of
+                    Image ->
+                        imageViewer fileList
+                    Video ->
+                        videoViewer fileList
+            Nothing ->
+                div [] [p [] [text "No file list selected"]]
 
 -- VIEW
 
@@ -137,40 +182,6 @@ view model =
                 _ ->
                     Tags.None
 
-        viewerWidth = model.viewerSize.width - if model.sidebarVisible then
-                Style.totalSidebarSize
-            else
-                0
-
-        viewerHeight = model.viewerSize.height -
-                if model.sidebarVisible then
-                    Style.tagEditorThumbnailHeight
-                else
-                    0
-
-        imageViewer =
-            let
-                events =
-                    ImageViewer.MouseEvents
-                        MouseMovedOnImage
-                        ImageScrolled
-                        ImageTouchStart
-                        ImageTouchMove
-                        ImageTouchEnd
-                        NoOp
-
-            in
-                case model.fileList of
-                    Just fileList ->
-                        ImageViewer.imageViewerHtml
-                            ImageLoaded
-                            (vec2 viewerWidth viewerHeight)
-                            model.imageGeometry
-                            (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
-                            events
-                    Nothing ->
-                        div [] []
-
 
         sidebar =
             div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
@@ -180,20 +191,6 @@ view model =
                 , addTagList
                 ]
 
-        mediaViewer =
-            case model.fileKind of
-                Image ->
-                    imageViewer
-                Video ->
-                    case model.fileList of
-                        Just fileList ->
-                            ImageViewer.videoViewer
-                                ImageLoaded
-                                (vec2 viewerWidth viewerHeight)
-                                (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
-                        Nothing ->
-                            div [] []
-
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -202,7 +199,7 @@ view model =
                     , Style.styleFromSize model.viewerSize 
                     ]
                     [ div [ Style.class [Style.EditorImageContainer]]
-                        [ mediaViewer
+                        [ mediaViewer model
                         ]
                     , lowerBar model
                     ]
