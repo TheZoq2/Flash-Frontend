@@ -4,6 +4,7 @@ import EditorModel exposing
     ( Model
     , FileData
     , KeyReceiver(..)
+    , FileKind(..)
     )
 import EditorMsg exposing
     ( Msg(..)
@@ -15,8 +16,8 @@ import ImageViewer
 import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
 
 import Html exposing (..)
+import Html.Attributes
 import Elements exposing (flatButton, thumbnail, hoverButton)
-import Graphics exposing (menuIcon)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
 
@@ -141,6 +142,12 @@ view model =
             else
                 0
 
+        viewerHeight = model.viewerSize.height -
+                if model.sidebarVisible then
+                    Style.tagEditorThumbnailHeight
+                else
+                    0
+
         imageViewer =
             let
                 events =
@@ -157,12 +164,13 @@ view model =
                     Just fileList ->
                         ImageViewer.imageViewerHtml
                             ImageLoaded
-                            (vec2 viewerWidth model.viewerSize.height)
+                            (vec2 viewerWidth viewerHeight)
                             model.imageGeometry
                             (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
                             events
                     Nothing ->
                         div [] []
+
 
         sidebar =
             div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
@@ -171,6 +179,21 @@ view model =
                 , Tags.tagListListHtml model.tags selectedTag listMessages
                 , addTagList
                 ]
+
+        mediaViewer =
+            case model.fileKind of
+                Image ->
+                    imageViewer
+                Video ->
+                    case model.fileList of
+                        Just fileList ->
+                            ImageViewer.videoViewer
+                                ImageLoaded
+                                (vec2 viewerWidth viewerHeight)
+                                (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                        Nothing ->
+                            div [] []
+
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -179,7 +202,7 @@ view model =
                     , Style.styleFromSize model.viewerSize 
                     ]
                     [ div [ Style.class [Style.EditorImageContainer]]
-                        [ imageViewer
+                        [ mediaViewer
                         ]
                     , lowerBar model
                     ]
@@ -195,16 +218,6 @@ hoverLayer : Html Msg
 hoverLayer =
     div
         [Style.class [Style.HoverLayer]]
-        [ flatButton 
-            [Style.BlockButton]
-            [Style.toStyle [Css.float Css.left]]
-            RequestPrev
-            "‹"
-            3
-        , flatButton 
-            [Style.BlockButton]
-            [Style.toStyle [Css.float Css.right]]
-            RequestNext
-            "›"
-            3
+        [ flatButton [Style.BlockButton] [Style.toStyle [Css.float Css.left]] RequestPrev "‹" 3
+        , flatButton [Style.BlockButton] [Style.toStyle [Css.float Css.right]] RequestNext "›" 3
         ]

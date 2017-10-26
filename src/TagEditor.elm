@@ -4,6 +4,8 @@ import EditorModel exposing
     ( Model
     , FileData
     , KeyReceiver(..)
+    , FileKind(..)
+    , fileKindFromExtension
     )
 import EditorMsg exposing
     ( Msg(..)
@@ -60,6 +62,7 @@ init location =
       , oldUrl = ""
       , imageGeometry = ImageViewer.initGeometry
       , imageTouchState = ImageViewer.initTouchState
+      , fileKind = Image
       }
     , Cmd.batch
         [ Task.perform WindowResized Window.size
@@ -454,6 +457,15 @@ requestFileListData selected listId =
 onFileDataReceived : FileData -> Model -> Model
 onFileDataReceived data model =
     let
+        -- Read the current file type
+        newFileKind =
+            String.split "." data.filePath
+            |> List.reverse
+            |> List.head
+            |> Maybe.map fileKindFromExtension
+            |> Maybe.withDefault model.fileKind
+
+
         -- Remove the old tag list containing old tags
         newTagListList = case model.oldTagList of
             Just id ->
@@ -481,7 +493,7 @@ onFileDataReceived data model =
                 in
                     (listList, Just id)
     in
-        {model | tags = newNewTagListList, oldTagList = id}
+        {model | tags = newNewTagListList, oldTagList = id, fileKind = newFileKind}
 
 
 
