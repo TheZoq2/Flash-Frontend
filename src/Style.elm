@@ -188,6 +188,8 @@ globalStyle =
          , Css.Elements.li
             [ listStyle none
             ]
+         , Css.Elements.img
+            [ Css.property "image-orientation" "from-image"]
          ]
             ++ tagEditorCss
             ++ tagListManagerCss
