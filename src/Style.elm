@@ -54,10 +54,12 @@ type CssClasses
     | TagEditorSelected
     | ImageViewer
     | ImageViewerImage
+    | EditorImageContainer
     | Button
     | WideButton
     | InlineButton
     | BlockButton
+    | RoundedSquareButton
     | Tag
     | TagList
     | TagListButtonRow
@@ -66,8 +68,11 @@ type CssClasses
     | LoadingPulse
     | LoadingContainer
     | Thumbnail
-    | ThumbnailContainer
+    | AlbumThumbnailContainer
+    | EditorThumbnailContainer
+    | SelectedThumbnail
     | SearchContainer
+    | HoverLayer
 
 
 
@@ -109,6 +114,14 @@ disabledTagColor =
 tagEditorSidebarWidth : Float
 tagEditorSidebarWidth =
     350
+
+tagEditorThumbnailHeight : Float
+tagEditorThumbnailHeight =
+    100
+
+tagEditorLowerBarHeight: Float
+tagEditorLowerBarHeight =
+    100
 
 
 tagEditorStdMargin : Float
@@ -164,8 +177,6 @@ globalStyle =
             ]
          , Css.class Thumbnail
             [ display block
-            , width (px 300)
-            , height (px 200)
             , children 
                 [ img
                     [ Css.width (Css.pct 100)
@@ -173,10 +184,6 @@ globalStyle =
                     , Css.property "object-fit" "contain"
                     ]
                 ]
-            ]
-         , Css.class ThumbnailContainer
-            [ displayFlex
-            , flexWrap wrap
             ]
          , Css.Elements.li
             [ listStyle none
@@ -202,9 +209,6 @@ tagEditorCss : List Css.Snippet
 tagEditorCss =
     [ Css.class TagEditorContainer
         [ displayFlex
-        ]
-    , Css.class TagEditorContentContainer
-        [ overflow hidden
         ]
     , Css.class TagEditorRightPane
         [ maxHeight (px 1000)
@@ -249,6 +253,9 @@ tagEditorCss =
         , display Css.inlineBlock
         , width <| (Css.em 1)
         ]
+    , Css.class RoundedSquareButton
+        [ width <| Css.em 1
+        ]
     , Css.class Tag
         [ fontSize <| (Css.em 1)
         , displayFlex
@@ -281,6 +288,16 @@ tagEditorCss =
         , backgroundColor Css.transparent
         , color primaryTextColor
         ]
+    , Css.class HoverLayer
+        [ position absolute
+        , top <| px 0
+        , left <| px 0
+        , width <| pct 100
+        , property "pointer-events" "none"
+        , children
+            [ everything [property "pointer-events" "all"]
+            ]
+        ]
     ]
 
 
@@ -312,6 +329,31 @@ imageViewerStyle =
         , Css.height (Css.pct 100)
         , Css.property "object-fit" "contain"
         ]
+    , Css.class EditorThumbnailContainer
+        [ displayFlex
+        , justifyContent center
+        , height <| Css.px 100
+        , children
+            [ Css.class Thumbnail
+                [ height <| Css.px tagEditorThumbnailHeight
+                , margin <| Css.px 2
+                , cursor pointer
+                ]
+            , Css.class SelectedThumbnail
+                [ transforms [translateY <| Css.px -10, scaleX 1.1, scaleY 1.1]
+                , border3 (Css.px 2) solid <| Css.hex "3b9ddb"
+                ]
+            ]
+        ]
+    , Css.class EditorImageContainer
+        [ flexGrow <| num 1
+        , overflow hidden
+        ]
+    , Css.class TagEditorContentContainer
+        [ overflow hidden
+        , displayFlex
+        , flexDirection column
+        ]
     ]
 
 
@@ -334,6 +376,16 @@ albumStyle =
     , Css.class AlbumIndexContainer
         [ maxWidth albumSearchMaxWidth
         , margin3 (px 100) auto (px 0)
+        ]
+     , Css.class AlbumThumbnailContainer
+        [ displayFlex
+        , flexWrap wrap
+        , children
+            [ Css.class Thumbnail 
+                [ width (px 300)
+                , height (px 200)
+                ]
+            ]
         ]
     ]
 

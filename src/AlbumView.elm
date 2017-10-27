@@ -74,7 +74,7 @@ createThumbnailList fileList =
                 [ img [src <| fileListFileUrl [] "get_thumbnail" fileList.listId fileId] []
                 ]
     in
-        div [Style.class [Style.ThumbnailContainer]]
+        div [Style.class [Style.AlbumThumbnailContainer]]
             <| List.map fileElements fileIds
 
 

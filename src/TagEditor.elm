@@ -4,6 +4,8 @@ import EditorModel exposing
     ( Model
     , FileData
     , KeyReceiver(..)
+    , FileKind(..)
+    , fileKindFromExtension
     )
 import EditorMsg exposing
     ( Msg(..)
@@ -62,6 +64,7 @@ init location =
       , imageGeometry = ImageViewer.initGeometry
       , imageTouchState = ImageViewer.initTouchState
       , imageTexture = Nothing
+      , fileKind = Image
       }
     , Cmd.batch
         [ Task.perform WindowResized Window.size
@@ -81,6 +84,8 @@ update msg model =
             selectNextFile model
         RequestPrev ->
             selectPrevFile model
+        RequestId id ->
+            selectFileId id model
         RequestSave ->
             ( model, requestSaveImage model <| getSelectedTags model)
         OnSaved ->
@@ -363,6 +368,18 @@ selectPrevFile : Model -> (Model, Cmd Msg)
 selectPrevFile model =
     jumpFileList -1 model
 
+
+selectFileId : Int -> Model -> (Model, Cmd Msg)
+selectFileId id model =
+    case model.fileList of
+        Just fileList ->
+            let
+                jumpAmount = id - fileList.fileIndex
+            in
+                jumpFileList jumpAmount model
+        Nothing ->
+            (model, Cmd.none)
+
 jumpFileList : Int -> Model -> (Model, Cmd Msg)
 jumpFileList amount model =
     case model.fileList of
@@ -462,6 +479,15 @@ requestFileListData selected listId =
 onFileDataReceived : FileData -> Model -> Model
 onFileDataReceived data model =
     let
+        -- Read the current file type
+        newFileKind =
+            String.split "." data.filePath
+            |> List.reverse
+            |> List.head
+            |> Maybe.map fileKindFromExtension
+            |> Maybe.withDefault model.fileKind
+
+
         -- Remove the old tag list containing old tags
         newTagListList = case model.oldTagList of
             Just id ->
@@ -470,11 +496,11 @@ onFileDataReceived data model =
                 model.tags
 
         uniqueTags =
-            List.filter 
-                (\tag -> (List.member (String.toLower tag) 
-                            <| List.map String.toLower 
-                            <| getSelectedTags model
-                         ) == False) 
+            List.filter
+                (\tag -> (List.member (String.toLower tag)
+                            <| List.map String.toLower
+                            <| Tags.selectedTags newTagListList
+                         ) == False)
                 <| data.tags
 
 
@@ -489,7 +515,7 @@ onFileDataReceived data model =
                 in
                     (listList, Just id)
     in
-        {model | tags = newNewTagListList, oldTagList = id}
+        {model | tags = newNewTagListList, oldTagList = id, fileKind = newFileKind}
 
 
 

@@ -24,6 +24,7 @@ type Msg
     = RequestNext
     | RequestPrev
     | RequestSave
+    | RequestId Int
     | NetworkError Http.Error
     | OnSaved
     | WindowResized Window.Size
