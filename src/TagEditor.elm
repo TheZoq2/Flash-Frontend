@@ -474,11 +474,11 @@ onFileDataReceived data model =
                 model.tags
 
         uniqueTags =
-            List.filter 
-                (\tag -> (List.member (String.toLower tag) 
-                            <| List.map String.toLower 
-                            <| getSelectedTags model
-                         ) == False) 
+            List.filter
+                (\tag -> (List.member (String.toLower tag)
+                            <| List.map String.toLower
+                            <| Tags.selectedTags newTagListList
+                         ) == False)
                 <| data.tags
 
 
