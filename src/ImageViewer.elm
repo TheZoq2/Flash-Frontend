@@ -11,6 +11,8 @@ module ImageViewer
         , initTouchState
         , handleTouchStartEnd
         , handleTouchMove
+        , InputType(..)
+        , constrainGeometry
         )
 
 import Css
@@ -27,6 +29,10 @@ import Dict
 import Math.Vector2 exposing (..)
 
 import Style
+
+type InputType
+    = Touch
+    | Mouse
 
 {-|
   Tracks the zoom level and position of an image
@@ -160,11 +166,12 @@ zoomGeometry : Float -> Vec2 -> Geometry -> Geometry
 zoomGeometry scaling pivot geometry =
     let
         zoom = geometry.zoom * scaling
-
-        newPosition =
+        position =
             Math.Vector2.sub (scale scaling (add pivot geometry.position)) pivot
+
+        (newZoom, newPosition) = if zoom <= 1 then (geometry.zoom, geometry.position) else (zoom, position)
     in
-        Geometry newPosition zoom
+        Geometry newPosition newZoom
 
 
 {-|
@@ -173,6 +180,16 @@ zoomGeometry scaling pivot geometry =
 moveGeometry : Vec2 -> Geometry -> Geometry
 moveGeometry moved geometry =
     {geometry | position = (add geometry.position (scale -1 moved))}
+
+constrainGeometry : Vec2 -> Geometry -> Geometry
+constrainGeometry viewerSize geometry =
+    let
+        (x, y) = Math.Vector2.toTuple geometry.position
+        (w, h) = Math.Vector2.toTuple geometry.position
+
+        new_x = if x < 0 then 0 else if x + w*geometry.zoom > w then w else x
+    in
+        Geometry (vec2 new_x y) geometry.zoom
 
 
 {-|

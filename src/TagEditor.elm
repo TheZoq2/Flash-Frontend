@@ -63,6 +63,7 @@ init location =
       , imageGeometry = ImageViewer.initGeometry
       , imageTouchState = ImageViewer.initTouchState
       , fileKind = Image
+      , inputType = ImageViewer.Mouse
       }
     , Cmd.batch
         [ Task.perform WindowResized Window.size
@@ -152,15 +153,15 @@ update msg model =
         FocusResult result ->
             handleFocusResult result model
         MouseMovedOnImage event ->
-            mouseMovedOnImage event model
+            mouseMovedOnImage event <| setInputType ImageViewer.Mouse model
         ImageScrolled event ->
-            imageScrolled event model
+            imageScrolled event <| setInputType ImageViewer.Mouse model
         ImageTouchStart event ->
-            imageTouchStartEnd event model
+            imageTouchStartEnd event <| setInputType ImageViewer.Touch model
         ImageTouchEnd event ->
-            imageTouchStartEnd event model
+            imageTouchStartEnd event <| setInputType ImageViewer.Touch model
         ImageTouchMove event ->
-            imageTouchMove event model
+            imageTouchMove event <| setInputType ImageViewer.Touch model
         NoOp ->
             (model, Cmd.none)
 
@@ -182,8 +183,10 @@ imageTouchMove event model =
                 event
                 model.imageTouchState
                 model.imageGeometry
+
+        newGeometry = ImageViewer.constrainGeometry (EditorView.actualViewerSize model) geometry
     in
-        ({model | imageTouchState = touchState, imageGeometry = geometry}, Cmd.none)
+        ({model | imageTouchState = touchState, imageGeometry = newGeometry}, Cmd.none)
 
 imageScrolled : Scroll.Event -> Model -> (Model, Cmd Msg)
 imageScrolled event model =
@@ -223,6 +226,12 @@ networkError e model =
             Debug.log "Network error" e
     in
         ( model, Cmd.none )
+
+
+
+setInputType : ImageViewer.InputType -> Model -> Model
+setInputType inputType model =
+    {model | inputType = inputType}
 
 
 -- Handling navigation and url updates

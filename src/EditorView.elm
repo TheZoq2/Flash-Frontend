@@ -1,4 +1,4 @@
-module EditorView exposing (view, imageIdList)
+module EditorView exposing (view, imageIdList, actualViewerSize)
 
 import EditorModel exposing 
     ( Model
@@ -80,17 +80,24 @@ lowerBar model =
         else
             []
 
+
+actualViewerSize : Model -> Vec2
+actualViewerSize model =
+    if model.sidebarVisible then
+        vec2
+            (model.viewerSize.width - Style.totalSidebarSize)
+            (model.viewerSize.height - Style.tagEditorThumbnailHeight)
+    else
+        vec2
+            model.viewerSize.width
+            model.viewerSize.height
+
+
 mediaViewer : Model -> Html Msg
 mediaViewer model =
     let
-        (viewerWidth, viewerHeight) = if model.sidebarVisible then
-                ( model.viewerSize.width - Style.totalSidebarSize
-                , model.viewerSize.height - Style.tagEditorThumbnailHeight
-                )
-            else
-                ( model.viewerSize.width
-                , model.viewerSize.height
-                )
+        (viewerWidth, viewerHeight) =
+            Math.Vector2.toTuple <| actualViewerSize model
 
         imageViewer fileList =
             let

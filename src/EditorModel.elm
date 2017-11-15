@@ -69,6 +69,8 @@ type alias Model =
     , imageTouchState: ImageViewer.TouchState
     -- The type of the currently viewed file
     , fileKind: FileKind
+    -- The current predicted mode of input that the user is using
+    , inputType: ImageViewer.InputType
     }
 
 
