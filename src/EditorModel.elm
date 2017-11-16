@@ -40,6 +40,7 @@ fileKindFromExtension : String -> FileKind
 fileKindFromExtension extension =
     case extension of
         "mp4" -> Video
+        "MOV" -> Video
         _ -> Image
 
 
