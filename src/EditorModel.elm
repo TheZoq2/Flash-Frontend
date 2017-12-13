@@ -20,6 +20,7 @@ type KeyReceiver
     | TagList Int
     | TagField Int
     | Tag Int Int
+    | CommandField
 
 
 

@@ -45,6 +45,7 @@ import Navigation
 import UrlParser
 import UrlParser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
+import CommandLine
 
 
 
@@ -122,6 +123,8 @@ update msg model =
                 fileList = FileList.newWithSelected selectedFile listId length
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
+        CommandCanceled ->
+            ({model | keyReceiver = None}, Cmd.none)
         -- TagList related messages
         AddTagList ->
             addTagList model
@@ -279,6 +282,8 @@ handleKeyboardInput model code =
                     ( { model | keyReceiver = TagListList }, Cmd.none )
                 'B' ->
                     ( { model | sidebarVisible = not model.sidebarVisible}, Cmd.none)
+                ' ' ->
+                    showCommandLine model
                 _ ->
                     ( model, Cmd.none )
 
@@ -434,6 +439,14 @@ requestSaveImage model tags =
                     (Http.get url <| Json.Decode.string)
         Nothing ->
             Cmd.none
+
+
+
+showCommandLine : Model -> (Model, Cmd Msg)
+showCommandLine model =
+    ( {model | keyReceiver = CommandField }
+    , Dom.focus "command_field" |> Task.attempt FocusResult
+    )
 
 
 

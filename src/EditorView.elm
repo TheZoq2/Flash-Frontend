@@ -17,6 +17,7 @@ import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListLi
 
 import Html exposing (..)
 import Html.Attributes
+import Html.Events exposing (onBlur)
 import Elements exposing (flatButton, thumbnail, hoverButton)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
@@ -191,6 +192,15 @@ view model =
                 , addTagList
                 ]
 
+        commandField =
+            div []
+                [ input 
+                    [ Html.Attributes.id "command_field"
+                    , Html.Attributes.placeholder "Command"
+                    , onBlur CommandCanceled
+                    ]
+                    []
+                ]
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -209,6 +219,7 @@ view model =
                      else
                          hoverLayer
                    ]
+                ++ if model.keyReceiver == CommandField then [commandField] else []
 
 
 hoverLayer : Html Msg

@@ -1,3 +1,6 @@
 [submodule "elm-mouse-events"]
 	path = elm-mouse-events
 	url = https://github.com/TheZoq2/elm-mouse-events
+[submodule "ElmFuzzyCommands"]
+	path = elm-fuzzy-commands
+	url = git@github.com:TheZoq2/ElmFuzzyCommands.git

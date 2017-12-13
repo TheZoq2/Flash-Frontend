@@ -31,6 +31,7 @@ type Msg
     | FileDataReceived FileData
     | UrlChanged Navigation.Location
     | ImageLoaded
+    | CommandCanceled
     -- Image view specific messages
     | MouseMovedOnImage Mouse.Event
     | ImageScrolled Scroll.Event
