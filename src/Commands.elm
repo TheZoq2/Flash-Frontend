@@ -18,4 +18,9 @@ commandLineView events data =
     div
         []
         [ div [] [input [onBlur events.onBlur, onInput events.onInput] []]
+        , div [] [p [] [text data.expandedQuery]]
+        , div [] [ul [] ]
         ]
+
+
+renderSuggestion : (String, List Bool) -> Html a
