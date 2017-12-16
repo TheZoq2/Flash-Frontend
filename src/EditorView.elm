@@ -14,6 +14,7 @@ import Tags
 import Style
 import ImageViewer
 import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
+import Commands
 
 import Html exposing (..)
 import Html.Attributes
@@ -192,15 +193,13 @@ view model =
                 , addTagList
                 ]
 
-        commandField =
-            div []
-                [ input 
-                    [ Html.Attributes.id "command_field"
-                    , Html.Attributes.placeholder "Command"
-                    , onBlur CommandCanceled
-                    ]
-                    []
-                ]
+        commandFieldEvents =
+            { onBlur = CommandCanceled
+            , onInput = CommandInput
+            }
+
+        commandField data =
+            Commands.commandLineView commandFieldEvents data
     in
         div [ Style.class [ Style.TagEditorContainer ] ]
             <|
@@ -219,7 +218,9 @@ view model =
                      else
                          hoverLayer
                    ]
-                ++ if model.keyReceiver == CommandField then [commandField] else []
+                ++ case model.keyReceiver of
+                    CommandField data -> [commandField data] 
+                    _ -> []
 
 
 hoverLayer : Html Msg

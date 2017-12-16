@@ -9,6 +9,7 @@ module EditorModel exposing
 import Tags
 import ImageViewer
 import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
+import Commands
 
 import Vec exposing (..)
 
@@ -20,7 +21,7 @@ type KeyReceiver
     | TagList Int
     | TagField Int
     | Tag Int Int
-    | CommandField
+    | CommandField Commands.CommandData
 
 
 

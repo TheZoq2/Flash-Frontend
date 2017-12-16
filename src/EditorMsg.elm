@@ -8,7 +8,6 @@ import EditorModel exposing
     , KeyReceiver(..)
     )
 
-
 import Http
 import Window
 import Dom
@@ -32,6 +31,8 @@ type Msg
     | UrlChanged Navigation.Location
     | ImageLoaded
     | CommandCanceled
+    | CommandInput String
+    | ToggleSidebar
     -- Image view specific messages
     | MouseMovedOnImage Mouse.Event
     | ImageScrolled Scroll.Event
@@ -50,3 +51,7 @@ type Msg
     | TagTextFieldChanged String
     | CancelTagCreation
     | FocusResult (Result Dom.Error ())
+
+
+
+

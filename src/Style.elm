@@ -47,6 +47,7 @@ type CssClasses
     | DisabledTag
     | TagEditorButtonRow
     | TagListManager
+    | CommandLineContainer
       --Tag editor specific tags
     | TagEditorContainer
     | TagEditorRightPane
@@ -195,6 +196,7 @@ globalStyle =
             ++ tagListManagerCss
             ++ imageViewerStyle
             ++ albumStyle
+            ++ commandLineStyle
         )
     ]
 
@@ -388,6 +390,21 @@ albumStyle =
                 , height (px 200)
                 ]
             ]
+        ]
+    ]
+
+
+commandLineStyle : List Css.Snippet
+commandLineStyle =
+    [ Css.class CommandLineContainer
+        [ position absolute
+        , backgroundColor <| hex "505050"
+        , padding <| px 5
+        , left <| pct 50
+        , transform <| translate2 (pct -50) (pct 0)
+        , borderRadius <| px 5
+        , descendants
+            [strong [fontWeight bold]]
         ]
     ]
 

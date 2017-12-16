@@ -29,6 +29,8 @@ import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
 import Mouse
 import Touch
 import Scroll
+import Commands
+import MsgCommand
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
@@ -164,6 +166,10 @@ update msg model =
             imageTouchStartEnd event model
         ImageTouchMove event ->
             imageTouchMove event model
+        ToggleSidebar ->
+            toggleSidebar model
+        CommandInput query ->
+            handleCommandLineInput query model
         NoOp ->
             (model, Cmd.none)
 
@@ -281,8 +287,8 @@ handleKeyboardInput model code =
                     --Modify tags
                     ( { model | keyReceiver = TagListList }, Cmd.none )
                 'B' ->
-                    ( { model | sidebarVisible = not model.sidebarVisible}, Cmd.none)
-                ' ' ->
+                    toggleSidebar model
+                ' ' -> -- Show commandline
                     showCommandLine model
                 _ ->
                     ( model, Cmd.none )
@@ -319,9 +325,20 @@ handleKeyboardInput model code =
                     toggleTag model listId tagId
                 _ ->
                     (model, Cmd.none)
+        CommandField _ ->
+            case code of
+                27 ->
+                    hideCommandLine model
+                13 ->
+                    submitCommandLine model
+                _ ->
+                    (model, Cmd.none)
         _ ->
             (model, Cmd.none)
 
+toggleSidebar : Model -> (Model, Cmd Msg)
+toggleSidebar model =
+    ( { model | sidebarVisible = not model.sidebarVisible}, Cmd.none)
 
 handleTagListSelectorKeys : Model -> Char -> (Model, Cmd Msg)
 handleTagListSelectorKeys model code =
@@ -444,9 +461,64 @@ requestSaveImage model tags =
 
 showCommandLine : Model -> (Model, Cmd Msg)
 showCommandLine model =
-    ( {model | keyReceiver = CommandField }
-    , Dom.focus "command_field" |> Task.attempt FocusResult
-    )
+    let
+        newKeyReceiver =
+            case Commands.initCommandData (MsgCommand.topLevel (getSelectedTags model)) of
+                Ok commandData ->
+                    CommandField commandData
+                Err e ->
+                    let
+                        _ = Debug.log "Failed to init commands: " e
+                    in
+                        model.keyReceiver
+
+        _ = Debug.log "newKeyReceiver" newKeyReceiver
+    in
+        ( {model | keyReceiver = newKeyReceiver }
+        , Dom.focus "command_field" |> Task.attempt FocusResult
+        )
+
+
+hideCommandLine : Model -> (Model, Cmd Msg)
+hideCommandLine model =
+    let
+        _ = Debug.log "got hide commannd" ""
+    in
+        ({model | keyReceiver = None}, Cmd.none)
+
+
+submitCommandLine : Model -> (Model, Cmd Msg)
+submitCommandLine model =
+    (model, Cmd.none)
+
+
+handleCommandLineInput : String -> Model -> (Model, Cmd Msg)
+handleCommandLineInput query model =
+    case model.keyReceiver of
+        CommandField data ->
+            let
+                command = (MsgCommand.topLevel (getSelectedTags model))
+
+                newData =
+                    case CommandLine.expandCommand query command of
+                        (expansion, Ok suggestions) ->
+                            {data
+                                | query = query
+                                , expandedQuery = expansion
+                                , suggestions = suggestions
+                            }
+                        (expansion, Err e) ->
+                            let
+                                _ = Debug.log "Command parse error: " e
+                            in
+                                data
+            in
+                ({model | keyReceiver = CommandField newData}, Cmd.none)
+        _ ->
+            let
+                _ = Debug.log "Got a commandLineInput msg with unfocused command field, ignoring" ""
+            in
+                (model, Cmd.none)
 
 
 
