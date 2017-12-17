@@ -130,7 +130,7 @@ update msg model =
         -- TagList related messages
         AddTagList ->
             addTagList model
-        AddTag id ->
+        FinnishAddTag id ->
             let
                 newTags =
                     case model.tagTextfieldContent of
@@ -140,6 +140,8 @@ update msg model =
                             model.tags
             in
                 ({model | tags = newTags} |> cancelTagCreation, Cmd.none)
+        AddTag id text ->
+            ({model | tags = Tags.addTagToTagListList text id model.tags}, Cmd.none)
         StartTagAddition id ->
             startTagAddition model id
         ToggleTagList id ->
@@ -325,12 +327,12 @@ handleKeyboardInput model code =
                     toggleTag model listId tagId
                 _ ->
                     (model, Cmd.none)
-        CommandField _ ->
+        CommandField commandData ->
             case code of
                 27 ->
-                    hideCommandLine model
+                    (hideCommandLine model, Cmd.none)
                 13 ->
-                    submitCommandLine model
+                    submitCommandLine commandData model
                 _ ->
                     (model, Cmd.none)
         _ ->
@@ -479,17 +481,25 @@ showCommandLine model =
         )
 
 
-hideCommandLine : Model -> (Model, Cmd Msg)
+hideCommandLine : Model -> Model
 hideCommandLine model =
     let
         _ = Debug.log "got hide commannd" ""
     in
-        ({model | keyReceiver = None}, Cmd.none)
+        {model | keyReceiver = None}
 
 
-submitCommandLine : Model -> (Model, Cmd Msg)
-submitCommandLine model =
-    (model, Cmd.none)
+submitCommandLine : Commands.CommandData -> Model -> (Model, Cmd Msg)
+submitCommandLine commandData model =
+    let
+        commandTemplate = MsgCommand.topLevel <| getSelectedTags model
+    in
+        case CommandLine.parseCommand commandData.expandedQuery commandTemplate of
+            Ok msg ->
+                update msg <| hideCommandLine model
+            Err _ ->
+                (hideCommandLine model, Cmd.none)
+
 
 
 handleCommandLineInput : String -> Model -> (Model, Cmd Msg)

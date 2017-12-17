@@ -404,7 +404,13 @@ commandLineStyle =
         , transform <| translate2 (pct -50) (pct 0)
         , borderRadius <| px 5
         , descendants
-            [strong [fontWeight bold]]
+            [ strong [fontWeight bold]
+            , input
+                [ border zero
+                , backgroundColor Css.transparent
+                , color primaryTextColor
+                ]
+            ]
         ]
     ]
 

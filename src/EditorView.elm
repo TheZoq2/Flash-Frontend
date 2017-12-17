@@ -171,7 +171,7 @@ view model =
                 , onTagRemoveButton = RemoveTag
                 , onTagTextClick = ToggleTag
                 , onTagnameUnfocus = CancelTagCreation
-                , onTagSubmit = AddTag
+                , onTagSubmit = FinnishAddTag
                 , onTextChanged = TagTextFieldChanged
                 }
 

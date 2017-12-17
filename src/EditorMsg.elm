@@ -42,10 +42,13 @@ type Msg
     | NoOp -- For events that are only handled because we want to prevent default
     -- Tag list specific messages
     | AddTagList
-    | AddTag Int
+    | FinnishAddTag Int
+    | AddTag Int String
     | StartTagAddition Int
     | ToggleTagList Int
     | RemoveTagList Int
+    | RemoveTagByName String
+    | ToggleTagByName String
     | ToggleTag Int Int
     | RemoveTag Int Int
     | TagTextFieldChanged String
