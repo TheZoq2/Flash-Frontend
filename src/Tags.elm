@@ -389,3 +389,18 @@ getNthTag tagListList listId target =
                 List.Extra.getAt target <| Dict.keys tagList.tags
             Nothing ->
                 Nothing
+
+
+indicesOfTag : TagListList -> String -> (Int, Int)
+indicesOfTag tagListList tag =
+    Dict.toList tagListList
+    |> List.concatMap (\(listId, list) -> tagListInidicesOfTag (\tagId -> (listId, tagId)) list tag)
+
+
+
+tagListInidicesOfTag : (Int -> (Int, Int)) -> TagList -> String -> List (Int, Int)
+tagListInidicesOfTag tupleConstructor tagList targetTag =
+    Dict.toList tagList
+    |> List.filter (\(id, tag) -> tag.text == targetTag)
+    |> List.map Tuple.first
+    |> List.map tupleConstructor
