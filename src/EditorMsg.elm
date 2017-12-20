@@ -47,8 +47,8 @@ type Msg
     | StartTagAddition Int
     | ToggleTagList Int
     | RemoveTagList Int
-    -- | RemoveTagByName String
-    -- | ToggleTagByName String
+    | RemoveTagByName String
+    | ToggleTagByName String
     | ToggleTag Int Int
     | RemoveTag Int Int
     | TagTextFieldChanged String

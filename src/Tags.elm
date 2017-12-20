@@ -22,6 +22,7 @@ module Tags exposing
     , cancelAddTag
     , getNthTagListId
     , getNthTag
+    , indicesOfTag
     )
 
 import Html exposing (..)
@@ -391,16 +392,16 @@ getNthTag tagListList listId target =
                 Nothing
 
 
-indicesOfTag : TagListList -> String -> (Int, Int)
+indicesOfTag : TagListList -> String -> List (Int, Int)
 indicesOfTag tagListList tag =
-    Dict.toList tagListList
+    Dict.toList tagListList.tagLists
     |> List.concatMap (\(listId, list) -> tagListInidicesOfTag (\tagId -> (listId, tagId)) list tag)
 
 
 
 tagListInidicesOfTag : (Int -> (Int, Int)) -> TagList -> String -> List (Int, Int)
 tagListInidicesOfTag tupleConstructor tagList targetTag =
-    Dict.toList tagList
+    Dict.toList tagList.tags
     |> List.filter (\(id, tag) -> tag.text == targetTag)
     |> List.map Tuple.first
     |> List.map tupleConstructor

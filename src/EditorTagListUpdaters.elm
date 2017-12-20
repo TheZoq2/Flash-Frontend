@@ -75,16 +75,16 @@ removeTagList model id =
 
 
 
-toggleTag : Model -> Int -> Int -> (Model, Cmd Msg)
+toggleTag : Model -> Int -> Int -> Model
 toggleTag model listId tagId =
     let
         newTags = Tags.toggleTagInTagListList listId tagId model.tags
     in
-        ({model | tags = newTags}, Cmd.none)
+        {model | tags = newTags}
 
 
 
-removeTag : Model -> Int -> Int -> (Model, Cmd Msg)
+removeTag : Model -> Int -> Int -> Model
 removeTag model listId tagId =
     let
         newTags =
@@ -96,7 +96,7 @@ removeTag model listId tagId =
                     EditorModel.TagList listId
                 old -> old
     in
-        ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
+        {model | tags = newTags, keyReceiver = newReceiver}
 
 
 

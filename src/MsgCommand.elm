@@ -5,7 +5,7 @@ import EditorMsg exposing (..)
 
 topLevel : List String -> Command Msg
 topLevel tags =
-    NonTerminal Word ["hideUi", "addTag", "addTagList", "removeList", "toggleList"]
+    NonTerminal Word ["hideUi", "addTag", "addTagList", "removeList", "toggleList", "toggleTag", "removeTag"]
         (\query ->
             case query of
                 "hideUi" -> Just <| Terminal EditorMsg.ToggleSidebar
@@ -13,6 +13,8 @@ topLevel tags =
                 "addTag" -> Just addTagCommand
                 "removeList" -> singleIntMsg RemoveTagList
                 "toggleList" -> singleIntMsg ToggleTagList
+                "removeTag" -> Just <| singleStringCommand RemoveTagByName tags
+                "toggleTag" -> Just <| singleStringCommand ToggleTagByName tags
                 _ -> Nothing
         )
 
@@ -23,13 +25,6 @@ intParam restProducer =
         (\query ->
             Result.toMaybe (String.toInt query)
             |> Maybe.map restProducer
-        )
-
-tagCommand : List String -> (String -> Msg) -> Command Msg
-tagCommand tags msg =
-    NonTerminal Rest tags
-        (\query ->
-            Just <| Terminal <| msg query
         )
 
 addTagCommand : Command Msg
@@ -46,3 +41,10 @@ singleIntMsg : (Int -> Msg) -> Maybe (Command Msg)
 singleIntMsg msg =
     Just <| intParam (\groupId -> Terminal <| msg groupId)
 
+
+singleStringCommand : (String -> Msg) -> List String -> Command Msg
+singleStringCommand msg suggestions =
+    NonTerminal Rest suggestions
+        (\query ->
+            Just <| Terminal <| msg query
+        )

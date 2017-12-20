@@ -149,9 +149,13 @@ update msg model =
         RemoveTagList id ->
             removeTagList model id
         ToggleTag listId tagId ->
-            toggleTag model listId tagId
+            (toggleTag model listId tagId, Cmd.none)
         RemoveTag listId tagId ->
-            removeTag model listId tagId
+            (removeTag model listId tagId, Cmd.none)
+        RemoveTagByName name ->
+            ( updateModelTagsByName removeTag name model, Cmd.none)
+        ToggleTagByName name ->
+            ( updateModelTagsByName toggleTag name model, Cmd.none)
         CancelTagCreation ->
             (cancelTagCreation model, Cmd.none)
         TagTextFieldChanged text ->
@@ -179,6 +183,15 @@ update msg model =
 updateModelTags : (Tags.TagListList -> Tags.TagListList) -> Model -> Model
 updateModelTags updateFunc model =
     ({model | tags = updateFunc model.tags})
+
+
+updateModelTagsByName : (Model -> Int -> Int -> Model) -> String -> Model -> Model
+updateModelTagsByName updateFunc name model =
+    let
+        ids =
+            Tags.indicesOfTag model.tags name
+    in
+        List.foldl (\(listId, tagId) model -> updateFunc model listId tagId) model ids
 
 
 imageTouchStartEnd : Touch.Event -> Model -> (Model, Cmd Msg)
@@ -322,9 +335,9 @@ handleKeyboardInput model code =
                 'I' ->
                     ( {model | keyReceiver = TagList listId}, Cmd.none)
                 'R' ->
-                    removeTag model listId tagId
+                    (removeTag model listId tagId, Cmd.none)
                 'T' ->
-                    toggleTag model listId tagId
+                    (toggleTag model listId tagId, Cmd.none)
                 _ ->
                     (model, Cmd.none)
         CommandField commandData ->
