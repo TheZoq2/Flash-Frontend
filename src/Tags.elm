@@ -23,6 +23,7 @@ module Tags exposing
     , getNthTagListId
     , getNthTag
     , indicesOfTag
+    , allTags
     )
 
 import Html exposing (..)
@@ -127,11 +128,24 @@ toggleTag id list =
 
 tagListSelectedTags : TagList -> List String
 tagListSelectedTags list =
-    let
-        tagList = Dict.foldl (\_ tag list -> list ++ [tag]) [] list.tags
-    in
-        List.filter (\tag -> tag.enabled) tagList
-        |> List.map (\tag -> tag.text)
+    tagListFilterTags (\tag -> tag.enabled) list
+
+
+-- Returns all tags in the specified tag list
+
+tagListAllTags : TagList -> List String
+tagListAllTags list =
+    tagListFilterTags (\_ -> True) list
+
+
+
+-- Returns all the tag names where the tag matches the filter
+
+tagListFilterTags : (Tag -> Bool) -> TagList -> List String
+tagListFilterTags filter list =
+    List.map (\tag -> tag.text)
+        <| List.filter filter
+        <| Dict.foldl (\_ tag list -> list ++ [tag]) [] list.tags
 
 
 
@@ -253,6 +267,14 @@ selectedTags list =
             acc ++ if value.enabled then tagListSelectedTags value else []
     in
         Dict.foldl foldFunction [] list.tagLists
+
+
+allTags : TagListList -> List String
+allTags list =
+    Dict.values list.tagLists
+    |> List.map tagListAllTags
+    |> List.concat
+
 
 
 

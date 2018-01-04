@@ -478,7 +478,7 @@ showCommandLine : Model -> (Model, Cmd Msg)
 showCommandLine model =
     let
         newKeyReceiver =
-            case Commands.initCommandData (MsgCommand.topLevel (getSelectedTags model)) of
+            case Commands.initCommandData (commands model) of
                 Ok commandData ->
                     CommandField commandData
                 Err e ->
@@ -502,10 +502,15 @@ hideCommandLine model =
         {model | keyReceiver = None}
 
 
+commands : Model -> CommandLine.Command Msg
+commands model =
+    MsgCommand.topLevel <| getAllTags model
+
+
 submitCommandLine : Commands.CommandData -> Model -> (Model, Cmd Msg)
 submitCommandLine commandData model =
     let
-        commandTemplate = MsgCommand.topLevel <| getSelectedTags model
+        commandTemplate = commands model
     in
         case CommandLine.parseCommand commandData.expandedQuery commandTemplate of
             Ok msg ->
@@ -520,7 +525,7 @@ handleCommandLineInput query model =
     case model.keyReceiver of
         CommandField data ->
             let
-                command = (MsgCommand.topLevel (getSelectedTags model))
+                command = (commands model)
 
                 newData =
                     case CommandLine.expandCommand query command of
@@ -610,6 +615,11 @@ onFileDataReceived data model =
 getSelectedTags : Model -> List String
 getSelectedTags model =
     Tags.selectedTags model.tags
+
+
+getAllTags : Model -> List String
+getAllTags model =
+    Debug.log "Tags: " Tags.allTags model.tags
 
 
 
