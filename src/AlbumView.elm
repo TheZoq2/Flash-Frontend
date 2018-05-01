@@ -41,6 +41,13 @@ view model =
                          (\(id, length, path) ->
                              ul [] [flatButton [Style.BlockButton] [] (OtherFileListClicked id) path 1])
                         model.otherFileLists
+
+        folderListing =
+            li [] 
+                <| List.map 
+                    (\path -> 
+                        ul [] [flatButton [Style.BlockButton] [] (SubmitSearchFor ("/" ++ path)) path 1]
+                    ) <| model.availableFolders
     in
         case model.currentList of
             Just currentList ->
@@ -54,6 +61,7 @@ view model =
                     [ networkErrorElem
                     , searchForm
                     , existingListListing
+                    , folderListing
                     ]
 
 
