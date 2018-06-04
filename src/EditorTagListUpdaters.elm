@@ -19,7 +19,7 @@ import EditorMsg exposing
 
 import Tags exposing (TagList, TagListList)
 import ImageViewer
-import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
+import FileList exposing (fileListDecoder)
 import Touch
 
 import Vec exposing (..)

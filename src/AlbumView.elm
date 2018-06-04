@@ -6,7 +6,8 @@ import AlbumModel exposing (Model)
 import AlbumMsg exposing (Msg(..))
 import AlbumCommon exposing (tagEditorUrl)
 
-import FileList exposing (FileList, fileListFileUrl)
+import FileList exposing (FileList)
+import Urls
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -71,7 +72,7 @@ createThumbnailList fileList =
 
         fileElements fileId =
             a [href <| tagEditorUrl fileList.listId fileId, Style.class [Style.Thumbnail]]
-                [ img [src <| fileListFileUrl [] "get_thumbnail" fileList.listId fileId] []
+                [ img [src <| Urls.fileListGetThumbnailUrl fileList.listId fileId] []
                 ]
     in
         div [Style.class [Style.AlbumThumbnailContainer]]

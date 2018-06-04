@@ -3,7 +3,7 @@ module AlbumModel exposing
     , init
     )
 
-import FileList exposing (FileList, FileListSource, FileListResponse, fileListFileUrl)
+import FileList exposing (FileList, FileListSource, FileListResponse)
 
 import AlbumMsg exposing (Msg(..))
 

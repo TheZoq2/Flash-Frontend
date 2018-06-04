@@ -8,9 +8,11 @@ import AlbumCommon exposing (tagEditorUrl)
 import Html exposing (..)
 import Html
 import Http
-import FileList exposing (FileList, FileListSource, FileListResponse, fileListFileUrl)
+import FileList exposing (FileList, FileListSource, FileListResponse)
 import Json.Decode
 import Navigation
+import Urls
+
 
 
 
@@ -58,7 +60,7 @@ onOtherFileListClicked model id =
     ( model
     , Http.send
         (checkHttpAttempt <| FileListLastSavedReceived id)
-        (Http.get (FileList.fileListListUrl [] "list_last_saved_index" id) Json.Decode.int)
+        (Http.get (Urls.fileListLastSavedIndexUrl id) Json.Decode.int)
     )
 
 
@@ -73,13 +75,9 @@ checkHttpAttempt func res=
 
 submitSearch : String -> Cmd Msg
 submitSearch text =
-    let
-        url =
-            "search?query=" ++ text
-    in
-        Http.send
-            (checkHttpAttempt (\val -> NewFileList val.id val.length))
-            (Http.get url FileList.fileListDecoder)
+    Http.send
+        (checkHttpAttempt (\val -> NewFileList val.id val.length))
+        (Http.get (Urls.searchUrl text) FileList.fileListDecoder)
 
 
 

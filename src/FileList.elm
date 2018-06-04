@@ -6,13 +6,13 @@ module FileList exposing
     , newWithSelected
     , jump
     , fileListDecoder
-    , fileListFileUrl
-    , fileListListUrl
     , requestFileListListing
     )
 
 import Json.Decode exposing (..)
 import Http
+
+import Urls
 
 type alias FileList =
     { listId: Int
@@ -97,35 +97,6 @@ fileListDecoder =
         (field "source" fileListSourceDecoder)
 
 
-fileListUrl : List (String, String) -> String -> String
-fileListUrl additionalVariables action =
-    let
-        baseUrl = "list?"
-
-        variables = [ ("action", action)
-                    ]
-                    ++ additionalVariables
-
-        variableStrings = List.intersperse "&"
-                        <| List.map (\(name, value) -> name ++ "=" ++ value) variables
-    in
-        baseUrl ++ List.foldr (++) "" variableStrings
-
-fileListListUrl : List(String, String) -> String -> Int -> String
-fileListListUrl additionalVariables action listId =
-    let
-        variables =
-            [ ("list_id", toString listId)
-            ]
-            ++ additionalVariables
-    in
-        fileListUrl variables action
-
-fileListFileUrl : List (String, String) -> String -> Int -> Int ->  String
-fileListFileUrl additionalVariables action listId fileIndex =
-    fileListListUrl ([ ("index", toString fileIndex) ] ++ additionalVariables) action listId
-
-
 fileListListingDecoder : Json.Decode.Decoder (List FileListResponse)
 fileListListingDecoder =
     Json.Decode.list fileListDecoder
@@ -142,10 +113,7 @@ checkHttpAttempt func errFunc res=
 
 requestFileListListing : (List FileListResponse -> msg) -> (Http.Error -> msg) -> Cmd msg
 requestFileListListing onSuccess onError =
-    let
-        url = fileListUrl [] "lists"
-    in
-        Http.send
-            (checkHttpAttempt onSuccess onError)
-            (Http.get url fileListListingDecoder)
+    Http.send
+        (checkHttpAttempt onSuccess onError)
+        (Http.get Urls.fileListListingUrl fileListListingDecoder)
 

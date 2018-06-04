@@ -13,7 +13,7 @@ import EditorMsg exposing
 import Tags
 import Style
 import ImageViewer
-import FileList exposing (FileList, fileListDecoder, fileListFileUrl, fileListListUrl)
+import FileList exposing (FileList, fileListDecoder)
 import Commands
 
 import Html exposing (..)
@@ -22,6 +22,8 @@ import Html.Events exposing (onBlur)
 import Elements exposing (flatButton, thumbnail, hoverButton)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
+
+import Urls
 
 imageIdList : FileList -> Int -> (List Int, Int, List Int)
 imageIdList fileList range =
@@ -37,8 +39,8 @@ imageIdList fileList range =
 thumbnailList : Int -> (Int -> Msg) -> (List Int, Int, List Int) -> List (Html Msg)
 thumbnailList listId onClick (previousIds, currentId, nextIds) =
     let
-        thumbnailUrlFromId id =
-            fileListFileUrl [] "get_thumbnail"  listId id
+        thumbnailUrlFromId index =
+            Urls.fileListGetThumbnailUrl listId index
 
         thumbnailCreatorFromId additionalAttributes id =
             thumbnail additionalAttributes (thumbnailUrlFromId id) (onClick id)
@@ -110,14 +112,14 @@ mediaViewer model =
                     ImageLoaded
                     (vec2 viewerWidth viewerHeight)
                     model.imageGeometry
-                    (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                    (Urls.fileListGetFileUrl fileList.listId fileList.fileIndex)
                     events
 
         videoViewer fileList = 
             ImageViewer.videoViewer
                 ImageLoaded
                 (vec2 viewerWidth viewerHeight)
-                (fileListFileUrl [] "get_file" fileList.listId fileList.fileIndex)
+                (Urls.fileListGetFileUrl fileList.listId fileList.fileIndex)
     in
         case model.fileList of
             Just fileList ->

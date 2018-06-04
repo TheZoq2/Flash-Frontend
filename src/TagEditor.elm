@@ -25,12 +25,13 @@ import EditorTagListUpdaters exposing
 
 import Tags
 import ImageViewer
-import FileList exposing (fileListDecoder, fileListFileUrl, fileListListUrl)
+import FileList exposing (fileListDecoder)
 import Mouse
 import Touch
 import Scroll
 import Commands
 import MsgCommand
+import Urls
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
@@ -439,12 +440,9 @@ checkHttpAttempt func res=
 
 requestFileData : Int -> Int -> Cmd Msg
 requestFileData listId index =
-    let
-        url = fileListFileUrl [] "get_data" listId index
-    in
-        Http.send 
-            (checkHttpAttempt FileDataReceived)
-            (Http.get url decodeFileData)
+    Http.send 
+        (checkHttpAttempt FileDataReceived)
+        (Http.get (Urls.fileListGetDataUrl listId index) decodeFileData)
 
 updateFileData : FileList.FileList -> Cmd Msg
 updateFileData fileList =
@@ -456,15 +454,10 @@ requestSaveImage model tags =
     case model.fileList of
         Just fileList ->
             let
-                --Encode the tag list
-                tagsJson =
-                    List.map Json.Encode.string tags
-
-                url = fileListFileUrl
-                        [("tags", toString tagsJson)]
-                        "save"
+                url = Urls.fileListSaveUrl
                         fileList.listId
                         fileList.fileIndex
+                        tags
             in
                 Http.send 
                     (checkHttpAttempt (\_ -> OnSaved))
@@ -561,7 +554,7 @@ requestFileListData : Int -> Int -> Cmd Msg
 requestFileListData selected listId =
     let
         url =
-            fileListListUrl [] "list_info" listId
+            Urls.fileListListInfoUrl listId
     in
         submitFileListRequest url (\val -> NewFileList selected val.id val.length)
 
