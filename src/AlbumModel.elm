@@ -6,6 +6,7 @@ module AlbumModel exposing
 import FileList exposing (FileList, FileListSource, FileListResponse)
 
 import AlbumMsg exposing (Msg(..))
+import Requests
 
 --Model
 
@@ -15,6 +16,7 @@ type alias Model =
     , currentList : Maybe FileList
     , networkError : Maybe String
     , otherFileLists: List (Int, Int, String)
+    , availableFolders: List String
     }
 
 
@@ -24,7 +26,11 @@ init =
       , currentList = Nothing
       , networkError = Nothing
       , otherFileLists = []
+      , availableFolders = []
       }
-    , FileList.requestFileListListing NewFileListListing NetworkError
+    , Cmd.batch
+        [ FileList.requestFileListListing NewFileListListing NetworkError
+        , Requests.requestSubdirectories
+        ]
     )
 

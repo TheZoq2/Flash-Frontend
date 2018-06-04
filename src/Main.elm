@@ -4,6 +4,7 @@ import AlbumModel exposing (Model, init)
 import AlbumMsg exposing (Msg(..))
 import AlbumView exposing (view)
 import AlbumCommon exposing (tagEditorUrl)
+import Requests exposing (checkHttpAttempt)
 
 import Html exposing (..)
 import Html
@@ -27,6 +28,8 @@ update msg model =
             ({model | searchQuery = query}, Cmd.none)
         SubmitSearch ->
             (model, submitSearch model.searchQuery)
+        SubmitSearchFor query ->
+            (model, submitSearch query)
         NetworkError err ->
             ( { model | networkError = Just <| toString err }, Cmd.none )
         NewFileList id length ->
@@ -37,7 +40,8 @@ update msg model =
             onOtherFileListClicked model id
         FileListLastSavedReceived listId index ->
             (model, Navigation.load <| tagEditorUrl listId index)
-
+        AvailableFoldersReceived folders ->
+            ({model | availableFolders = folders}, Cmd.none)
 
 
 updateFileListListings : Model -> List FileListResponse -> (Model, Cmd Msg)
@@ -62,15 +66,6 @@ onOtherFileListClicked model id =
         (checkHttpAttempt <| FileListLastSavedReceived id)
         (Http.get (Urls.fileListLastSavedIndexUrl id) Json.Decode.int)
     )
-
-
-checkHttpAttempt : (a -> Msg) -> Result Http.Error a -> Msg
-checkHttpAttempt func res=
-    case res of
-        Ok val ->
-            func val
-        Err e ->
-            NetworkError e
 
 
 submitSearch : String -> Cmd Msg

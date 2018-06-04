@@ -373,10 +373,6 @@ tagListListHtml tagListList selectedTag messages =
                                     , onInput messages.onTextChanged
                                     , Style.class [Style.TagTextField]
                                     ] []]
-
-
-
-
             in
                 div [Style.class [Style.TagListButtonRow]]
                     [ toggleButton
