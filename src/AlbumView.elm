@@ -21,7 +21,7 @@ view model =
     let
         searchForm =
             Html.form [onSubmit SubmitSearch, Style.class [Style.SearchContainer]]
-                [ input [ placeholder "Search", onInput SearchQueryChanged ] []
+                [ input [ placeholder "Search", onInput SearchQueryChanged, autofocus True] []
                 , flatButton [Style.InlineButton] [] SubmitSearch "🔍" 1.5
                 ]
 
