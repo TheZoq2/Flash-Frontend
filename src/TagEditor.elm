@@ -635,6 +635,6 @@ main =
     Navigation.program UrlChanged
         { init = init
         , update = update
-        , view = view
+        , view = view keyboardSelectorList
         , subscriptions = subscriptions
         }

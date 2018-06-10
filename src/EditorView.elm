@@ -132,8 +132,8 @@ mediaViewer model =
 
 -- VIEW
 
-view : Model -> Html Msg
-view model =
+view : List Char -> Model -> Html Msg
+view keyboardSelectorList model =
     let
         prevButton =
             flatButton [Style.BlockButton] [] RequestPrev "‹" 3
@@ -190,7 +190,11 @@ view model =
             div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , loadingBar
-                , TagViews.tagListListHtml model.tags selectedTag listMessages
+                , TagViews.tagListListHtml 
+                    model.tags
+                    selectedTag
+                    listMessages
+                    keyboardSelectorList
                 , addTagList
                 ]
 

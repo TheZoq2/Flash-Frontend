@@ -66,8 +66,8 @@ tagListHtml list onTextClick onRemoveButton =
 -- Tag list list things
 
 
-tagListButtonRow : TagList -> Int -> TagListMessages msg -> Maybe Int -> Html msg
-tagListButtonRow tagList id messages textFieldTargetId =
+tagListButtonRow : TagList -> Int -> TagListMessages msg -> Maybe Int -> Maybe Char -> Html msg
+tagListButtonRow tagList id messages textFieldTargetId selector =
     let
         toggleCharacter =
             case tagList.enabled of
@@ -121,15 +121,22 @@ tagListButtonRow tagList id messages textFieldTargetId =
                             , onInput messages.onTextChanged
                             , Style.class [Style.TagTextField]
                             ] []]
+
+        selectorText = case selector of
+            Just selector ->
+                p [] [text <| String.fromChar selector]
+            Nothing ->
+                span [] []
     in
         div [Style.class [Style.TagListButtonRow]]
             [ toggleButton
             , addElement
+            , selectorText
             , removeButton
             ]
 
-tagListListHtml : TagListList -> SelectedTag -> TagListMessages msg -> Html msg
-tagListListHtml tagListList selectedTag messages =
+tagListListHtml : TagListList -> SelectedTag -> TagListMessages msg -> List Char -> Html msg
+tagListListHtml tagListList selectedTag messages keyboardSelectorList =
     let
         foldFunction =
             (\id value acc -> 
@@ -137,6 +144,14 @@ tagListListHtml tagListList selectedTag messages =
 
         tagLists =
             Dict.foldl foldFunction [] tagListList.tagLists
+
+        selectorKeys = 
+            List.append (List.map Just keyboardSelectorList)
+                <| List.repeat (List.length tagLists) Nothing
+
+        tagListsWithSelector =
+            List.map2 (,) tagLists selectorKeys
+
 
         listClasses listId tagList =
             case selectedTag of
@@ -154,10 +169,10 @@ tagListListHtml tagListList selectedTag messages =
     in
         ul []
             <| List.map 
-                (\(id, (tag, onText, onRemove)) ->
+                (\((id, (tag, onText, onRemove)), selector) ->
                     div [Style.class ([Style.TagList] ++ (listClasses id tag))]
                         [ tagListHtml tag onText onRemove
-                        , tagListButtonRow tag id messages tagListList.textFieldTargetId
+                        , tagListButtonRow tag id messages tagListList.textFieldTargetId selector
                         ]
                     )
-                tagLists
+                tagListsWithSelector
