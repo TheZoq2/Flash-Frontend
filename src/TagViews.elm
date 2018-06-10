@@ -124,7 +124,7 @@ tagListButtonRow tagList id messages textFieldTargetId selector =
 
         selectorText = case selector of
             Just selector ->
-                p [] [text <| String.fromChar selector]
+                div [Style.class [Style.KeyboardHint]] [p [] [text <| String.fromChar selector]]
             Nothing ->
                 span [] []
     in

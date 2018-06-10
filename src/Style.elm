@@ -74,6 +74,7 @@ type CssClasses
     | SelectedThumbnail
     | SearchContainer
     | HoverLayer
+    | KeyboardHint
 
 
 
@@ -149,7 +150,7 @@ globalStyle =
         ([ body
             [ color primaryTextColor
             , backgroundColor primaryBackgroundColor
-            , fontFamilies ["Source Sans Pro"]
+            , fontFamilies ["Tahoma, Geneva, sans-serif"]
             ]
          , Css.class RemoveButton
             [ display inlineBlock
@@ -191,6 +192,24 @@ globalStyle =
             ]
          , Css.Elements.img
             [ Css.property "image-orientation" "from-image"]
+         , Css.class KeyboardHint
+            [ width (Css.em 1)
+            , height (Css.em 1)
+            , borderBottom3 (Css.em 0.2) solid (Css.hex "7b007b")
+            , backgroundColor (Css.hex "3f2936")
+            , borderRadius (Css.px 2)
+            , padding (Css.em 0.3)
+            , fontSize (Css.em 0.9)
+            , children
+                [ p
+                    [ width (Css.pct 100)
+                    , height (Css.pct 100)
+                    , lineHeight (Css.em 1.2)
+                    , textAlign center
+                    , fontSize (Css.em 0.9)
+                    ]
+                ]
+            ]
          ]
             ++ tagEditorCss
             ++ tagListManagerCss
