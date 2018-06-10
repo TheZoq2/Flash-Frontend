@@ -35,7 +35,6 @@ import Urls
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
-import Json.Encode
 import Http
 import Task
 import Window

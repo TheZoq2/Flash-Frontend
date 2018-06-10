@@ -11,14 +11,13 @@ import EditorMsg exposing
     )
 
 import Tags
+import TagViews
 import Style
 import ImageViewer
 import FileList exposing (FileList, fileListDecoder)
 import Commands
 
 import Html exposing (..)
-import Html.Attributes
-import Html.Events exposing (onBlur)
 import Elements exposing (flatButton, thumbnail, hoverButton)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
@@ -191,7 +190,7 @@ view model =
             div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , loadingBar
-                , Tags.tagListListHtml model.tags selectedTag listMessages
+                , TagViews.tagListListHtml model.tags selectedTag listMessages
                 , addTagList
                 ]
 
