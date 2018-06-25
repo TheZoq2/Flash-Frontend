@@ -108,6 +108,16 @@ tagListSelectedBackgroundColor =
     hex "292929"
 
 
+accentColor : Css.Color
+accentColor =
+    hex "7d007d"
+
+
+cardColor : Css.Color
+cardColor =
+    hex "2c2c2c"
+
+
 disabledTagColor : Css.Color
 disabledTagColor =
     (rgb 100 100 100)
@@ -151,16 +161,6 @@ globalStyle =
             [ color primaryTextColor
             , backgroundColor primaryBackgroundColor
             , fontFamilies ["Tahoma, Geneva, sans-serif"]
-            ]
-         , Css.class RemoveButton
-            [ display inlineBlock
-            , borderRadius (Css.em 0.2)
-            , backgroundColor (rgb 169 3 41)
-            , fontSize (Css.em 1.6)
-            , cursor pointer
-            , hover
-                [ backgroundColor (rgb 200 50 80)
-                ]
             ]
          , Css.class TagListContainer
             [ width (px tagEditorSidebarWidth)
@@ -210,6 +210,30 @@ globalStyle =
                     ]
                 ]
             ]
+        , Css.class Button
+            [ textAlign Css.center
+            , lineHeight <| Css.px tagEditorStdHeight
+            , color primaryTextColor
+            , textDecoration Css.none
+            , cursor pointer
+            , hover
+                [ backgroundColor buttonHoverColor]
+            ]
+        , Css.class WideButton
+            [ width <| Css.px tagEditorSidebarWidth
+            ]
+        , Css.class BlockButton 
+            [ display Css.block
+            , padding2 (Css.px tagEditorStdMargin) zero
+            ]
+        , Css.class InlineButton
+            [ lineHeight <| (Css.em 1)
+            , display Css.inlineBlock
+            , width <| (Css.em 1)
+            ]
+        , Css.class RoundedSquareButton
+            [ width <| Css.em 1
+        ]
          ]
             ++ tagEditorCss
             ++ tagListManagerCss
@@ -240,7 +264,12 @@ tagEditorCss =
         , flexGrow zero
         , flexShrink zero
         , backgroundColor secondaryBackgroundColor
-        , margin2 (px 0) (px tagEditorStdMargin)
+        , children
+            [ div
+                [ backgroundColor cardColor
+                , boxShadow4 (px 5) (px 5) (px 5) (hex "000")
+                ]
+            ]
         ]
     , Css.class TagEditorSelected
         [ backgroundColor tagListSelectedBackgroundColor
@@ -254,30 +283,6 @@ tagEditorCss =
                 , borderBottom3 (Css.px 1) Css.solid dividerColor
                 ]
             ]
-        ]
-    , Css.class Button
-        [ textAlign Css.center
-        , lineHeight <| Css.px tagEditorStdHeight
-        , color primaryTextColor
-        , textDecoration Css.none
-        , cursor pointer
-        , hover
-            [ backgroundColor buttonHoverColor]
-        ]
-    , Css.class WideButton
-        [ width <| Css.px tagEditorSidebarWidth
-        ]
-    , Css.class BlockButton 
-        [ display Css.block
-        , padding2 (Css.px tagEditorStdMargin) zero
-        ]
-    , Css.class InlineButton
-        [ lineHeight <| (Css.em 1)
-        , display Css.inlineBlock
-        , width <| (Css.em 1)
-        ]
-    , Css.class RoundedSquareButton
-        [ width <| Css.em 1
         ]
     , Css.class Tag
         [ fontSize <| (Css.em 1)
