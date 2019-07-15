@@ -7,22 +7,25 @@ module ImageViewer
         , MouseEvents
         , handleMouseMove
         , zoomGeometry
-        , TouchState
-        , initTouchState
-        , handleTouchStartEnd
-        , handleTouchMove
+        -- , TouchState
+        -- , initTouchState
+        -- , handleTouchStartEnd
+        -- , handleTouchMove
         )
 
 import Css
-import Html exposing (..)
-import Html.Attributes exposing (src)
-import Html.Events exposing (on, onWithOptions, defaultOptions)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (src, css)
+import Html.Styled.Events exposing (on)
 import Json.Decode exposing (..)
-import Mouse
 import Scroll
-import Touch
-import MultiTouch
+-- TODO: Re-implement multitouch support
+-- import Touch
+-- import MultiTouch
 import Dict
+import EventUtil exposing (onPreventDefault)
+import Mouse
+import MathUtil exposing (vecToTuple)
 
 import Math.Vector2 exposing (..)
 
@@ -40,6 +43,8 @@ initGeometry : Geometry
 initGeometry =
     Geometry (vec2 0 0) 1
 
+
+{-
 {-|
   Tracks the current touches on the image
 -}
@@ -134,6 +139,7 @@ handleMultitouchMove oldTouches newTouches geometry =
         _ -> -- We only care about the pinch gesture
             geometry
 
+-}
 
 
 {-|
@@ -181,9 +187,10 @@ moveGeometry moved geometry =
 type alias MouseEvents msg =
     { moveMsg: Mouse.Event -> msg
     , scrollMsg: Scroll.Event -> msg
-    , touchStart: Touch.Event -> msg
-    , touchMove: Touch.Event -> msg
-    , touchEnd: Touch.Event -> msg
+    -- TODO: Re-add touch support
+    -- , touchStart: Touch.Event -> msg
+    -- , touchMove: Touch.Event -> msg
+    -- , touchEnd: Touch.Event -> msg
     -- This is unused, but needed for preventing the default behaviour of images
     , downMsg: msg
     }
@@ -195,13 +202,14 @@ type alias MouseEvents msg =
 imageViewerHtml : msg -> Vec2 -> Geometry -> String -> MouseEvents msg -> Html msg
 imageViewerHtml onLoaded containerSize {position, zoom} filename events =
     let
-        {moveMsg, downMsg, scrollMsg, touchStart, touchMove, touchEnd} = events
+        -- {moveMsg, downMsg, scrollMsg, touchStart, touchMove, touchEnd} = events
+        {moveMsg, downMsg, scrollMsg} = events
 
         (x, y) =
-            toTuple position
+            vecToTuple position
 
         (w, h) =
-            toTuple containerSize
+            vecToTuple containerSize
 
         containerCss =
             [ Css.width <| Css.px (w * zoom)
@@ -211,20 +219,17 @@ imageViewerHtml onLoaded containerSize {position, zoom} filename events =
                 , Css.translateY <| Css.px -y
                 ]
             ]
-
-        mouseDownOptions =
-            {defaultOptions | preventDefault = True}
     in
-        div [Style.toStyle containerCss]
+        div [css containerCss]
             [ img
-                [ Style.class [Style.ImageViewerImage]
+                [ css [Style.imageViewerImageStyle]
                 , src filename
                 , onLoadSrc onLoaded
-                , Mouse.onMove moveMsg
-                , onWithOptions "mousedown" mouseDownOptions (Json.Decode.succeed downMsg)
-                , MultiTouch.onStart touchStart
-                , MultiTouch.onMove touchMove
-                , MultiTouch.onEnd touchEnd
+                , on "mousemove" (Json.Decode.map moveMsg Mouse.eventDecoder)
+                , onPreventDefault "mousedown" (Json.Decode.succeed downMsg)
+                -- , MultiTouch.onStart touchStart
+                -- , MultiTouch.onMove touchMove
+                -- , MultiTouch.onEnd touchEnd
                 , Scroll.onScroll scrollMsg
                 ]
                 []
@@ -234,18 +239,18 @@ videoViewer : msg -> Vec2 -> String -> Html msg
 videoViewer onLoadStart containerSize url =
     let
         (w, h) =
-            toTuple containerSize
+            vecToTuple containerSize
 
-        css =
+        style =
             [ Css.width <| Css.px w
             , Css.height <| Css.px h
             ]
     in
         video
             [ src url
-            , Style.toStyle css
+            , css style
             , onVideoLoadStart onLoadStart
-            , Html.Attributes.controls True
+            , Html.Styled.Attributes.controls True
             ]
             []
 
@@ -253,14 +258,14 @@ videoViewer onLoadStart containerSize url =
 {-|
   Event handler for image onLoad events
 -}
-onLoadSrc : msg -> Html.Attribute msg
+onLoadSrc : msg -> Html.Styled.Attribute msg
 onLoadSrc msg =
     on "load" (Json.Decode.succeed msg)
 
 {-|
   Event handler for video onLoadStart events
 -}
-onVideoLoadStart : msg -> Html.Attribute msg
+onVideoLoadStart : msg -> Html.Styled.Attribute msg
 onVideoLoadStart msg =
     on "loadStart" (Json.Decode.succeed msg)
 

@@ -5,7 +5,7 @@ module AlbumCommon exposing
 tagEditorUrl : Int -> Int -> String
 tagEditorUrl listId fileId =
     "tag_editor.html#list/"
-              ++ (toString listId)
+              ++ (String.fromInt listId)
               ++ "/file/"
-              ++ (toString fileId)
+              ++ (String.fromInt fileId)
 

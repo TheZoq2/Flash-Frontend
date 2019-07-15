@@ -10,18 +10,20 @@ import Tags
 import ImageViewer
 import FileList exposing (fileListDecoder)
 import Commands
+import Browser.Navigation exposing (Key)
+import Url
 
 import Vec exposing (..)
 
 
 
 type KeyReceiver
-    = None
-    | TagListList
-    | TagList Int
-    | TagField Int
-    | Tag Int Int
-    | CommandField Commands.CommandData
+    = FocusNone
+    | FocusTagListList
+    | FocusTagList Int
+    | FocusTagField Int
+    | FocusTag Int Int
+    | FocusCommandField Commands.CommandData
 
 
 
@@ -65,13 +67,16 @@ type alias Model =
     -- Wether or not the sidebar is shown
     , sidebarVisible: Bool
     -- The previous URL of the page
-    , oldUrl: String
+    , oldUrl: Url.Url
     -- Geometry of the current image
     , imageGeometry: ImageViewer.Geometry
     -- The current touches of the image viewer
-    , imageTouchState: ImageViewer.TouchState
+    -- TODO: RE-enable touch support
+    -- , imageTouchState: ImageViewer.TouchState
     -- The type of the currently viewed file
     , fileKind: FileKind
+    -- Navigation key required to manage urls
+    , navigationKey: Key
     }
 
 

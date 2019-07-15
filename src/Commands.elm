@@ -5,9 +5,9 @@ module Commands exposing
     , commandLineView
     )
 
-import Html exposing (..)
-import Html.Events exposing (onBlur, onInput)
-import Html.Attributes
+import Html.Styled exposing (..)
+import Html.Styled.Events exposing (onBlur, onInput)
+import Html.Styled.Attributes exposing (css)
 
 import CommandLine
 import Style
@@ -50,11 +50,11 @@ type alias CommandLineEvents a =
 commandLineView : CommandLineEvents a -> CommandData -> Html a
 commandLineView events data =
     div
-        [Style.class [Style.CommandLineContainer]]
+        [css [Style.commandLineContainerStyle]]
         [ input
             [ onInput events.onInput
             -- onBlur events.onBlur
-            , Html.Attributes.id "command_field"
+            , Html.Styled.Attributes.id "command_field"
             ]
             []
         , div [] [p [] [text data.expandedQuery]]
@@ -66,7 +66,7 @@ commandLineView events data =
 -}
 renderSuggestion : (String, List Bool) -> Html a
 renderSuggestion (string, matches) =
-    List.map2 (,) (String.toList string) matches
+    List.map2 Tuple.pair (String.toList string) matches
     |> List.map (\(char, match) ->
         (if match then strong [] else span []) <| [text <| String.fromChar char])
     |> li []

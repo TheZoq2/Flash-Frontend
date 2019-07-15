@@ -11,17 +11,19 @@ import EditorMsg exposing
     )
 
 import Tags
-import Style
+import Style exposing (..)
 import ImageViewer
 import FileList exposing (FileList, fileListDecoder)
 import Commands
+import Reset
 
-import Html exposing (..)
-import Html.Attributes
-import Html.Events exposing (onBlur)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css)
+import Html.Styled.Events exposing (onBlur)
 import Elements exposing (flatButton, thumbnail, hoverButton)
 import Math.Vector2 exposing (Vec2, vec2)
 import Css
+import Css.Global
 
 import Urls
 
@@ -47,7 +49,7 @@ thumbnailList listId onClick (previousIds, currentId, nextIds) =
     in
         List.map (thumbnailCreatorFromId []) previousIds
         ++
-        [thumbnailCreatorFromId [Style.class [Style.SelectedThumbnail]] currentId]
+        [thumbnailCreatorFromId [css [Style.selectedThumbnailStyle]] currentId]
         ++
         List.map (thumbnailCreatorFromId []) nextIds
 
@@ -55,14 +57,14 @@ lowerBar : Model -> Html Msg
 lowerBar model =
     let
         buttonStyle =
-            Style.toStyle
+            css
                 [ Css.margin2 (Css.px 0) Css.auto
                 ]
 
         imageBar =
             case model.fileList of
                 Just fileList ->
-                    div [Style.class [Style.EditorThumbnailContainer]]
+                    div [css [Style.editorThumbnailContainerStyle]]
                         <| thumbnailList fileList.listId
                             RequestId
                             <| imageIdList fileList 4
@@ -71,7 +73,7 @@ lowerBar model =
 
         container children =
             div
-                [ Style.toStyle
+                [ css
                     [ Css.bottom <| Css.px 0
                     , Css.width <| Css.pct 100
                     ]
@@ -102,9 +104,9 @@ mediaViewer model =
                     ImageViewer.MouseEvents
                         MouseMovedOnImage
                         ImageScrolled
-                        ImageTouchStart
-                        ImageTouchMove
-                        ImageTouchEnd
+                        -- ImageTouchStart
+                        -- ImageTouchMove
+                        -- ImageTouchEnd
                         NoOp
 
             in
@@ -137,32 +139,32 @@ view : Model -> Html Msg
 view model =
     let
         prevButton =
-            flatButton [Style.BlockButton] [] RequestPrev "‹" 3
+            flatButton [Style.blockButtonStyle, Style.buttonRowButtonStyle] [] RequestPrev "‹" 3
 
         nextButton =
-            flatButton [Style.BlockButton] [] RequestNext "›" 3
+            flatButton [Style.blockButtonStyle, Style.buttonRowButtonStyle] [] RequestNext "›" 3
 
         saveButton =
-            flatButton [Style.BlockButton] [] RequestSave "✔" 1.5
+            flatButton [Style.blockButtonStyle, Style.buttonRowButtonStyle] [] RequestSave "✔" 1.5
 
         buttonRow =
-            div [ Style.class [ Style.TagEditorButtonRow ] ] [ prevButton, nextButton, saveButton ]
+            div [ css [Style.tagEditorButtonRowStyle] ] [ prevButton, nextButton, saveButton ]
 
         addTagList =
-            flatButton [Style.WideButton, Style.BlockButton] [] AddTagList "+" 2
+            flatButton [Style.wideButtonStyle, Style.blockButtonStyle] [] AddTagList "+" 2
 
         loadingBar =
             case model.imageLoaded of
                 False ->
-                    div [ Style.class [ Style.LoadingContainer ] ]
-                        [  div [ Style.class [Style.LoadingPulse ] ] [ ] 
+                    div []
+                        [ div [css [Style.loadingPulseStyle] ] [ ] 
                         ]
                 True ->
                     div [] []
 
         additionalRightPaneClasses =
-            if model.keyReceiver == TagListList then
-                [ Style.TagEditorSelected ]
+            if model.keyReceiver == FocusTagListList then
+                [ Style.tagEditorSelectedStyle ]
             else
                 []
 
@@ -179,16 +181,16 @@ view model =
 
         selectedTag =
             case model.keyReceiver of
-                TagList id ->
+                FocusTagList id ->
                     Tags.List id
-                Tag listId tagId ->
+                FocusTag listId tagId ->
                     Tags.Single listId tagId
                 _ ->
                     Tags.None
 
 
         sidebar =
-            div [ Style.class ([ Style.TagEditorRightPane ] ++ additionalRightPaneClasses) ]
+            div [ css ([ Style.tagEditorRightPaneStyle ] ++ additionalRightPaneClasses) ]
                 [ buttonRow
                 , loadingBar
                 , Tags.tagListListHtml model.tags selectedTag listMessages
@@ -202,14 +204,18 @@ view model =
 
         commandField data =
             Commands.commandLineView commandFieldEvents data
+
+        globalStyle =
+            Css.Global.global (Reset.resetStyle ++ Style.globalStyle)
     in
-        div [ Style.class [ Style.TagEditorContainer ] ]
+        div [ css [Style.tagEditorContainerStyle] ]
             <|
-                [ div
-                    [ Style.class [ Style.TagEditorContentContainer]
+                [ globalStyle
+                , div
+                    [ css [Style.tagEditorContentContainerStyle]
                     , Style.styleFromSize model.viewerSize 
                     ]
-                    [ div [ Style.class [Style.EditorImageContainer]]
+                    [ div [ css [Style.editorImageContainerStyle]]
                         [ mediaViewer model
                         ]
                     , lowerBar model
@@ -221,14 +227,14 @@ view model =
                          hoverLayer
                    ]
                 ++ case model.keyReceiver of
-                    CommandField data -> [commandField data] 
+                    FocusCommandField data -> [commandField data] 
                     _ -> []
 
 
 hoverLayer : Html Msg
 hoverLayer =
     div
-        [Style.class [Style.HoverLayer]]
-        [ flatButton [Style.BlockButton] [Style.toStyle [Css.float Css.left]] RequestPrev "‹" 3
-        , flatButton [Style.BlockButton] [Style.toStyle [Css.float Css.right]] RequestNext "›" 3
+        [css [hoverLayerStyle]]
+        [ flatButton [Style.blockButtonStyle] [css [Css.float Css.left]] RequestPrev "‹" 3
+        , flatButton [Style.blockButtonStyle] [css [Css.float Css.right]] RequestNext "›" 3
         ]

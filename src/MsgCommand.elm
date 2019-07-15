@@ -23,7 +23,7 @@ intParam : (Int -> Command Msg) -> Command Msg
 intParam restProducer =
     NonTerminal Word []
         (\query ->
-            Result.toMaybe (String.toInt query)
+            (String.toInt query)
             |> Maybe.map restProducer
         )
 

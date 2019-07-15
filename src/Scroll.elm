@@ -3,10 +3,11 @@ module Scroll exposing
     , onScroll
     )
 
-import Html
-import Html.Events exposing (onWithOptions, defaultOptions)
-import Mouse
+import Html.Styled
+import Html.Styled.Events exposing (preventDefaultOn)
 import Json.Decode as Decode exposing (Decoder)
+
+import Mouse
 
 
 type alias Event =
@@ -19,12 +20,12 @@ type alias Event =
 
 
 
-onScroll : (Event -> msg) -> Html.Attribute msg
+onScroll : (Event -> msg) -> Html.Styled.Attribute msg
 onScroll msg =
     let
-        options = {defaultOptions | preventDefault = True}
+        alwaysPreventDefault msg_ = (msg_, True)
     in
-        onWithOptions "wheel" options (Decode.map msg scrollDecoder)
+        preventDefaultOn "wheel" (Decode.map alwaysPreventDefault <| Decode.map msg scrollDecoder)
 
 
 scrollDecoder : Decoder Event

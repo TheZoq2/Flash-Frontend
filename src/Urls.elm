@@ -76,7 +76,7 @@ fileListSaveUrl : Int -> Int -> List String -> String
 fileListSaveUrl listId fileIndex tags =
     let
         tagsJson =
-            toString <| List.map Json.Encode.string tags
+            Json.Encode.encode 0 <| Json.Encode.list Json.Encode.string tags
     in
         rawUrlWithAction
             ["list"]
@@ -88,7 +88,7 @@ fileListListInfoUrl id =
     rawUrlWithAction
         ["list"]
         "list_info"
-        [("list_id", toString id)]
+        [("list_id", String.fromInt id)]
 
 
 fileListLastSavedIndexUrl : Int -> String
@@ -96,7 +96,7 @@ fileListLastSavedIndexUrl id =
     rawUrlWithAction
         ["list"]
         "list_last_saved_index"
-        [("list_id", toString id)]
+        [("list_id", String.fromInt id)]
 
 
 
@@ -124,5 +124,5 @@ searchUrl query =
 
 fileListFileParameters : Int -> Int -> List (String, String)
 fileListFileParameters listId fileIndex =
-    [("list_id", toString listId), ("index", toString fileIndex)]
+    [("list_id", String.fromInt listId), ("index", String.fromInt fileIndex)]
 

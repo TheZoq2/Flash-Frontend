@@ -1,16 +1,10 @@
-all:
-	make tageditor
-	make css
-	make album
+all: tageditor album
 
 tageditor:
-	elm-make src/TagEditor.elm --output=output/tag_editor.js
-
-css:
-	elm-css src/Style.elm --module=Style
+	elm make src/TagEditor.elm --output=output/tag_editor.html
 
 album:
-	elm-make src/Main.elm --output=output/album.js
+	elm make src/Main.elm --output=output/album.html
 
 
 

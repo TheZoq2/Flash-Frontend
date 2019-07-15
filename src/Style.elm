@@ -1,88 +1,63 @@
-port module Style exposing (..)
+module Style exposing (..)
 
+import Html.Styled
+import Html.Styled.Attributes exposing (css)
+
+import Css
 import Css exposing (..)
-import Css.File exposing (..)
-import Css.Elements exposing (..)
-import Html.Attributes exposing (style)
-import Html.CssHelpers
-import Html
+import Css.Global
+import Css.Animations as Anim
 
-port files : CssFileStructure -> Cmd msg
+type alias Placeholder = ()
 
 
-albumContainer : List Css.Mixin
-albumContainer =
-    [ displayFlex
-    , flexDirection row
-    , flexWrap wrap
-    ]
-
-
-albumItemContainer : List Css.Mixin
-albumItemContainer =
-    [ height (px 300)
-    , margin (px 10)
-    ]
-
-
-toStyle : List Css.Mixin -> Html.Attribute msg
-toStyle =
-    Css.asPairs >> Html.Attributes.style
-
-
-
---Css helpers
-
-
-{ id, class, classList } =
-    Html.CssHelpers.withNamespace ""
-
-
-type CssClasses
-    = AlbumIndexContainer
-    | TagListContainer
-    | RemoveButton
-    | TagListName
-    | TagListLi
-    | DisabledTag
-    | TagEditorButtonRow
-    | TagListManager
-    | CommandLineContainer
-      --Tag editor specific tags
-    | TagEditorContainer
-    | TagEditorRightPane
-    | TagEditorContentContainer
-    | TagEditorSelected
-    | ImageViewer
-    | ImageViewerImage
-    | EditorImageContainer
-    | Button
-    | WideButton
-    | InlineButton
-    | BlockButton
-    | RoundedSquareButton
-    | Tag
-    | TagList
-    | TagListButtonRow
-    | AddTagButton
-    | TagTextField
-    | LoadingPulse
-    | LoadingContainer
-    | Thumbnail
-    | AlbumThumbnailContainer
-    | EditorThumbnailContainer
-    | SelectedThumbnail
-    | SearchContainer
-    | HoverLayer
-
+styleFromSize : {width: Float, height: Float} -> Html.Styled.Attribute msg
+styleFromSize size =
+    css [width (px size.width), height (px size.height)]
 
 
 --Some very common parameters
 
 
+
+tagEditorSidebarWidth : Float
+tagEditorSidebarWidth =
+    350
+
+tagEditorThumbnailHeight : Float
+tagEditorThumbnailHeight =
+    100
+
+tagEditorLowerBarHeight: Float
+tagEditorLowerBarHeight =
+    100
+
+
+tagEditorStdMargin : Float
+tagEditorStdMargin =
+    10
+
+tagEditorStdHeight : Float
+tagEditorStdHeight = 
+    40
+
+
+defaultMaxHeight : Float
+defaultMaxHeight =
+    1000
+
+totalSidebarSize : Float
+totalSidebarSize =
+    tagEditorSidebarWidth + tagEditorStdMargin * 2
+
+
+
+-- Common colors
+
 primaryTextColor : Css.Color
 primaryTextColor =
     hex "ffffff"
+
 
 dividerColor : Css.Color
 dividerColor =
@@ -112,131 +87,108 @@ disabledTagColor =
     (rgb 100 100 100)
 
 
-tagEditorSidebarWidth : Float
-tagEditorSidebarWidth =
-    350
+-- Global style, primarily for styling body
 
-tagEditorThumbnailHeight : Float
-tagEditorThumbnailHeight =
-    100
-
-tagEditorLowerBarHeight: Float
-tagEditorLowerBarHeight =
-    100
-
-
-tagEditorStdMargin : Float
-tagEditorStdMargin =
-    10
-
-tagEditorStdHeight : Float
-tagEditorStdHeight = 
-    40
-
-
-defaultMaxHeight : Float
-defaultMaxHeight =
-    1000
-
-
-
---The style to apply to all files in the project
-
-
-globalStyle : List Css.Stylesheet
 globalStyle =
-    [(stylesheet)
-        ([ body
-            [ color primaryTextColor
-            , backgroundColor primaryBackgroundColor
-            , fontFamilies ["Source Sans Pro"]
-            ]
-         , Css.class RemoveButton
-            [ display inlineBlock
-            , borderRadius (Css.em 0.2)
-            , backgroundColor (rgb 169 3 41)
-            , fontSize (Css.em 1.6)
-            , cursor pointer
-            , hover
-                [ backgroundColor (rgb 200 50 80)
-                ]
-            ]
-         , Css.class TagListContainer
-            [ width (px tagEditorSidebarWidth)
-            ]
-         , Css.class TagListName
-            [ padding2 (Css.em 0.5) (px 0)
-            ]
-         , Css.class TagListLi
-            [ height (Css.em 2)
-            ]
-         , Css.class DisabledTag
-            [ color disabledTagColor
-            ]
-         , Css.class TagListContainer
-            [ margin2 (px (tagEditorStdMargin * 3)) zero
-            ]
-         , Css.class Thumbnail
-            [ display block
-            , children 
-                [ img
-                    [ Css.width (Css.pct 100)
-                    , Css.height (Css.pct 100)
-                    , Css.property "object-fit" "contain"
-                    ]
-                ]
-            ]
-         , Css.Elements.li
-            [ listStyle none
-            ]
-         , Css.Elements.img
-            [ Css.property "image-orientation" "from-image"]
-         ]
-            ++ tagEditorCss
-            ++ tagListManagerCss
-            ++ imageViewerStyle
-            ++ albumStyle
-            ++ commandLineStyle
-        )
+    [ Css.Global.body
+        [ backgroundColor primaryBackgroundColor
+        , color <| hex "#ffffff"
+        , backgroundColor <| hex "#1c1c1c"
+        , fontFamilies ["Source Sans Pro"]
+        ]
     ]
 
 
+-- Animation stuff
+loadingPulseKeyframe =
+    Anim.keyframes [(50, [Anim.backgroundColor (rgb 25 142 224)])]
 
---Tag editor specific styles
+loadingContainerStyle =
+    [ displayFlex
+    , justifyContent spaceAround
+    , alignItems center
+    ]
 
-buttonWidth : Float
-buttonWidth =
-    tagEditorSidebarWidth / 3
+loadingPulseStyle =
+    Css.batch
+        [ position absolute
+        , width (px tagEditorSidebarWidth)
+        , height (px 5)
+        , backgroundColor (rgba 25 142 224 0.2)
+        , animationName loadingPulseKeyframe
+        , animationDuration (ms 750)
+        , property "animation-iteration-count" "infinite"
+        ]
 
 
-tagEditorCss : List Css.Snippet
-tagEditorCss =
-    [ Css.class TagEditorContainer
+-- Styles
+
+hoverLayerStyle : Style
+hoverLayerStyle =
+    Css.batch
+        [ position absolute
+        , top <| px 0
+        , left <| px 0
+        , width <| pct 100
+        , property "pointer-events" "none"
+        , Css.Global.children
+            [ Css.Global.everything [property "pointer-events" "all"]
+            ]
+        ]
+
+
+albumSearchMaxWidth : Css.Px
+albumSearchMaxWidth =
+    px 960
+
+
+selectedThumbnailStyle : Style
+selectedThumbnailStyle =
+    Css.batch
+        [ transforms [translateY <| Css.px -10, scaleX 1.1, scaleY 1.1]
+        , border3 (Css.px 2) solid <| Css.hex "3b9ddb"
+        ]
+
+
+editorThumbnailContainerStyle : Style
+editorThumbnailContainerStyle =
+    Css.batch
         [ displayFlex
+        , justifyContent center
+        , height <| Css.px 100
         ]
-    , Css.class TagEditorRightPane
-        [ maxHeight (px 1000)
-        , --width (px tagEditorSidebarWidth),
-          flexBasis (px tagEditorSidebarWidth)
-        , flexGrow zero
-        , flexShrink zero
-        , backgroundColor secondaryBackgroundColor
-        , margin2 (px 0) (px tagEditorStdMargin)
-        ]
-    , Css.class TagEditorSelected
-        [ backgroundColor tagListSelectedBackgroundColor
-        ]
-    , Css.class TagEditorButtonRow
-        [ displayFlex
-        , descendants
-            [ Css.class Button
-                [ width <| Css.px buttonWidth
-                , height <| Css.px tagEditorStdHeight
-                , borderBottom3 (Css.px 1) Css.solid dividerColor
+
+
+editorThumbnailStyle : Style
+editorThumbnailStyle =
+    Css.batch
+        [ height <| Css.px tagEditorThumbnailHeight
+        , margin <| Css.px 2
+        , cursor pointer
+        , Css.Global.children 
+            [ Css.Global.img
+                [ Css.width (Css.pct 100)
+                , Css.height (Css.pct 100)
+                , Css.property "object-fit" "contain"
                 ]
             ]
         ]
-    , Css.class Button
+
+tagTextFieldStyle =
+    Css.batch
+        [ border zero
+        , backgroundColor Css.transparent
+        , color primaryTextColor
+        ]
+
+addTagButtonStyle =
+    Css.batch [flexGrow <| Css.num 1]
+
+
+-- Buttons
+
+buttonStyle =
+    Css.batch
         [ textAlign Css.center
         , lineHeight <| Css.px tagEditorStdHeight
         , color primaryTextColor
@@ -245,26 +197,34 @@ tagEditorCss =
         , hover
             [ backgroundColor buttonHoverColor]
         ]
-    , Css.class WideButton
-        [ width <| Css.px tagEditorSidebarWidth
-        ]
-    , Css.class BlockButton 
-        [ display Css.block
-        , padding2 (Css.px tagEditorStdMargin) zero
-        ]
-    , Css.class InlineButton
+inlineButtonStyle =
+    Css.batch
         [ lineHeight <| (Css.em 1)
         , display Css.inlineBlock
         , width <| (Css.em 1)
         ]
-    , Css.class RoundedSquareButton
-        [ width <| Css.em 1
+blockButtonStyle =
+    Css.batch
+        [ display Css.block
+        , padding2 (Css.px tagEditorStdMargin) zero
         ]
-    , Css.class Tag
+wideButtonStyle =
+    Css.batch
+        [ width <| Css.px tagEditorSidebarWidth
+        ]
+roundedSquareButton =
+    Css.batch
+        [ width <| Css.px tagEditorSidebarWidth
+        ]
+
+
+
+tagStyle =
+    Css.batch
         [ fontSize <| (Css.em 1)
         , displayFlex
-        , descendants
-            [ span
+        , Css.Global.descendants
+            [ Css.Global.span
                 [ flexGrow (Css.num 1)
                 , cursor Css.pointer
                 , hover
@@ -272,168 +232,134 @@ tagEditorCss =
                 ]
             ]
         ]
-    , Css.class TagList
+
+tagListStyle =
+    Css.batch
         [ padding2 (Css.em 1) zero
         , borderTopWidth (px 1)
         , borderTopColor dividerColor
         , borderTopStyle solid
         ]
-    , Css.class TagListButtonRow
+
+tagEditorSelectedStyle =
+    Css.batch
+        [ backgroundColor tagListSelectedBackgroundColor
+        ]
+
+disabledTagStyle =
+    Css.batch
+        [ color disabledTagColor
+        ]
+
+tagEditorRightPaneStyle =
+    Css.batch
+        [ maxHeight (px 1000)
+        , --width (px tagEditorSidebarWidth),
+          flexBasis (px tagEditorSidebarWidth)
+        , flexGrow zero
+        , flexShrink zero
+        , backgroundColor secondaryBackgroundColor
+        , margin2 (px 0) (px tagEditorStdMargin)
+        ]
+
+tagListButtonRowStyle =
+    Css.batch
         [ displayFlex
         , firstChild
             [ flexGrow <| Css.num 1
             ]
         ]
-    , Css.class AddTagButton
-        [ flexGrow <| Css.num 1
-        ]
-    , Css.class TagTextField
-        [ border zero
-        , backgroundColor Css.transparent
-        , color primaryTextColor
-        ]
-    , Css.class HoverLayer
-        [ position absolute
-        , top <| px 0
-        , left <| px 0
-        , width <| pct 100
-        , property "pointer-events" "none"
-        , children
-            [ everything [property "pointer-events" "all"]
-            ]
-        ]
-    ]
 
-
-tagListManagerCss : List Css.Snippet
-tagListManagerCss =
-    [ Css.class TagListManager
-        [ children
-            [ input
-                []
-            ]
+editorImageContainerStyle =
+     Css.batch
+        [ flexGrow <| num 1
+        , overflow hidden
         ]
-    , Css.class TagListContainer
-        [ borderTopWidth (px 1)
-        , borderTopColor dividerColor
-        , borderTopStyle solid
-        , paddingTop (px 15)
-        , margin2 (px 15) zero
-        ]
-    ]
 
-
-imageViewerStyle : List Css.Snippet
-imageViewerStyle =
-    [ Css.class ImageViewer
-        [ overflow hidden
-        ]
-    , Css.class ImageViewerImage
+imageViewerImageStyle =
+     Css.batch
         [ Css.width (Css.pct 100)
         , Css.height (Css.pct 100)
         , Css.property "object-fit" "contain"
         ]
-    , Css.class EditorThumbnailContainer
-        [ displayFlex
-        , justifyContent center
-        , height <| Css.px 100
-        , children
-            [ Css.class Thumbnail
-                [ height <| Css.px tagEditorThumbnailHeight
-                , margin <| Css.px 2
-                , cursor pointer
-                ]
-            , Css.class SelectedThumbnail
-                [ transforms [translateY <| Css.px -10, scaleX 1.1, scaleY 1.1]
-                , border3 (Css.px 2) solid <| Css.hex "3b9ddb"
-                ]
-            ]
-        ]
-    , Css.class EditorImageContainer
-        [ flexGrow <| num 1
-        , overflow hidden
-        ]
-    , Css.class TagEditorContentContainer
+
+tagEditorContentContainerStyle =
+     Css.batch
         [ overflow hidden
         , displayFlex
         , flexDirection column
         ]
-    ]
 
-
-albumSearchMaxWidth : Css.Px
-albumSearchMaxWidth =
-    px 960
-
-albumStyle : List Css.Snippet
-albumStyle =
-    [ Css.class SearchContainer
+tagEditorContainerStyle =
+     Css.batch
         [ displayFlex
-        , margin2 (px 0) auto
-        , maxWidth albumSearchMaxWidth
-        , descendants
-            [ input
-                [ Css.flexGrow <| Css.num 1
-                ]
-            ]
         ]
-    , Css.class AlbumIndexContainer
-        [ maxWidth albumSearchMaxWidth
-        , margin3 (px 100) auto (px 0)
-        ]
-     , Css.class AlbumThumbnailContainer
-        [ displayFlex
-        , flexWrap wrap
-        , children
-            [ Css.class Thumbnail 
-                [ width (px 300)
-                , height (px 200)
-                ]
-            ]
-        ]
-    ]
 
-
-commandLineStyle : List Css.Snippet
-commandLineStyle =
-    [ Css.class CommandLineContainer
+commandLineContainerStyle =
+     Css.batch
         [ position absolute
         , backgroundColor <| hex "505050"
         , padding <| px 5
         , left <| pct 50
         , transform <| translate2 (pct -50) (pct 0)
         , borderRadius <| px 5
-        , descendants
-            [ strong [fontWeight bold]
-            , input
+        , Css.Global.descendants
+            [ Css.Global.strong [fontWeight bold]
+            , Css.Global.input
                 [ border zero
                 , backgroundColor Css.transparent
                 , color primaryTextColor
                 ]
             ]
         ]
-    ]
 
+tagEditorButtonRowStyle =
+     Css.batch
+        [ displayFlex
+        ]
 
-cssFiles : CssFileStructure
-cssFiles =
-    toFileStructure [ ( "output/css/GlobalStyle.css", Css.File.compile globalStyle ) ]
-
-
-totalSidebarSize : Float
-totalSidebarSize =
-    tagEditorSidebarWidth + tagEditorStdMargin * 2
-
-
-
-styleFromSize : {width: Float, height: Float} -> Html.Attribute msg
-styleFromSize size =
-    toStyle
-        [ width (px size.width)
-        , height (px size.height)
+buttonRowButtonWidth =
+    tagEditorSidebarWidth / 3
+buttonRowButtonStyle =
+    Css.batch
+        [ width <| Css.px buttonRowButtonWidth
+        , height <| Css.px tagEditorStdHeight
+        , borderBottom3 (Css.px 1) Css.solid dividerColor
         ]
 
 
-main : CssCompilerProgram
-main =
-    Css.File.compiler files cssFiles
+-- Album specific styles
+
+albumThumbnailContainerStyle : Style
+albumThumbnailContainerStyle =
+    Css.batch
+        [ displayFlex
+        , flexWrap wrap
+        ]
+
+albumThumbnailStyle : Style
+albumThumbnailStyle =
+    Css.batch
+        [ width (px 300)
+        , height (px 200)
+        ]
+
+searchContainerStyle : Style
+searchContainerStyle =
+    Css.batch
+        [ displayFlex
+        , margin2 (px 0) auto
+        , maxWidth albumSearchMaxWidth
+        , Css.Global.descendants
+            [ Css.Global.input
+                [ Css.flexGrow <| Css.num 1
+                ]
+            ]
+        ]
+
+albumIndexContainerStyle =
+     Css.batch
+        [ maxWidth albumSearchMaxWidth
+        , margin3 (px 100) auto (px 0)
+        ]
+

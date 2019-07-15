@@ -9,9 +9,9 @@ import AlbumCommon exposing (tagEditorUrl)
 import FileList exposing (FileList)
 import Urls
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (..)
+import Html.Styled.Events exposing (..)
 import Style
 import Elements exposing (flatButton)
 
@@ -20,9 +20,9 @@ view : Model -> Html Msg
 view model =
     let
         searchForm =
-            Html.form [onSubmit SubmitSearch, Style.class [Style.SearchContainer]]
+            Html.Styled.form [onSubmit SubmitSearch, css [Style.searchContainerStyle]]
                 [ input [ placeholder "Search", onInput SearchQueryChanged ] []
-                , flatButton [Style.InlineButton] [] SubmitSearch "🔍" 1.5
+                , flatButton [Style.inlineButtonStyle] [] SubmitSearch "🔍" 1.5
                 ]
 
         networkErrorElem =
@@ -35,19 +35,19 @@ view model =
                     div properties
                 Nothing ->
                     div
-                        (properties ++ [Style.class [Style.AlbumIndexContainer]])
+                        (properties ++ [css [Style.albumIndexContainerStyle]])
 
         existingListListing =
             li [] <| List.map 
                          (\(id, length, path) ->
-                             ul [] [flatButton [Style.BlockButton] [] (OtherFileListClicked id) path 1])
+                             ul [] [flatButton [Style.blockButtonStyle] [] (OtherFileListClicked id) path 1])
                         model.otherFileLists
 
         folderListing =
             li [] 
                 <| List.map 
                     (\path -> 
-                        ul [] [flatButton [Style.BlockButton] [] (SubmitSearchFor ("/" ++ path)) path 1]
+                        ul [] [flatButton [Style.blockButtonStyle] [] (SubmitSearchFor ("/" ++ path)) path 1]
                     ) <| model.availableFolders
     in
         case model.currentList of
@@ -79,11 +79,11 @@ createThumbnailList fileList =
             List.range 0 amount
 
         fileElements fileId =
-            a [href <| tagEditorUrl fileList.listId fileId, Style.class [Style.Thumbnail]]
+            a [href <| tagEditorUrl fileList.listId fileId, css [Style.albumThumbnailStyle]]
                 [ img [src <| Urls.fileListGetThumbnailUrl fileList.listId fileId] []
                 ]
     in
-        div [Style.class [Style.AlbumThumbnailContainer]]
+        div [css [Style.albumThumbnailContainerStyle]]
             <| List.map fileElements fileIds
 
 

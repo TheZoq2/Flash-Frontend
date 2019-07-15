@@ -26,36 +26,37 @@ import EditorTagListUpdaters exposing
 import Tags
 import ImageViewer
 import FileList exposing (fileListDecoder)
-import Mouse
-import Touch
 import Scroll
 import Commands
 import MsgCommand
 import Urls
+import CommandLine
+import MathUtil
+import Mouse
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
+import Json.Decode as Decode
 import Json.Encode
 import Http
 import Task
-import Window
-import Keyboard
 import Char
-import Dom
+import Browser
+import Browser.Dom as Dom
+import Browser.Navigation as Navigation exposing (Key)
+import Browser.Events
+import Url
 import List.Extra
-import UrlParser
-import Navigation
-import UrlParser
-import UrlParser exposing ((</>))
+import Url.Parser
+import Url.Parser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
-import CommandLine
+import Html.Styled exposing (toUnstyled)
 
 
-
-init : Navigation.Location -> ( Model, Cmd Msg )
-init location =
+init : flags -> Url.Url -> Key -> ( Model, Cmd Msg )
+init _ location key =
     ( { lastError = ""
-      , keyReceiver = None
+      , keyReceiver = FocusNone
       , viewerSize = (Size 0 0 )
       , tags = Tags.emptyTagListList
       , tagTextfieldContent = Nothing
@@ -63,13 +64,16 @@ init location =
       , oldTagList = Nothing
       , imageLoaded = True
       , sidebarVisible = True
-      , oldUrl = ""
+      , oldUrl = location
       , imageGeometry = ImageViewer.initGeometry
-      , imageTouchState = ImageViewer.initTouchState
+      -- , imageTouchState = ImageViewer.initTouchState
       , fileKind = Image
+      , navigationKey = key
       }
     , Cmd.batch
-        [ Task.perform WindowResized Window.size
+        [ Task.perform
+            (\vp -> WindowResized (round vp.viewport.width) (round vp.viewport.height))
+            Dom.getViewport
         , updateLocation location
         ]
     )
@@ -96,25 +100,32 @@ update msg model =
             networkError e model
         FileDataReceived data ->
             let
-                newUrl = case model.fileList of
+                newFragment = case model.fileList of
                     Just fileList ->
-                        "#list/"
-                               ++ (toString fileList.listId)
+                        "list/"
+                               ++ (String.fromInt fileList.listId)
                                ++ "/file/"
-                               ++ (toString fileList.fileIndex)
+                               ++ (String.fromInt fileList.fileIndex)
                     Nothing ->
                         ""
+
+                oldUrl = model.oldUrl
+                newUrl = {oldUrl | fragment = Just newFragment}
             in
-                (onFileDataReceived data {model | oldUrl = newUrl } , Navigation.modifyUrl newUrl)
+                ( onFileDataReceived data {model | oldUrl = newUrl }
+                , Navigation.replaceUrl (model.navigationKey) (Url.toString newUrl)
+                )
         UrlChanged location ->
-            if location.hash /= model.oldUrl then
-                ({model | oldUrl = location.hash}, updateLocation location)
+            if location /= model.oldUrl then
+                ({model | oldUrl = location}, updateLocation location)
             else
                 (model, Cmd.none)
-        WindowResized size ->
+        UrlRequest _ ->
+            (model, Cmd.none)
+        WindowResized sizeX sizeY ->
             let
                 viewerSize =
-                    Size ((toFloat size.width)) (toFloat size.height)
+                    Size ((toFloat sizeX)) (toFloat sizeY)
             in
                 ( { model | viewerSize = viewerSize }, Cmd.none )
         ImageLoaded ->
@@ -127,7 +138,7 @@ update msg model =
             in
                 ({model | fileList = Just fileList }, updateFileData fileList)
         CommandCanceled ->
-            ({model | keyReceiver = None}, Cmd.none)
+            ({model | keyReceiver = FocusNone}, Cmd.none)
         -- TagList related messages
         AddTagList ->
             addTagList model
@@ -163,16 +174,16 @@ update msg model =
             ({model | tagTextfieldContent = Just text}, Cmd.none)
         FocusResult result ->
             handleFocusResult result model
-        MouseMovedOnImage event ->
-            mouseMovedOnImage event model
+        MouseMovedOnImage coords ->
+            mouseMovedOnImage coords model
         ImageScrolled event ->
             imageScrolled event model
-        ImageTouchStart event ->
-            imageTouchStartEnd event model
-        ImageTouchEnd event ->
-            imageTouchStartEnd event model
-        ImageTouchMove event ->
-            imageTouchMove event model
+        -- ImageTouchStart event ->
+        --     imageTouchStartEnd event model
+        -- ImageTouchEnd event ->
+        --     imageTouchStartEnd event model
+        -- ImageTouchMove event ->
+        --     imageTouchMove event model
         ToggleSidebar ->
             toggleSidebar model
         CommandInput query ->
@@ -192,30 +203,31 @@ updateModelTagsByName updateFunc name model =
         ids =
             Tags.indicesOfTag model.tags name
     in
-        List.foldl (\(listId, tagId) model -> updateFunc model listId tagId) model ids
+        List.foldl (\(listId, tagId) accModel -> updateFunc accModel listId tagId) model ids
 
 
-imageTouchStartEnd : Touch.Event -> Model -> (Model, Cmd Msg)
-imageTouchStartEnd event model =
-    ({model | imageTouchState = ImageViewer.handleTouchStartEnd event model.imageTouchState}, Cmd.none)
-
-imageTouchMove : Touch.Event -> Model -> (Model, Cmd Msg)
-imageTouchMove event model =
-    let
-        (touchState, geometry) =
-            ImageViewer.handleTouchMove
-                event
-                model.imageTouchState
-                model.imageGeometry
-    in
-        ({model | imageTouchState = touchState, imageGeometry = geometry}, Cmd.none)
+-- TODO: Re-add touch support
+-- imageTouchStartEnd : Touch.Event -> Model -> (Model, Cmd Msg)
+-- imageTouchStartEnd event model =
+--     ({model | imageTouchState = ImageViewer.handleTouchStartEnd event model.imageTouchState}, Cmd.none)
+-- 
+-- imageTouchMove : Touch.Event -> Model -> (Model, Cmd Msg)
+-- imageTouchMove event model =
+--     let
+--         (touchState, geometry) =
+--             ImageViewer.handleTouchMove
+--                 event
+--                 model.imageTouchState
+--                 model.imageGeometry
+--     in
+--         ({model | imageTouchState = touchState, imageGeometry = geometry}, Cmd.none)
 
 imageScrolled : Scroll.Event -> Model -> (Model, Cmd Msg)
 imageScrolled event model =
     let
         zoomModifier = 1.0 - event.deltaY * 0.05
 
-        clientXY = Math.Vector2.fromTuple event.mouseEvent.clientPos
+        clientXY = MathUtil.tupleToVec event.mouseEvent.clientPos
 
         newGeometry = (ImageViewer.zoomGeometry zoomModifier clientXY model.imageGeometry)
     in
@@ -223,8 +235,8 @@ imageScrolled event model =
 
 
 mouseMovedOnImage : Mouse.Event -> Model -> (Model, Cmd Msg)
-mouseMovedOnImage event model =
-    ( {model | imageGeometry = (ImageViewer.handleMouseMove event model.imageGeometry)}
+mouseMovedOnImage coords model =
+    ( {model | imageGeometry = (ImageViewer.handleMouseMove coords model.imageGeometry)}
     , Cmd.none
     )
 
@@ -236,7 +248,7 @@ handleFocusResult result model =
             let
                 _ = Debug.log "Failed to find dom element when trying to focus on" id
             in
-                ( {model | keyReceiver = None}, Cmd.none)
+                ( {model | keyReceiver = FocusNone}, Cmd.none)
         Ok () ->
             (model, Cmd.none)
 
@@ -255,17 +267,18 @@ type Route
     = FileList Int
     | File Int Int
 
-updateLocation : Navigation.Location -> Cmd Msg
+updateLocation : Url.Url -> Cmd Msg
 updateLocation location =
     let
+        adjustedLocation = {location | path = Maybe.withDefault "" location.fragment, fragment = Nothing}
         route =
-            UrlParser.oneOf
-                [ UrlParser.map FileList (UrlParser.s "list" </> UrlParser.int)
-                , UrlParser.map File
-                    (UrlParser.s "list" </> UrlParser.int </> (UrlParser.s "file") </> UrlParser.int)
+            Url.Parser.oneOf
+                [ Url.Parser.map FileList (Url.Parser.s "list" </> Url.Parser.int)
+                , Url.Parser.map File
+                    (Url.Parser.s "list" </> Url.Parser.int </> (Url.Parser.s "file") </> Url.Parser.int)
                 ]
     in
-        case UrlParser.parseHash route location of
+        case Url.Parser.parse route adjustedLocation of
             Just (FileList list) ->
                 requestFileListData 0 list
             Just (File list file) ->
@@ -278,74 +291,74 @@ updateLocation location =
 
 
 
-keyboardSelectorList : List Char
+keyboardSelectorList : List String
 keyboardSelectorList =
-    ['J', 'K', 'L', 'H', 'S', 'D', 'F', 'G']
+    ["j", "k", "l", "h", "s", "d", "f", "g"]
 
-handleKeyboardInput : Model -> Int -> ( Model, Cmd Msg )
+handleKeyboardInput : Model -> String -> ( Model, Cmd Msg )
 handleKeyboardInput model code =
     case model.keyReceiver of
-        None ->
-            case Char.fromCode code of
-                'L' ->
+        FocusNone ->
+            case code of
+                "l" ->
                     --Next
                     selectNextFile model
 
-                'H' ->
+                "h" ->
                     --Previous
                     selectPrevFile model
 
-                'S' ->
+                "s" ->
                     --Save
                     ( model, requestSaveImage model <| getSelectedTags model)
 
-                'T' ->
+                "t" ->
                     --Modify tags
-                    ( { model | keyReceiver = TagListList }, Cmd.none )
-                'B' ->
+                    ( { model | keyReceiver = FocusTagListList }, Cmd.none )
+                "b" ->
                     toggleSidebar model
-                ' ' -> -- Show commandline
+                " " -> -- Show commandline
                     showCommandLine model
                 _ ->
                     ( model, Cmd.none )
 
-        TagListList ->
-            case Char.fromCode code of
-                'I' ->
+        FocusTagListList ->
+            case code of
+                "i" ->
                     --Return to normal
-                    ( {model | keyReceiver = None}, Cmd.none)
-                'A' ->
+                    ( {model | keyReceiver = FocusNone}, Cmd.none)
+                "a" ->
                     addTagList model
-                code ->
+                code_ ->
                     --Select a subcomponent
-                    handleTagListSelectorKeys model code
-        TagList id ->
-            case Char.fromCode code of
-                'I' ->
-                    ( {model | keyReceiver = TagListList}, Cmd.none)
-                'A' ->
+                    handleTagListSelectorKeys model code_
+        FocusTagList id ->
+            case code of
+                "i" ->
+                    ( {model | keyReceiver = FocusTagListList}, Cmd.none)
+                "a" ->
                     startTagAddition model id
-                'R' -> -- Remove the list
+                "r" -> -- Remove the list
                     removeTagList model id
-                'T' -> -- Toggle the list
+                "t" -> -- Toggle the list
                     toggleTagList model id
-                code ->
-                    handleTagSelectorKeys model id code
-        Tag listId tagId ->
-            case Char.fromCode code of
-                'I' ->
-                    ( {model | keyReceiver = TagList listId}, Cmd.none)
-                'R' ->
+                code_ ->
+                    handleTagSelectorKeys model id code_
+        FocusTag listId tagId ->
+            case code of
+                "i" ->
+                    ( {model | keyReceiver = FocusTagList listId}, Cmd.none)
+                "r" ->
                     (removeTag model listId tagId, Cmd.none)
-                'T' ->
+                "t" ->
                     (toggleTag model listId tagId, Cmd.none)
                 _ ->
                     (model, Cmd.none)
-        CommandField commandData ->
+        FocusCommandField commandData ->
             case code of
-                27 ->
+                "Escape" ->
                     (hideCommandLine model, Cmd.none)
-                13 ->
+                "Enter" ->
                     submitCommandLine commandData model
                 _ ->
                     (model, Cmd.none)
@@ -356,7 +369,7 @@ toggleSidebar : Model -> (Model, Cmd Msg)
 toggleSidebar model =
     ( { model | sidebarVisible = not model.sidebarVisible}, Cmd.none)
 
-handleTagListSelectorKeys : Model -> Char -> (Model, Cmd Msg)
+handleTagListSelectorKeys : Model -> String -> (Model, Cmd Msg)
 handleTagListSelectorKeys model code =
     case List.Extra.elemIndex code keyboardSelectorList of
         Just index ->
@@ -366,7 +379,7 @@ handleTagListSelectorKeys model code =
             in
                 case receiverId of
                     Just id ->
-                        ({ model | keyReceiver = TagList id}, Cmd.none)
+                        ({ model | keyReceiver = FocusTagList id}, Cmd.none)
                     Nothing ->
                         (model, Cmd.none)
         Nothing ->
@@ -374,7 +387,7 @@ handleTagListSelectorKeys model code =
 
 
 
-handleTagSelectorKeys : Model -> Int -> Char -> (Model, Cmd Msg)
+handleTagSelectorKeys : Model -> Int -> String -> (Model, Cmd Msg)
 handleTagSelectorKeys model selectedListId code =
     case List.Extra.elemIndex code keyboardSelectorList of
         Just index ->
@@ -383,8 +396,8 @@ handleTagSelectorKeys model selectedListId code =
                     Tags.getNthTag model.tags selectedListId index
             in
                 case receiverId of
-                    Just receiverId ->
-                        ({model | keyReceiver = Tag selectedListId receiverId}, Cmd.none)
+                    Just receiverId_ ->
+                        ({model | keyReceiver = FocusTag selectedListId receiverId_}, Cmd.none)
                     Nothing ->
                         (model, Cmd.none)
         Nothing ->
@@ -473,14 +486,12 @@ showCommandLine model =
         newKeyReceiver =
             case Commands.initCommandData (commands model) of
                 Ok commandData ->
-                    CommandField commandData
+                    FocusCommandField commandData
                 Err e ->
                     let
                         _ = Debug.log "Failed to init commands: " e
                     in
                         model.keyReceiver
-
-        _ = Debug.log "newKeyReceiver" newKeyReceiver
     in
         ( {model | keyReceiver = newKeyReceiver }
         , Dom.focus "command_field" |> Task.attempt FocusResult
@@ -489,10 +500,7 @@ showCommandLine model =
 
 hideCommandLine : Model -> Model
 hideCommandLine model =
-    let
-        _ = Debug.log "got hide commannd" ""
-    in
-        {model | keyReceiver = None}
+    {model | keyReceiver = FocusNone}
 
 
 commands : Model -> CommandLine.Command Msg
@@ -516,7 +524,7 @@ submitCommandLine commandData model =
 handleCommandLineInput : String -> Model -> (Model, Cmd Msg)
 handleCommandLineInput query model =
     case model.keyReceiver of
-        CommandField data ->
+        FocusCommandField data ->
             let
                 command = (commands model)
 
@@ -534,7 +542,7 @@ handleCommandLineInput query model =
                             in
                                 data
             in
-                ({model | keyReceiver = CommandField newData}, Cmd.none)
+                ({model | keyReceiver = FocusCommandField newData}, Cmd.none)
         _ ->
             let
                 _ = Debug.log "Got a commandLineInput msg with unfocused command field, ignoring" ""
@@ -573,11 +581,12 @@ onFileDataReceived data model =
 
 
         -- Remove the old tag list containing old tags
-        newTagListList = case model.oldTagList of
-            Just id ->
-                Tags.removeTagList id model.tags
-            Nothing ->
-                model.tags
+        newTagListList =
+            case model.oldTagList of
+                Just id_ ->
+                    Tags.removeTagList id_ model.tags
+                Nothing ->
+                    model.tags
 
         uniqueTags =
             List.filter
@@ -589,15 +598,16 @@ onFileDataReceived data model =
 
 
         -- Add a new tag list with the old tags if they exist
-        (newNewTagListList, id) = case uniqueTags of
-            [] ->
-                (newTagListList, Nothing)
-            tags ->
-                let
-                    list = Tags.addTagsToList uniqueTags <| Tags.emptyTagList
-                    (listList, id) = Tags.addTagList list newTagListList
-                in
-                    (listList, Just id)
+        (newNewTagListList, id) =
+            case uniqueTags of
+                [] ->
+                    (newTagListList, Nothing)
+                tags ->
+                    let
+                        list = Tags.addTagsToList uniqueTags <| Tags.emptyTagList
+                        (listList, id_) = Tags.addTagList list newTagListList
+                    in
+                        (listList, Just id_)
     in
         {model | tags = newNewTagListList, oldTagList = id, fileKind = newFileKind}
 
@@ -622,8 +632,8 @@ getAllTags model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Window.resizes WindowResized
-        , Keyboard.downs Keypress
+        [ Browser.Events.onResize WindowResized
+        , Browser.Events.onKeyDown (Decode.map Keypress (Decode.field "key" Decode.string))
         ]
 
 
@@ -631,11 +641,13 @@ subscriptions model =
 -- Main
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Navigation.program UrlChanged
+    Browser.application
         { init = init
         , update = update
-        , view = view
+        , view = (\model -> Browser.Document "flash" [toUnstyled <| view model])
         , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = UrlRequest
         }

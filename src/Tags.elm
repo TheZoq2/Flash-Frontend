@@ -26,13 +26,14 @@ module Tags exposing
     , allTags
     )
 
-import Html exposing (..)
-import Html.Attributes exposing (autofocus)
-import Html.Events exposing (..)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes as Attributes exposing (autofocus, css)
+import Html.Styled.Events exposing (..)
 
 import Elements exposing (flatButton)
 import Style
 import Dict exposing (Dict)
+import Css
 
 import List.Extra
 
@@ -54,18 +55,18 @@ htmlFromTag tag onTextClick onRemoveButton =
             True ->
                 []
             False ->
-                [Style.DisabledTag]
+                [Style.disabledTagStyle]
     in
-        span [Style.class [Style.Tag]]
-            [ span [onClick (onTextClick), Style.class textClasses] [text tag.text]
-            , flatButton [Style.InlineButton] [] (onRemoveButton) "×" 1.5
+        span [css [Style.tagStyle]]
+            [ span [onClick (onTextClick), css textClasses] [text tag.text]
+            , flatButton [Style.inlineButtonStyle] [] (onRemoveButton) "×" 1.5
             ]
 
 
 
-htmlFromListOfTags : List (Style.CssClasses) -> List (Tag, msg, msg) -> Html msg
+htmlFromListOfTags : List (Css.Style) -> List (Tag, msg, msg) -> Html msg
 htmlFromListOfTags additionalClasses list =
-    ul [Style.class additionalClasses]
+    ul [css additionalClasses]
         <| List.map 
             (\(tag, onTextClick, onRemoveButton) -> li [] [htmlFromTag tag onTextClick onRemoveButton]) 
             list
@@ -145,7 +146,7 @@ tagListFilterTags : (Tag -> Bool) -> TagList -> List String
 tagListFilterTags filter list =
     List.map (\tag -> tag.text)
         <| List.filter filter
-        <| Dict.foldl (\_ tag list -> list ++ [tag]) [] list.tags
+        <| Dict.foldl (\_ tag acc -> acc ++ [tag]) [] list.tags
 
 
 
@@ -157,7 +158,7 @@ tagListHtml list onTextClick onRemoveButton =
         (\key value acc -> acc ++ [(value, (onTextClick key), (onRemoveButton key))])
         []
         list.tags
-    |> (htmlFromListOfTags <| if not list.enabled then [Style.DisabledTag] else [])
+    |> (htmlFromListOfTags <| if not list.enabled then [Style.disabledTagStyle] else [])
 
 
 
@@ -247,7 +248,7 @@ toggleTagInTagListList listId tagId tagListList =
 -- Togles the specified tag list
 toggleTagList : Int -> TagListList -> TagListList
 toggleTagList id list =
-    runOnTagList (\list -> {list | enabled = not list.enabled}) id list
+    runOnTagList (\inner -> {inner | enabled = not inner.enabled}) id list
 
 
 
@@ -305,17 +306,19 @@ tagListListHtml tagListList selectedTag messages =
             Dict.foldl foldFunction [] tagListList.tagLists
 
         listClasses listId tagList =
-            case selectedTag of
+            ( case selectedTag of
                 None ->
                     []
                 Single _ _ ->
                     []
                 List id ->
-                    if id == listId then [Style.TagEditorSelected] else []
+                    if id == listId then [Style.tagEditorSelectedStyle] else []
+            )
             ++
-            case tagList.enabled of
+            ( case tagList.enabled of
                 True -> []
-                False -> [Style.DisabledTag]
+                False -> [Style.disabledTagStyle]
+            )
 
         --TODO: Improve code quality in this function
         buildButtonRow : TagList -> Int -> Html msg
@@ -334,7 +337,7 @@ tagListListHtml tagListList selectedTag messages =
 
                 toggleButton =
                     flatButton 
-                        [Style.InlineButton]
+                        [Style.inlineButtonStyle]
                         []
                         (messages.onToggleList id)
                         toggleCharacter
@@ -342,7 +345,7 @@ tagListListHtml tagListList selectedTag messages =
 
                 removeButton =
                     flatButton
-                        [Style.InlineButton]
+                        [Style.inlineButtonStyle]
                         []
                         (messages.onRemoveList id)
                         removeCharacter
@@ -351,7 +354,7 @@ tagListListHtml tagListList selectedTag messages =
                 addElement = case tagListList.textFieldTargetId of
                     Nothing ->
                         flatButton 
-                            [Style.InlineButton, Style.AddTagButton]
+                            [Style.inlineButtonStyle, Style.addTagButtonStyle]
                             []
                             (messages.onAddTag id)
                             addCharacter
@@ -360,21 +363,21 @@ tagListListHtml tagListList selectedTag messages =
                     Just(targetId) ->
                         if targetId /= id then
                             flatButton 
-                                [Style.InlineButton, Style.AddTagButton]
+                                [Style.inlineButtonStyle, Style.addTagButtonStyle]
                                 []
                                 (messages.onAddTag id)
                                 addCharacter
                                 buttonSize
                         else
-                            form [Style.class [Style.AddTagButton], onSubmit <| messages.onTagSubmit id]
-                                [input 
-                                    [Html.Attributes.id "tag_input_field"
+                            form [css [Style.addTagButtonStyle], onSubmit <| messages.onTagSubmit id]
+                                [input
+                                    [Attributes.id "tag_input_field"
                                     , onBlur messages.onTagnameUnfocus
                                     , onInput messages.onTextChanged
-                                    , Style.class [Style.TagTextField]
+                                    , css [Style.tagTextFieldStyle]
                                     ] []]
             in
-                div [Style.class [Style.TagListButtonRow]]
+                div [css [Style.tagListButtonRowStyle]]
                     [ toggleButton
                     , addElement
                     , removeButton
@@ -383,7 +386,7 @@ tagListListHtml tagListList selectedTag messages =
         ul []
             <| List.map 
                     (\(id, (tag, onText, onRemove)) ->
-                        div [Style.class ([Style.TagList] ++ (listClasses id tag))]
+                        div [css ([Style.tagListStyle] ++ (listClasses id tag))]
                             [ tagListHtml tag onText onRemove
                             , buildButtonRow tag id
                             ]
@@ -404,8 +407,8 @@ getNthTag tagListList listId target =
             getTagList tagListList listId
     in
         case tagList of
-            Just tagList ->
-                List.Extra.getAt target <| Dict.keys tagList.tags
+            Just list ->
+                List.Extra.getAt target <| Dict.keys list.tags
             Nothing ->
                 Nothing
 

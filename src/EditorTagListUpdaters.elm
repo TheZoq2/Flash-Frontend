@@ -20,22 +20,17 @@ import EditorMsg exposing
 import Tags exposing (TagList, TagListList)
 import ImageViewer
 import FileList exposing (fileListDecoder)
-import Touch
 
 import Vec exposing (..)
 import Json.Decode exposing (..)
 import Json.Encode
 import Http
 import Task
-import Window
-import Keyboard
 import Char
-import Dom
+import Browser.Dom
 import List.Extra
-import UrlParser
-import Navigation
-import UrlParser
-import UrlParser exposing ((</>))
+import Url.Parser
+import Url.Parser exposing ((</>))
 import Math.Vector2 exposing (Vec2, vec2)
 
 
@@ -52,9 +47,9 @@ startTagAddition : Model -> Int -> (Model, Cmd Msg)
 startTagAddition model tagListId =
     let
         newTags = Tags.startTagTextInput tagListId model.tags
-        cmd = Dom.focus "tag_input_field" |> Task.attempt FocusResult
+        cmd = Browser.Dom.focus "tag_input_field" |> Task.attempt FocusResult
     in
-        ({model | tags = newTags, keyReceiver = TagField tagListId}, cmd)
+        ({model | tags = newTags, keyReceiver = FocusTagField tagListId}, cmd)
 
 
 removeTagList : Model -> Int -> (Model, Cmd Msg)
@@ -65,10 +60,10 @@ removeTagList model id =
 
         newReceiver =
             case model.keyReceiver of
-                TagList _ ->
-                    EditorModel.TagListList
-                TagField _ ->
-                    EditorModel.TagListList
+                FocusTagList _ ->
+                    FocusTagListList
+                FocusTagField _ ->
+                    FocusTagListList
                 old -> old
     in
         ({model | tags = newTags, keyReceiver = newReceiver}, Cmd.none)
@@ -92,8 +87,8 @@ removeTag model listId tagId =
 
         newReceiver =
             case model.keyReceiver of
-                Tag listId _ ->
-                    EditorModel.TagList listId
+                FocusTag focusId _ ->
+                    FocusTagList focusId
                 old -> old
     in
         {model | tags = newTags, keyReceiver = newReceiver}
@@ -114,10 +109,10 @@ cancelTagCreation : Model -> Model
 cancelTagCreation model =
     let
         newReceiver = case model.keyReceiver of
-            TagField id ->
-                EditorModel.TagList id
+            FocusTagField id ->
+                FocusTagList id
             _ ->
-                None
+                FocusNone
     in
         {model | tagTextfieldContent = Nothing
                , tags = Tags.cancelAddTag model.tags

@@ -20,8 +20,8 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : flags -> ( Model, Cmd Msg )
+init _ =
     ( { searchQuery = ""
       , currentList = Nothing
       , networkError = Nothing

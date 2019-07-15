@@ -6,12 +6,13 @@ import AlbumView exposing (view)
 import AlbumCommon exposing (tagEditorUrl)
 import Requests exposing (checkHttpAttempt)
 
-import Html exposing (..)
-import Html
+import Html.Styled exposing (..)
+import Html.Styled
 import Http
 import FileList exposing (FileList, FileListSource, FileListResponse)
 import Json.Decode
-import Navigation
+import Browser
+import Browser.Navigation as Navigation
 import Urls
 
 
@@ -31,7 +32,7 @@ update msg model =
         SubmitSearchFor query ->
             (model, submitSearch query)
         NetworkError err ->
-            ( { model | networkError = Just <| toString err }, Cmd.none )
+            ( { model | networkError = Just <| Debug.toString err }, Cmd.none )
         NewFileList id length ->
             ( { model | currentList = Just <| FileList.new id length }, Cmd.none )
         NewFileListListing fileLists ->
@@ -91,12 +92,12 @@ subscriptions model =
 --Main
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.document
         { init = init
         , update = update
-        , view = view
+        , view = (\model -> Browser.Document "Flash album" [toUnstyled <| view model])
         , subscriptions = subscriptions
         }
 

@@ -9,12 +9,12 @@ import EditorModel exposing
     )
 
 import Http
-import Window
-import Dom
-import Navigation
-import Mouse
+import Browser
+import Browser.Dom
 import Scroll
-import Touch
+import Url
+import Mouse
+import Json.Decode
 
 
 type Msg
@@ -24,11 +24,12 @@ type Msg
     | RequestId Int
     | NetworkError Http.Error
     | OnSaved
-    | WindowResized Window.Size
-    | Keypress Int
+    | WindowResized Int Int
+    | Keypress String
     | NewFileList Int Int Int -- selectedFile listId length
     | FileDataReceived FileData
-    | UrlChanged Navigation.Location
+    | UrlChanged Url.Url
+    | UrlRequest Browser.UrlRequest
     | ImageLoaded
     | CommandCanceled
     | CommandInput String
@@ -36,9 +37,10 @@ type Msg
     -- Image view specific messages
     | MouseMovedOnImage Mouse.Event
     | ImageScrolled Scroll.Event
-    | ImageTouchStart Touch.Event
-    | ImageTouchMove Touch.Event
-    | ImageTouchEnd Touch.Event
+    -- TODO: Re-add touch support
+    -- | ImageTouchStart Touch.Event
+    -- | ImageTouchMove Touch.Event
+    -- | ImageTouchEnd Touch.Event
     | NoOp -- For events that are only handled because we want to prevent default
     -- Tag list specific messages
     | AddTagList
@@ -53,7 +55,7 @@ type Msg
     | RemoveTag Int Int
     | TagTextFieldChanged String
     | CancelTagCreation
-    | FocusResult (Result Dom.Error ())
+    | FocusResult (Result Browser.Dom.Error ())
 
 
 

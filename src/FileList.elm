@@ -1,7 +1,7 @@
 module FileList exposing
     ( FileList
     , FileListResponse
-    , FileListSource(Folder, Search)
+    , FileListSource (..)
     , new
     , newWithSelected
     , jump

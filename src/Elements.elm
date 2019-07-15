@@ -1,24 +1,24 @@
 module Elements exposing (flatButton, thumbnail, hoverButton)
 
-import Html exposing (..)
-import Html.Attributes exposing (style, href, src)
-import Html.Events exposing (onClick)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (style, href, src, css)
+import Html.Styled.Events exposing (onClick)
 import Css
 import Style
-import Svg
-import Svg exposing (Svg)
-import Svg.Attributes
+import Svg.Styled as Svg
+import Svg.Styled exposing (Svg)
+import Svg.Styled.Attributes as SvgAttributes
 
 --Complete elements
 
-flatButton : List Style.CssClasses -> List (Html.Attribute a) -> a -> String -> Float -> Html a
+flatButton : List Css.Style -> List (Attribute a) -> a -> String -> Float -> Html a
 flatButton classes attributes onClickMsg buttonText fontSize =
     p
         (
-            [ Style.class (classes ++ [Style.Button])
+            [ css (classes ++ [Style.buttonStyle])
             , onClick onClickMsg
             , href "#"
-            , Style.toStyle 
+            , css
                 [ Css.fontSize (Css.em fontSize)
                 ]
             ]
@@ -27,9 +27,9 @@ flatButton classes attributes onClickMsg buttonText fontSize =
         [ text buttonText ]
 
 
-thumbnail : List (Html.Attribute msg) -> String -> msg -> Html msg
+thumbnail : List (Attribute msg) -> String -> msg -> Html msg
 thumbnail additionalAttributes thumbnailUrl clickMsg =
-    div ([onClick clickMsg, Style.class [Style.Thumbnail]] ++ additionalAttributes)
+    div ([onClick clickMsg, css [Style.editorThumbnailStyle]] ++ additionalAttributes)
         [ img [src thumbnailUrl] []
         ]
 
@@ -42,26 +42,26 @@ hoverButton onClick icon (x, y) innerRadius =
 
         hoverArea =
             Svg.circle
-                [ Svg.Attributes.cx "50"
-                , Svg.Attributes.cy "50"
-                , Svg.Attributes.r (toString (hoverRadius + innerRadius//2))
-                , Svg.Attributes.class "hoverArea"
+                [ SvgAttributes.cx "50"
+                , SvgAttributes.cy "50"
+                , SvgAttributes.r (String.fromInt (hoverRadius + innerRadius//2))
+                , SvgAttributes.class "hoverArea"
                 ]
                 []
     in
-        div [Style.toStyle [Css.position Css.absolute, Css.zIndex (Css.int 1)]]
+        div [css [Css.position Css.absolute, Css.zIndex (Css.int 1)]]
             [ Svg.svg
-                [ Svg.Attributes.viewBox
-                    <|  toString (-hoverRadius)
+                [ SvgAttributes.viewBox
+                    <|  String.fromInt (-hoverRadius)
                     ++ " "
-                    ++ toString (-hoverRadius)
+                    ++ String.fromInt (-hoverRadius)
                     ++ " "
-                    ++ toString (hoverRadius * 2 + innerRadius)
+                    ++ String.fromInt (hoverRadius * 2 + innerRadius)
                     ++ " "
-                    ++ toString (hoverRadius * 2 + innerRadius)
-                , Svg.Attributes.width <| toString (innerRadius + hoverRadius * 2)
-                , Svg.Attributes.height <| toString (innerRadius + hoverRadius * 2)
-                , Svg.Attributes.class "hoverButton"
+                    ++ String.fromInt (hoverRadius * 2 + innerRadius)
+                , SvgAttributes.width <| String.fromInt (innerRadius + hoverRadius * 2)
+                , SvgAttributes.height <| String.fromInt (innerRadius + hoverRadius * 2)
+                , SvgAttributes.class "hoverButton"
                 ]
                 <| [ hoverArea
                    ]
