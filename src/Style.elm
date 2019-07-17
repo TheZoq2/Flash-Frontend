@@ -190,7 +190,6 @@ addTagButtonStyle =
 buttonStyle =
     Css.batch
         [ textAlign Css.center
-        , lineHeight <| Css.px tagEditorStdHeight
         , color primaryTextColor
         , textDecoration Css.none
         , cursor pointer
@@ -324,6 +323,7 @@ buttonRowButtonStyle =
     Css.batch
         [ width <| Css.px buttonRowButtonWidth
         , height <| Css.px tagEditorStdHeight
+        , lineHeight <| Css.px tagEditorStdHeight
         , borderBottom3 (Css.px 1) Css.solid dividerColor
         ]
 
